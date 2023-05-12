@@ -15,6 +15,6 @@ if (PLATFORM_LINUX OR PLATFORM_MACOS)
     set(CMAKE_C_COMPILER_LAUNCHER "${ccache_executable}" CACHE FILEPATH "ccache")
 
   else()
-    message(STATUS "Orzo: No ccache executable found")
+    message(STATUS "Macroni: No ccache executable found")
   endif ()
 endif ()

@@ -6,7 +6,9 @@
 # the LICENSE file found in the root directory of this source tree.
 #
 
-set(source_include_dir "${PROJECT_SOURCE_DIR}/include/orzo")
+set(PROJECT_NAME "macroni")
+
+set(source_include_dir "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}")
 
 # https://github.com/JonathanSalwan/Triton/issues/1082#issuecomment-1030826696
 if(LLVM_LINK_LLVM_DYLIB)
@@ -27,11 +29,11 @@ else()
 endif()
 
 
-add_library("orzo" STATIC
+add_library("${PROJECT_NAME}" STATIC
   
 )
 
-target_link_libraries("orzo"
+target_link_libraries("${PROJECT_NAME}"
   PUBLIC
     vast::vast
     vast::MLIRCore
@@ -76,13 +78,13 @@ target_link_libraries("orzo"
     clangIndex
 )
 
-target_include_directories("orzo"
+target_include_directories("${PROJECT_NAME}"
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_features("orzo"
+target_compile_features("${PROJECT_NAME}"
   PRIVATE
     cxx_std_20
 )

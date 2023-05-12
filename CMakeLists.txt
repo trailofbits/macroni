@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.25)
 
 include("cmake/ccache.cmake")
 
-project("orzo" CXX)
+project("macroni" CXX)
 
 include(CMakeDependentOption)
 include(GNUInstallDirs)
