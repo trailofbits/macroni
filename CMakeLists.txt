@@ -17,12 +17,17 @@ include(GNUInstallDirs)
 include("cmake/options.cmake")
 
 find_package(Clang CONFIG REQUIRED)
-find_package(gap CONFIG REQUIRED)
 find_package(LLVM CONFIG REQUIRED)
 find_package(MLIR CONFIG REQUIRED)
-find_package(PASTA CONFIG REQUIRED)
-find_package(VAST CONFIG REQUIRED)
+
+# TODO(bpp): Add MACRONI_ENABLE_{VAST,PASTA}_SUBMODULE options to let users
+# build Macroni using their own versions of PASTA and VAST
+# find_package(pasta CONFIG REQUIRED)
+# find_package(VAST CONFIG REQUIRED)
+
 find_package(Z3 CONFIG REQUIRED)
 
+add_subdirectory(external)
+
 add_subdirectory("lib")
-add_subdirectory("bin")
+# add_subdirectory("bin")

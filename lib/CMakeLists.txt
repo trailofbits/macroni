@@ -35,12 +35,6 @@ add_library("${PROJECT_NAME}" STATIC
 
 target_link_libraries("${PROJECT_NAME}"
   PUBLIC
-    vast::vast
-    vast::MLIRCore
-    vast::MLIRMeta
-    vast::MLIRLowLevel
-    vast::MLIRHighLevel
-    
     MLIRDialect
     MLIRMLProgramDialect
     MLIROpenMPDialect
