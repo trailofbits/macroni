@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "compilerPath": "/home/bpappas/trail-of-bits/vcpkg_ubuntu-22.04_llvm-16-pasta_amd64/installed/x64-linux-rel/bin/clang++",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "defines": [],
+            "includePath": [
+                "/home/bpappas/trail-of-bits/**",
+                "/home/bpappas/trail-of-bits/vcpkg_ubuntu-22.04_llvm-16-pasta_amd64/installed/x64-linux-rel/include",
+                "/home/bpappas/trail-of-bits/vcpkg_ubuntu-v2-22.04_llvm-16_amd64/installed/x64-linux-rel/include"
+            ],
+            "intelliSenseMode": "linux-clang-x64",
+            "name": "Linux"
+        }
+    ],
+    "version": 4
+}
