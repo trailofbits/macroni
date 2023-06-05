@@ -33,43 +33,80 @@ add_library("${PROJECT_NAME}" STATIC
   
 )
 
+get_property(DIALECT_LIBS GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+get_property(CONVERSION_LIBS GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+
 target_link_libraries("${PROJECT_NAME}"
   PUBLIC
-    MLIRDialect
-    MLIRMLProgramDialect
-    MLIROpenMPDialect
-    MLIRTosaDialect
-
-    MLIRBufferizationTransformOps
-    MLIRSparseTensorTransforms
-    MLIROpenACCDialect
-    MLIRLLVMIRTransforms
-    MLIRROCDLDialect
-    MLIRAsyncDialect
-    MLIRSCFTransformOps
-    MLIREmitCDialect
-    MLIRNVGPUDialect
-    MLIRShapeDialect
+    ${DIALECT_LIBS}
+    ${CONVERSION_LIBS}
+    MLIRAffineAnalysis
+    MLIRAffineDialect
+    MLIRAffineTransformOps
+    MLIRAffineTransforms
+    MLIRAffineUtils
     MLIRAMDGPUDialect
-    MLIRShapeOpsTransforms
+    MLIRAsyncDialect
+    MLIRBufferizationTransformOps
+    MLIRCore
+    MLIRDialect
+    MLIREmitCDialect
+    MLIRExecutionEngine
+    MLIRGPUOps
+    MLIRGPUTransformOps
+    MLIRGPUTransforms
+    MLIRHighLevel
+    MLIRHighLevelTransforms
+    MLIRIR
     MLIRLinalgTransformOps
+    MLIRLLVMCommonConversion
+    MLIRLLVMIRTransforms
+    MLIRLLVMToLLVMIRTranslation
+    MLIRLowLevel
+    MLIRMemRefDialect
+    MLIRMemRefTransformOps
+    MLIRMemRefTransforms
+    MLIRMemRefUtils
+    MLIRMeta
+    MLIRMLProgramDialect
+    MLIRNVGPUDialect
+    MLIROpenACCDialect
+    MLIROpenMPDialect
+    MLIROptLib
+    MLIRParser
+    MLIRPass
+    MLIRROCDLDialect
+    MLIRSCFTransformOps
+    MLIRShapeDialect
+    MLIRShapeOpsTransforms
+    MLIRSparseTensorTransforms
     MLIRSPIRVDialect
+    MLIRSupport
+    MLIRTargetLLVMIRExport
     MLIRTensorInferTypeOpInterfaceImpl
+    MLIRToLLVMIRTranslationRegistration
+    MLIRTosaDialect
+    MLIRTransforms
+    MLIRTransformUtils
+    MLIRVectorDialect
+    MLIRVectorTransformOps
+    MLIRVectorTransforms
+    MLIRVectorUtils
     
     ${llvm_libs}
     
     clang
-    clangFrontend
-    clangDriver
-    clangSerialization
-    clangParse
     clangAnalysis
-    clangEdit
     clangAST
-    clangLex
     clangBasic
-    clangTooling
+    clangDriver
+    clangEdit
+    clangFrontend
     clangIndex
+    clangLex
+    clangParse
+    clangSerialization
+    clangTooling
 )
 
 target_include_directories("${PROJECT_NAME}"
