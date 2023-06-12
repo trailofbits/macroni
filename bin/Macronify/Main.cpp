@@ -51,13 +51,16 @@ VAST_UNRELAX_WARNINGS
 #include <memory>
 #include <string>
 #include <optional>
+#include <algorithm>
+#include <set>
+#include <map>
 
-// TODO(bpp): Instead of using a global variable for the PASTA AST, find out how
-// to pass it to the CodeGen
-std::optional<pasta::AST> ast;
+// TODO(bpp): Instead of using a global variable for the PASTA AST and MLIR
+// context, find out how to pass these to a CodeGen object.
+std::optional<pasta::AST> ast = std::nullopt;
+std::optional<mlir::MLIRContext> mctx = std::nullopt;
 
 namespace macroni {
-
     struct MetaGenerator {
         MetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
             : ast(ast), mctx(mctx) {}
@@ -101,6 +104,22 @@ namespace macroni {
         mlir::MLIRContext *mctx;
     };
 
+    // Adds an MLIR StrAttr with the given name and value to an MLIR operation.
+    void AddStrAttr(mlir::Operation *op, std::string_view name, std::string_view value) {
+        auto attr_name = llvm::StringRef(name);
+        auto twine = llvm::Twine(value);
+        auto attr = mlir::StringAttr::get(&*mctx, twine);
+        op->setAttr(attr_name, attr);
+    }
+
+    // Adds an MLIR U64Attr with the given name and value to an MLIR operation.
+    void AddU64Attr(mlir::Operation *op, std::string_view name, uint64_t value) {
+        auto attr_name = llvm::StringRef(name);
+        auto aps_int = mlir::APSInt(llvm::APInt(64, value, false), true);
+        auto attr = mlir::IntegerAttr::get(&*mctx, aps_int);
+        op->setAttr(attr_name, attr);
+    }
+
     template< typename Derived >
     struct CodeGenVisitorMixin
         : vast::cg::CodeGenDeclVisitorMixin< Derived >
@@ -114,12 +133,94 @@ namespace macroni {
         using DeclVisitor::Visit;
         using TypeVisitor::Visit;
 
+        using HLScope = vast::cg::HighLevelScope;
+
+        std::set<pasta::Macro> visiting;
+
         mlir::Operation *Visit(const clang::Stmt *stmt) {
-            auto pasta_stmt = ast->Adopt(stmt);
-            if (pasta_stmt.LowestCoveringMacro(pasta::MacroKind::kExpansion)) {
-                std::cerr << "Test\n";
+            if (clang::isa<clang::ImplicitValueInitExpr,
+                clang::ImplicitCastExpr>(stmt)) {
+                // Don't visit implicit expressions
+                return StmtVisitor::Visit(stmt);
             }
-            return StmtVisitor::Visit(stmt);
+
+            // Find the lowest macro that covers this statement, if any
+            const auto pasta_stmt = ast->Adopt(stmt);
+            std::optional<pasta::Macro> lowest_macro = std::nullopt;
+            auto macros = pasta_stmt.CoveringMacros();
+            std::reverse(macros.begin(), macros.end());
+            for (auto macro : macros) {
+
+                // Don't visit macros more than once
+                if (visiting.contains(macro)) {
+                    continue;
+                }
+
+                // Only visit pre-expanded forms of function-like macro
+                // expansions.
+                if (auto exp = pasta::MacroExpansion::From(macro)) {
+                    bool is_pre_expansion = (exp->Arguments().empty() ||
+                                             exp->IsArgumentPreExpansion());
+                    if (!is_pre_expansion) {
+                        continue;
+                    }
+                }
+
+                // Don't visit macro arguments, only their substitutions
+                if (auto arg = pasta::MacroArgument::From(macro)) {
+                    continue;
+                }
+
+                lowest_macro = macro;
+                break;
+            }
+
+            if (!lowest_macro.has_value()) {
+                // If no macro covers this statement, visit it normally.
+                return StmtVisitor::Visit(stmt);
+            }
+
+            // NOTE(bpp): Right now we use MLIR attributes to annotate
+            // statements that were expanded from macros. We may want to define
+            // a separate dialect for this eventually instead.
+            auto loc = StmtVisitor::meta_location(stmt);
+            vast::Operation *result = nullptr;
+            visiting.insert(*lowest_macro);
+            if (const auto expr = clang::dyn_cast<clang::Expr>(stmt)) {
+                // If this argument is an expression, treat it like VAST treats
+                // parenthesized expressions.
+                auto [reg, rty] = StmtVisitor::make_value_yield_region(expr);
+                result = StmtVisitor::template make< vast::hl::ExprOp >(
+                    loc, rty, std::move(reg));
+            } else {
+                // Otherwise, treat it like VAST treat compound statements.
+                result = StmtVisitor::template make_scoped<HLScope>(
+                    loc, [&] {
+                        Visit(stmt);
+                    });
+            }
+            visiting.erase(*lowest_macro);
+
+            if (auto exp = pasta::MacroExpansion::From(*lowest_macro)) {
+                if (auto name = exp->NameOrOperator()) {
+                    AddStrAttr(result, "MacroName", name->Data());
+                } else {
+                    AddStrAttr(result, "MacroName", "<a nameless macro>");
+                }
+            } else if (auto param_sub =
+                       pasta::MacroParameterSubstitution::From(*lowest_macro)) {
+                if (auto name = param_sub->NameOrOperator()) {
+                    AddStrAttr(result, "ParameterName", name->Data());
+                } else {
+                    AddStrAttr(result, "ParameterName", "<a nameless macro parameter>");
+                }
+                AddU64Attr(result, "ParameterIndex", param_sub->Parameter().Index());
+                AddU64Attr(result, "ParentRawMacroID", reinterpret_cast<uintptr_t>(param_sub->Parent()->RawMacro()));
+            }
+            AddU64Attr(result, "RawMacroID", reinterpret_cast<uintptr_t>(lowest_macro->RawMacro()));
+            AddStrAttr(result, "MacroKind", lowest_macro->KindName());
+
+            return result;
         }
     };
 
@@ -175,21 +276,22 @@ int main(int argc, char **argv) {
             std::cerr << maybe_ast.TakeError() << std::endl;
             return EXIT_FAILURE;
         }
-        else {
-            ast.emplace(maybe_ast.TakeValue());
 
-            mlir::DialectRegistry registry;
-            registry.insert<vast::hl::HighLevelDialect>();
-            mlir::MLIRContext mctx(registry);
-            macroni::MetaGenerator meta(*ast, &mctx);
-            vast::cg::CodeGenBase<macroni::Visitor> codegen(&mctx, meta);
+        ast.emplace(maybe_ast.TakeValue());
 
-            codegen.append_to_module(ast->UnderlyingAST().getTranslationUnitDecl());
-            auto mod = codegen.freeze();
-            mod->print(llvm::outs());
+        mlir::DialectRegistry registry;
+        registry.insert<vast::hl::HighLevelDialect>();
+        mctx.emplace(registry);
+        macroni::MetaGenerator meta(*ast, &*mctx);
+        vast::cg::CodeGenBase<macroni::Visitor> codegen(&*mctx, meta);
 
-            return EXIT_SUCCESS;
-        }
+        codegen.append_to_module(ast->UnderlyingAST().getTranslationUnitDecl());
+        auto mod = codegen.freeze();
+        mlir::OpPrintingFlags flags;
+        flags.enableDebugInfo(false, true);
+        mod->print(llvm::outs(), flags);
+
+        return EXIT_SUCCESS;
     }
     return EXIT_SUCCESS;
 }
