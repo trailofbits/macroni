@@ -276,7 +276,6 @@ if (MACRONI_INSTALL)
     MLIRABI
     MLIRCore
     MLIRHighLevel
-    MLIRHighLevelTransforms
     MLIRLowLevel
     MLIRLowLevelTransforms
     MLIRMeta
