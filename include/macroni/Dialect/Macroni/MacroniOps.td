@@ -32,7 +32,8 @@ def MacroParameterExpr :
   let assemblyFormat = " $parameterName attr-dict $expansion `:` type($result)";
 }
 
-// TODO: Add operations for stringifications token-pastings
+// TODO: Add operations for stringifications token-pastings? We will only need
+// these if we add operations for non-aligned macro expansions
 
 def MacroExpansionStmt :
   Macroni_Op< "expansion.stmt", [NoTerminator] >
