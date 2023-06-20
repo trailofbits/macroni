@@ -15,11 +15,10 @@
 
 namespace macroni::macroni {
 
-    void MacroExpansionStmt::build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, std::optional<llvm::function_ref< void(mlir::OpBuilder &, mlir::Location) >> expansionBuilder, mlir::IntegerAttr macroID, mlir::StringAttr macroName, mlir::StringAttr macroKind, mlir::ArrayAttr parameterNames, mlir::BoolAttr functionLike) {
+    void MacroExpansionStmt::build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, std::optional<llvm::function_ref< void(mlir::OpBuilder &, mlir::Location) >> expansionBuilder, mlir::IntegerAttr macroID, mlir::StringAttr macroName, mlir::ArrayAttr parameterNames, mlir::BoolAttr functionLike) {
         mlir::OpBuilder::InsertionGuard guard(odsBuilder);
         odsState.addAttribute("macroID", macroID);
         odsState.addAttribute("macroName", macroName);
-        odsState.addAttribute("macroKind", macroKind);
         odsState.addAttribute("parameterNames", parameterNames);
         odsState.addAttribute("functionLike", functionLike);
         auto reg = odsState.addRegion();
