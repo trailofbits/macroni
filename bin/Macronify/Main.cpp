@@ -172,9 +172,6 @@ namespace macroni {
 
             // First get the macro's name
             std::string_view macro_name = "<a nameless macro>";
-            uintptr_t macro_id =
-                reinterpret_cast<uintptr_t>(lowest_macro->RawMacro());
-            auto macro_id_ap_int = llvm::APInt(64, macro_id, false);
             bool function_like = false;
             std::vector<llvm::StringRef> param_names;
             if (auto sub = pasta::MacroSubstitution::From(*lowest_macro)) {
@@ -204,7 +201,6 @@ namespace macroni {
                     StmtVisitor::template make<macroni::MacroExpansionExpr>(
                         loc,
                         expansion,
-                        macro_id,
                         macro_name,
                         builder->getStrArrayAttr(llvm::ArrayRef(param_names)),
                         function_like
@@ -216,8 +212,6 @@ namespace macroni {
                     make< macroni::MacroExpansionStmt >(
                         loc,
                         expansion_builder,
-                        builder->getIntegerAttr(builder->getI64Type(),
-                                                macro_id_ap_int),
                         builder->getStringAttr(llvm::Twine(macro_name)),
                         builder->getStrArrayAttr(llvm::ArrayRef(param_names)),
                         builder->getBoolAttr(function_like)

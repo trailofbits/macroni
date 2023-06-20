@@ -10,7 +10,6 @@ def MacroExpansionExpr :
   Macroni_Op< "macro.expr", [SameOperandsAndResultType] >
   , Arguments<(ins
     AnyType:$expansion,
-    I64Attr:$macroID,
     StrAttr:$macroName,
     ArrayAttr:$parameterNames,
     DefaultValuedAttr<BoolAttr, "false">:$functionLike
@@ -18,13 +17,12 @@ def MacroExpansionExpr :
   , Results<(outs AnyType:$result)> {
   let summary = "Macro expansion to an expression";
   let description = "A macro that expands to an expression";
-  let assemblyFormat = " $macroID $macroName ($parameterNames $functionLike^)? attr-dict $expansion `:` type($result)";
+  let assemblyFormat = " $macroName ($parameterNames $functionLike^)? attr-dict $expansion `:` type($result)";
 }
 
 def MacroExpansionStmt :
   Macroni_Op< "macro.stmt", [NoTerminator] >
   , Arguments<(ins
-    I64Attr:$macroID,
     StrAttr:$macroName,
     ArrayAttr:$parameterNames,
     DefaultValuedAttr<BoolAttr, "false">:$functionLike
@@ -37,13 +35,12 @@ def MacroExpansionStmt :
   let builders = [
     OpBuilder<(ins
       "std::optional<llvm::function_ref< void(mlir::OpBuilder &, mlir::Location) >>":$expansionBuilder,
-      "mlir::IntegerAttr":$macroID,
       "mlir::StringAttr":$macroName,
       "mlir::ArrayAttr":$parameterNames,
       "mlir::BoolAttr":$functionLike
     )>
   ];
-  let assemblyFormat = " $macroID $macroName ($parameterNames $functionLike^)? $expansion attr-dict";
+  let assemblyFormat = " $macroName ($parameterNames $functionLike^)? $expansion attr-dict";
 }
 
 #endif // MACRONI_DIALECT_IR_MACRONIOPS
