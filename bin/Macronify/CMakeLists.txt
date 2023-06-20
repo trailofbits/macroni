@@ -8,7 +8,6 @@ target_link_libraries(macronify
 
     MLIROptLib
     MLIRHighLevel
-    MLIRHighLevelTransforms
 
     MLIRIR
     MLIRParser
