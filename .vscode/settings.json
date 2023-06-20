@@ -89,7 +89,6 @@
     ],
     "cmake.configureSettings": {
         "LLVM_ENABLE_RTTI": "ON",
-        "LLVM_ENABLE_LLD": "TRUE",
         "LLVM_SYMBOLIZER_PATH": "${env.VCPKG_DIR}/installed/x64-linux-rel/bin/llvm-symbolizer",
         "CMAKE_INSTALL_PREFIX": "/home/bpappas/macroni-install",
         "LLVM_EXTERNAL_LIT": "/home/bpappas/.local/bin/lit",
