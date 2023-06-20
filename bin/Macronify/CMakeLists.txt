@@ -1,18 +1,21 @@
+set(LLVM_LINK_COMPONENTS Core Support AsmParser)
+
 add_executable(macronify Main.cpp)
-
-include_directories(
-  /external/vast/include
-  /external/pasta/include
-  ${PROJECT_SOURCE_DIR}/build/external/vast/include
-)
-
-add_dependencies(macronify pasta)
-add_dependencies(macronify vast)
+llvm_update_compile_flags(macronify)
 
 target_link_libraries(macronify
-  pasta
-  gap::gap
-  vast
-  FromSourceParser
-  macroni
+    macroni
+
+    MLIROptLib
+    MLIRHighLevel
+    MLIRHighLevelTransforms
+
+    MLIRIR
+    MLIRParser
+    MLIRPass
+    MLIRSupport
+
+    MLIRMacroni
 )
+
+mlir_check_link_libraries(macronify)
