@@ -16,13 +16,24 @@ VAST_RELAX_WARNINGS
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/InitAllDialects.h>
 #include <mlir/IR/OperationSupport.h>
+#include <mlir/Tools/mlir-translate/Translation.h>
 #include <mlir/Tools/mlir-translate/MlirTranslateMain.h>
+#include <mlir/Support/TypeID.h>
 
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendAction.h>
 #include <clang/Tooling/CommonOptionsParser.h>
+
+#include <pasta/AST/AST.h>
+#include <pasta/AST/Decl.h>
+#include <pasta/Compile/Command.h>
+#include <pasta/Compile/Compiler.h>
+#include <pasta/Compile/Job.h>
+#include <pasta/Util/ArgumentVector.h>
+#include <pasta/Util/FileSystem.h>
+#include <pasta/Util/Init.h>
 
 VAST_UNRELAX_WARNINGS
 
@@ -35,16 +46,9 @@ VAST_UNRELAX_WARNINGS
 #include <vast/Translation/Register.hpp>
 #include <vast/Translation/CodeGenDriver.hpp>
 #include <vast/Translation/CodeGenTypeDriver.hpp>
-#include <mlir/Tools/mlir-translate/Translation.h>
 
-#include <pasta/AST/AST.h>
-#include <pasta/AST/Decl.h>
-#include <pasta/Compile/Command.h>
-#include <pasta/Compile/Compiler.h>
-#include <pasta/Compile/Job.h>
-#include <pasta/Util/ArgumentVector.h>
-#include <pasta/Util/FileSystem.h>
-#include <pasta/Util/Init.h>
+#include <macroni/Dialect/Macroni/MacroniDialect.hpp>
+#include <macroni/Dialect/Macroni/MacroniOps.hpp>
 
 #include <cstdlib>
 #include <iostream>
@@ -59,6 +63,7 @@ VAST_UNRELAX_WARNINGS
 // context, find out how to pass these to a CodeGen object.
 std::optional<pasta::AST> ast = std::nullopt;
 std::optional<mlir::MLIRContext> mctx = std::nullopt;
+std::optional<mlir::Builder> builder = std::nullopt;
 
 namespace macroni {
     struct MetaGenerator {
@@ -180,45 +185,61 @@ namespace macroni {
                 return StmtVisitor::Visit(stmt);
             }
 
-            // NOTE(bpp): Right now we use MLIR attributes to annotate
-            // statements that were expanded from macros. We may want to define
-            // a separate dialect for this eventually instead.
+            // First get the macro's name
+            std::string_view macro_name = "<a nameless macro>";
+            std::string_view macro_kind = lowest_macro->KindName();
+            uintptr_t macro_id =
+                reinterpret_cast<uintptr_t>(lowest_macro->RawMacro());
+            auto macro_id_ap_int = llvm::APInt(64, macro_id, false);
+            bool function_like = false;
+            std::vector<llvm::StringRef> parameter_names;
+            if (auto sub = pasta::MacroSubstitution::From(*lowest_macro)) {
+                if (auto name = sub->NameOrOperator()) {
+                    macro_name = name->Data();
+                }
+                if (auto exp = pasta::MacroExpansion::From(*sub)) {
+                    if (auto def = exp->Definition()) {
+                        function_like = def->IsFunctionLike();
+                        for (auto macro_tok : def->Parameters()) {
+                            if (auto bt = macro_tok.BeginToken()) {
+                                parameter_names.push_back(bt->Data());
+                            }
+                        }
+                    }
+                }
+            }
+
             auto loc = StmtVisitor::meta_location(stmt);
             vast::Operation *result = nullptr;
             visiting.insert(*lowest_macro);
             if (const auto expr = clang::dyn_cast<clang::Expr>(stmt)) {
-                // If this argument is an expression, treat it like VAST treats
-                // parenthesized expressions.
-                auto [reg, rty] = StmtVisitor::make_value_yield_region(expr);
-                result = StmtVisitor::template make< vast::hl::ExprOp >(
-                    loc, rty, std::move(reg));
+                // If this macro is an expression, replace it with a
+                // MacroExpansionExpr.
+                auto expansion = StmtVisitor::visit(expr)->getResult(0);
+                result = StmtVisitor::template make<macroni::MacroExpansionExpr>(
+                    loc,
+                    expansion,
+                    macro_id,
+                    macro_name,
+                    macro_kind,
+                    builder->getStrArrayAttr(llvm::ArrayRef(parameter_names)),
+                    function_like
+                );
             } else {
-                // Otherwise, treat it like VAST treat compound statements.
-                result = StmtVisitor::template make_scoped<HLScope>(
-                    loc, [&] {
-                        Visit(stmt);
-                    });
+                // Otherwise, replace it with a MacroExpansionStmt.
+                auto expansion_builder = StmtVisitor::make_region_builder(stmt);
+                result = StmtVisitor::template make< macroni::MacroExpansionStmt >(
+                    loc,
+                    expansion_builder,
+                    builder->getIntegerAttr(builder->getI64Type(),
+                                            macro_id_ap_int),
+                    builder->getStringAttr(llvm::Twine(macro_name)),
+                    builder->getStringAttr(llvm::Twine(macro_kind)),
+                    builder->getStrArrayAttr(llvm::ArrayRef(parameter_names)),
+                    builder->getBoolAttr(function_like)
+                );
             }
             visiting.erase(*lowest_macro);
-
-            if (auto exp = pasta::MacroExpansion::From(*lowest_macro)) {
-                if (auto name = exp->NameOrOperator()) {
-                    AddStrAttr(result, "MacroName", name->Data());
-                } else {
-                    AddStrAttr(result, "MacroName", "<a nameless macro>");
-                }
-            } else if (auto param_sub =
-                       pasta::MacroParameterSubstitution::From(*lowest_macro)) {
-                if (auto name = param_sub->NameOrOperator()) {
-                    AddStrAttr(result, "ParameterName", name->Data());
-                } else {
-                    AddStrAttr(result, "ParameterName", "<a nameless macro parameter>");
-                }
-                AddU64Attr(result, "ParameterIndex", param_sub->Parameter().Index());
-                AddU64Attr(result, "ParentRawMacroID", reinterpret_cast<uintptr_t>(param_sub->Parent()->RawMacro()));
-            }
-            AddU64Attr(result, "RawMacroID", reinterpret_cast<uintptr_t>(lowest_macro->RawMacro()));
-            AddStrAttr(result, "MacroKind", lowest_macro->KindName());
 
             return result;
         }
@@ -280,15 +301,18 @@ int main(int argc, char **argv) {
         ast.emplace(maybe_ast.TakeValue());
 
         mlir::DialectRegistry registry;
-        registry.insert<vast::hl::HighLevelDialect>();
+        registry.insert<
+            vast::hl::HighLevelDialect,
+            macroni::macroni::MacroniDialect>();
         mctx.emplace(registry);
         macroni::MetaGenerator meta(*ast, &*mctx);
         vast::cg::CodeGenBase<macroni::Visitor> codegen(&*mctx, meta);
+        builder.emplace(&*mctx);
 
         codegen.append_to_module(ast->UnderlyingAST().getTranslationUnitDecl());
         auto mod = codegen.freeze();
         mlir::OpPrintingFlags flags;
-        flags.enableDebugInfo(false, true);
+        flags.enableDebugInfo(false, false);
         mod->print(llvm::outs(), flags);
 
         return EXIT_SUCCESS;
