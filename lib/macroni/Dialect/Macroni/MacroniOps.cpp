@@ -34,6 +34,22 @@ namespace macroni::macroni {
             expansionBuilder.value()(odsBuilder, odsState.location);
         }
     }
+
+    void MacroParameterStmt::build(
+        mlir::OpBuilder &odsBuilder,
+        mlir::OperationState &odsState,
+        std::optional<llvm::function_ref<void(mlir::OpBuilder &,
+                                              mlir::Location) >>
+        expansionBuilder,
+        mlir::StringAttr parameterName) {
+        mlir::OpBuilder::InsertionGuard guard(odsBuilder);
+        odsState.addAttribute("parameterName", parameterName);
+        auto reg = odsState.addRegion();
+        if (expansionBuilder.has_value()) {
+            odsBuilder.createBlock(reg);
+            expansionBuilder.value()(odsBuilder, odsState.location);
+        }
+    }
 }
 
 #define GET_OP_CLASSES

@@ -197,25 +197,47 @@ namespace macroni {
                 // If this macro is an expression, replace it with a
                 // MacroExpansionExpr.
                 auto expansion = StmtVisitor::visit(expr)->getResult(0);
-                result =
-                    StmtVisitor::template make<macroni::MacroExpansionExpr>(
-                        loc,
-                        expansion,
-                        macro_name,
-                        builder->getStrArrayAttr(llvm::ArrayRef(param_names)),
-                        function_like
-                    );
+                if (lowest_macro->Kind() ==
+                    pasta::MacroKind::kParameterSubstitution) {
+                    result =
+                        StmtVisitor::template make<macroni::MacroParameterExpr>(
+                            loc,
+                            expansion,
+                            macro_name
+                        );
+                } else {
+                    result =
+                        StmtVisitor::template make<macroni::MacroExpansionExpr>(
+                            loc,
+                            expansion,
+                            macro_name,
+                            builder->getStrArrayAttr(
+                                llvm::ArrayRef(param_names)),
+                            function_like
+                        );
+                }
             } else {
                 // Otherwise, replace it with a MacroExpansionStmt.
                 auto expansion_builder = StmtVisitor::make_region_builder(stmt);
-                result = StmtVisitor::template
-                    make< macroni::MacroExpansionStmt >(
-                        loc,
-                        expansion_builder,
-                        builder->getStringAttr(llvm::Twine(macro_name)),
-                        builder->getStrArrayAttr(llvm::ArrayRef(param_names)),
-                        builder->getBoolAttr(function_like)
-                    );
+                if (lowest_macro->Kind() ==
+                    pasta::MacroKind::kParameterSubstitution) {
+                    result = StmtVisitor::template
+                        make < macroni::MacroParameterStmt >(
+                            loc,
+                            expansion_builder,
+                            builder->getStringAttr(llvm::Twine(macro_name))
+                        );
+                } else {
+                    result = StmtVisitor::template
+                        make< macroni::MacroExpansionStmt >(
+                            loc,
+                            expansion_builder,
+                            builder->getStringAttr(llvm::Twine(macro_name)),
+                            builder->getStrArrayAttr(
+                                llvm::ArrayRef(param_names)),
+                            builder->getBoolAttr(function_like)
+                        );
+                }
             }
             visiting.erase(*lowest_macro);
 
