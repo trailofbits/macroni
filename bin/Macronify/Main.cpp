@@ -194,8 +194,6 @@ namespace macroni {
             vast::Operation *result = nullptr;
             visiting.insert(*lowest_macro);
             if (const auto expr = clang::dyn_cast<clang::Expr>(stmt)) {
-                // If this macro is an expression, replace it with a
-                // MacroExpansionExpr.
                 auto expansion = StmtVisitor::visit(expr)->getResult(0);
                 if (lowest_macro->Kind() ==
                     pasta::MacroKind::kParameterSubstitution) {
@@ -217,7 +215,6 @@ namespace macroni {
                         );
                 }
             } else {
-                // Otherwise, replace it with a MacroExpansionStmt.
                 auto expansion_builder = StmtVisitor::make_region_builder(stmt);
                 if (lowest_macro->Kind() ==
                     pasta::MacroKind::kParameterSubstitution) {
