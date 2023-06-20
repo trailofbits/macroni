@@ -109,22 +109,6 @@ namespace macroni {
         mlir::MLIRContext *mctx;
     };
 
-    // Adds an MLIR StrAttr with the given name and value to an MLIR operation.
-    void AddStrAttr(mlir::Operation *op, std::string_view name, std::string_view value) {
-        auto attr_name = llvm::StringRef(name);
-        auto twine = llvm::Twine(value);
-        auto attr = mlir::StringAttr::get(&*mctx, twine);
-        op->setAttr(attr_name, attr);
-    }
-
-    // Adds an MLIR U64Attr with the given name and value to an MLIR operation.
-    void AddU64Attr(mlir::Operation *op, std::string_view name, uint64_t value) {
-        auto attr_name = llvm::StringRef(name);
-        auto aps_int = mlir::APSInt(llvm::APInt(64, value, false), true);
-        auto attr = mlir::IntegerAttr::get(&*mctx, aps_int);
-        op->setAttr(attr_name, attr);
-    }
-
     template< typename Derived >
     struct CodeGenVisitorMixin
         : vast::cg::CodeGenDeclVisitorMixin< Derived >
@@ -133,7 +117,8 @@ namespace macroni {
     {
         using DeclVisitor = vast::cg::CodeGenDeclVisitorMixin< Derived >;
         using StmtVisitor = vast::cg::CodeGenStmtVisitorMixin< Derived >;
-        using TypeVisitor = vast::cg::CodeGenTypeVisitorWithDataLayoutMixin< Derived >;
+        using TypeVisitor =
+            vast::cg::CodeGenTypeVisitorWithDataLayoutMixin< Derived >;
 
         using DeclVisitor::Visit;
         using TypeVisitor::Visit;
@@ -187,12 +172,11 @@ namespace macroni {
 
             // First get the macro's name
             std::string_view macro_name = "<a nameless macro>";
-            std::string_view macro_kind = lowest_macro->KindName();
             uintptr_t macro_id =
                 reinterpret_cast<uintptr_t>(lowest_macro->RawMacro());
             auto macro_id_ap_int = llvm::APInt(64, macro_id, false);
             bool function_like = false;
-            std::vector<llvm::StringRef> parameter_names;
+            std::vector<llvm::StringRef> param_names;
             if (auto sub = pasta::MacroSubstitution::From(*lowest_macro)) {
                 if (auto name = sub->NameOrOperator()) {
                     macro_name = name->Data();
@@ -202,7 +186,7 @@ namespace macroni {
                         function_like = def->IsFunctionLike();
                         for (auto macro_tok : def->Parameters()) {
                             if (auto bt = macro_tok.BeginToken()) {
-                                parameter_names.push_back(bt->Data());
+                                param_names.push_back(bt->Data());
                             }
                         }
                     }
@@ -216,28 +200,28 @@ namespace macroni {
                 // If this macro is an expression, replace it with a
                 // MacroExpansionExpr.
                 auto expansion = StmtVisitor::visit(expr)->getResult(0);
-                result = StmtVisitor::template make<macroni::MacroExpansionExpr>(
-                    loc,
-                    expansion,
-                    macro_id,
-                    macro_name,
-                    macro_kind,
-                    builder->getStrArrayAttr(llvm::ArrayRef(parameter_names)),
-                    function_like
-                );
+                result =
+                    StmtVisitor::template make<macroni::MacroExpansionExpr>(
+                        loc,
+                        expansion,
+                        macro_id,
+                        macro_name,
+                        builder->getStrArrayAttr(llvm::ArrayRef(param_names)),
+                        function_like
+                    );
             } else {
                 // Otherwise, replace it with a MacroExpansionStmt.
                 auto expansion_builder = StmtVisitor::make_region_builder(stmt);
-                result = StmtVisitor::template make< macroni::MacroExpansionStmt >(
-                    loc,
-                    expansion_builder,
-                    builder->getIntegerAttr(builder->getI64Type(),
-                                            macro_id_ap_int),
-                    builder->getStringAttr(llvm::Twine(macro_name)),
-                    builder->getStringAttr(llvm::Twine(macro_kind)),
-                    builder->getStrArrayAttr(llvm::ArrayRef(parameter_names)),
-                    builder->getBoolAttr(function_like)
-                );
+                result = StmtVisitor::template
+                    make< macroni::MacroExpansionStmt >(
+                        loc,
+                        expansion_builder,
+                        builder->getIntegerAttr(builder->getI64Type(),
+                                                macro_id_ap_int),
+                        builder->getStringAttr(llvm::Twine(macro_name)),
+                        builder->getStrArrayAttr(llvm::ArrayRef(param_names)),
+                        builder->getBoolAttr(function_like)
+                    );
             }
             visiting.erase(*lowest_macro);
 
@@ -270,7 +254,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    auto maybe_cwd = pasta::FileSystem::From(maybe_compiler.Value())->CurrentWorkingDirectory();
+    auto maybe_cwd = (pasta::FileSystem::From(maybe_compiler.Value())
+                      ->CurrentWorkingDirectory());
     if (!maybe_cwd.Succeeded()) {
         std::cerr << maybe_compiler.TakeError() << std::endl;
         return EXIT_FAILURE;
