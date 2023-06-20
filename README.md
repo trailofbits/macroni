@@ -15,7 +15,7 @@ Macroni is an MLIR dialect that adds macro expansions to VAST's tower of IRS.
 ## Testing
 
 ## License
-VAST is licensed according to the Apache 2.0 license. VAST links against and
+Macroni is licensed according to the Apache 2.0 license. Macroni links against and
 uses Clang and LLVM APIs. Clang is also licensed under Apache 2.0, with LLVM
 exceptions.
 
