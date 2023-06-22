@@ -17,7 +17,7 @@ def MacroExpansionExpr :
   , Results<(outs AnyType:$result)> {
   let summary = "Macro expansion to an expression";
   let description = "A macro that expands to an expression";
-  let assemblyFormat = " $macroName ($parameterNames $functionLike^)? attr-dict $expansion `:` type($result)";
+  let assemblyFormat = "custom<MacroParameters>($macroName, $functionLike, $parameterNames) attr-dict $expansion `->` type($result)";
 }
 
 def MacroParameterExpr :
@@ -29,7 +29,7 @@ def MacroParameterExpr :
   , Results<(outs AnyType:$result)> {
   let summary = "Macro parameter expansion to an expression";
   let description = "A macro parameter that expands to an expression";
-  let assemblyFormat = " $parameterName attr-dict $expansion `:` type($result)";
+  let assemblyFormat = "$parameterName attr-dict $expansion `->` type($result)";
 }
 
 // TODO: Add operations for stringifications token-pastings? We will only need
@@ -55,7 +55,7 @@ def MacroExpansionStmt :
       "mlir::BoolAttr":$functionLike
     )>
   ];
-  let assemblyFormat = " $macroName ($parameterNames $functionLike^)? $expansion attr-dict";
+  let assemblyFormat = "custom<MacroParameters>($macroName, $functionLike, $parameterNames) $expansion attr-dict";
 }
 
 def MacroParameterStmt :
@@ -74,7 +74,7 @@ def MacroParameterStmt :
       "mlir::StringAttr":$parameterName
     )>
   ];
-  let assemblyFormat = " $parameterName $expansion attr-dict";
+  let assemblyFormat = "$parameterName $expansion attr-dict";
 }
 
 #endif // MACRONI_DIALECT_IR_MACRONIOPS
