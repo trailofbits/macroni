@@ -5,12 +5,10 @@
 #include "macroni/Dialect/Macroni/MacroniTypes.hpp"
 #include "macroni/Dialect/Macroni/MacroniAttributes.hpp"
 
-VAST_RELAX_WARNINGS
 #include <llvm/ADT/TypeSwitch.h>
 #include <mlir/IR/Builders.h>
 #include <mlir/IR/OpImplementation.h>
 #include <mlir/IR/DialectImplementation.h>
-VAST_RELAX_WARNINGS
 
 #define GET_ATTRDEF_CLASSES
 #include "macroni/Dialect/Macroni/MacroniAttributes.cpp.inc"
