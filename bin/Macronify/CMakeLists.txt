@@ -15,6 +15,8 @@ target_link_libraries(macronify
     MLIRSupport
 
     MLIRMacroni
+
+    FromSourceParser
 )
 
 mlir_check_link_libraries(macronify)

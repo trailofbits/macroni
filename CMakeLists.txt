@@ -22,7 +22,7 @@ endif ()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-project(MACRONI
+project(Macroni
     LANGUAGES C CXX
     VERSION 0.0.0
     DESCRIPTION "Intermediate representation of macros for program analysis"
@@ -147,7 +147,7 @@ function(mk_clang_libs out)
 endfunction()
 
 #
-# MACRONI build settings
+# Macroni build settings
 #
 
 add_library(macroni_settings INTERFACE)
@@ -201,9 +201,6 @@ target_link_libraries(macroni_settings
 
     gap::gap
 
-    vast::frontend_tool
-    vast::target_llvmir
-    FromSourceParser
     vast::util
 
     pasta
@@ -216,7 +213,7 @@ add_subdirectory(include/macroni)
 add_subdirectory(lib)
 
 #
-# MACRONI executables
+# Macroni executables
 #
 add_subdirectory(bin)
 
@@ -251,7 +248,6 @@ if (MACRONI_INSTALL)
   set(MACRONI_CMAKE_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
   set(MACRONI_INSTALL_TARGETS
-
     gap-core
     gap-settings
     gap
@@ -267,10 +263,6 @@ if (MACRONI_INSTALL)
     vast_conversion_core
     vast_conversion_from_hl
 
-    FromSourceParser
-    vast_frontend
-    vast_frontend_tool
-    vast_target_llvmir
     vast_util
 
     MLIRABI
@@ -317,7 +309,7 @@ if (MACRONI_INSTALL)
     PATTERN "CMakeFiles" EXCLUDE
   )
 
-  set(MACRONI_EXPORT_NAME MACRONITargets)
+  set(MACRONI_EXPORT_NAME MacroniTargets)
 
   install(TARGETS ${MACRONI_INSTALL_TARGETS}
     EXPORT ${MACRONI_EXPORT_NAME}
@@ -330,7 +322,7 @@ if (MACRONI_INSTALL)
 
   install(EXPORT ${MACRONI_EXPORT_NAME}
     FILE ${MACRONI_EXPORT_NAME}.cmake
-    NAMESPACE MACRONI::
+    NAMESPACE Macroni::
     DESTINATION ${MACRONI_CMAKE_INSTALL_DIR}
   )
 
@@ -340,7 +332,7 @@ if (MACRONI_INSTALL)
 
   set(CPACK_PACKAGE_VENDOR "Trail of Bits")
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
-    "MACRONI: a VAST dialect extenion with macros"
+    "Macroni: a VAST dialect extension with macros"
   )
   set(CPACK_PACKAGE_VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR})
   set(CPACK_PACKAGE_VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR})
