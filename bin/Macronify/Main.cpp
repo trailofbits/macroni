@@ -5,20 +5,20 @@
 // the LICENSE file found in the root directory of this source tree.
 
 
-#include <vast/Util/Warnings.hpp>
-
-VAST_RELAX_WARNINGS
 #include <clang/AST/ASTContext.h>
 #include <clang/Tooling/Tooling.h>
 #include <llvm/Support/raw_ostream.h>
+#include <mlir/InitAllDialects.h>
+#include <mlir/InitAllPasses.h>
 #include <mlir/IR/Builders.h>
 #include <mlir/IR/Dialect.h>
 #include <mlir/IR/MLIRContext.h>
-#include <mlir/InitAllDialects.h>
 #include <mlir/IR/OperationSupport.h>
-#include <mlir/Tools/mlir-translate/Translation.h>
-#include <mlir/Tools/mlir-translate/MlirTranslateMain.h>
+#include <mlir/Pass/Pass.h>
+#include <mlir/Pass/PassManager.h>
 #include <mlir/Support/TypeID.h>
+#include <mlir/Tools/mlir-translate/MlirTranslateMain.h>
+#include <mlir/Tools/mlir-translate/Translation.h>
 
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/RecursiveASTVisitor.h>
@@ -34,8 +34,6 @@ VAST_RELAX_WARNINGS
 #include <pasta/Util/ArgumentVector.h>
 #include <pasta/Util/FileSystem.h>
 #include <pasta/Util/Init.h>
-
-VAST_UNRELAX_WARNINGS
 
 #include <vast/Util/Common.hpp>
 #include <vast/Translation/CodeGenContext.hpp>
@@ -66,6 +64,66 @@ std::optional<mlir::MLIRContext> mctx = std::nullopt;
 std::optional<mlir::Builder> builder = std::nullopt;
 
 namespace macroni {
+
+    // NOTE(bpp): I think it would be a good idea to also transform
+    // substitutions of get_user's parameters into special operations as well,
+    // to even more information about the macro. This would let us match against
+    // all the various definitions of get_user, and all its substitutions of all
+    // its parameters.
+
+    struct macro_expr_to_get_user
+        : mlir::OpConversionPattern< macroni::MacroExpansionExpr > {
+        using parent_t = mlir::OpConversionPattern<macroni::MacroExpansionExpr>;
+        using parent_t::parent_t;
+
+        mlir::LogicalResult matchAndRewrite(
+            macroni::MacroExpansionExpr op,
+            macroni::MacroExpansionExpr::Adaptor adaptor,
+            mlir::ConversionPatternRewriter &rewriter) const override {
+            if (op.getMacroName() != "get_user") {
+                return mlir::failure();
+            }
+            if (op.getParameterNames().size() != 2) {
+                return mlir::failure();
+            }
+
+            std::optional<macroni::MacroParameterExpr> last_x = std::nullopt;
+            std::optional<macroni::MacroParameterExpr> last_ptr = std::nullopt;
+
+            op.getExpansion().getDefiningOp()->walk(
+                [&](mlir::Operation *op) {
+                    if (auto param_op = mlir::dyn_cast<macroni::MacroParameterExpr>(op)) {
+                        auto param_name = param_op.getParameterName();
+                        if (param_name == "x") {
+                            last_x.emplace(param_op);
+                        } else if (param_name == "ptr") {
+                            last_ptr.emplace(param_op);
+                        }
+                    }
+                }
+            );
+
+            auto last_x_clone =
+                rewriter.clone(*last_x->getExpansion().getDefiningOp());
+            auto last_ptr_clone = 
+                rewriter.clone(*last_ptr->getExpansion().getDefiningOp());
+
+            mlir::Type result_type = op.getType();
+            // mlir::Value x = rewriter.create<vast::hl::ConstantOp>(op.getLoc(), rewriter.getI32Type(), llvm::APSInt("42"));
+            mlir::Value x = last_x_clone->getResult(0);
+            // mlir::Value ptr = rewriter.create<vast::hl::ConstantOp>(op.getLoc(), rewriter.getI32Type(), llvm::APSInt("42"));
+            mlir::Value ptr = last_ptr_clone->getResult(0);
+
+            // Erase the original expansion
+            //////
+            rewriter.eraseOp(op.getExpansion().getDefiningOp());
+            //////
+            rewriter.replaceOpWithNewOp<macroni::GetUser>(op, result_type,
+                                                          x, ptr);
+            return mlir::success();
+        }
+    };
+
     struct MetaGenerator {
         MetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
             : ast(ast), mctx(mctx) {}
@@ -299,16 +357,42 @@ int main(int argc, char **argv) {
         ast.emplace(maybe_ast.TakeValue());
 
         mlir::DialectRegistry registry;
+
+        // Register the MLIR dialects we will be converting to
         registry.insert<
             vast::hl::HighLevelDialect,
-            macroni::macroni::MacroniDialect>();
+            macroni::macroni::MacroniDialect
+        >();
         mctx.emplace(registry);
         macroni::MetaGenerator meta(*ast, &*mctx);
         vast::cg::CodeGenBase<macroni::Visitor> codegen(&*mctx, meta);
         builder.emplace(&*mctx);
 
+        // Generate the MLIR code and freeze the result
         codegen.append_to_module(ast->UnderlyingAST().getTranslationUnitDecl());
-        auto mod = codegen.freeze();
+        mlir::OwningOpRef<mlir::ModuleOp> mod = codegen.freeze();
+
+        // TODO(bpappas): Add a command-line argument to convert special macros
+        // into special operations
+
+        // Register conversions
+        mlir::ConversionTarget trg(*mctx);
+        // TODO(bpappas): Apparently MLIR will only transform illegal
+        // operations? I will need to dynamically make MacroExpansionExprs legal
+        // only if they are not invocations of get_user. I will probably have to
+        // do something similar for get_user's arguments.
+        trg.addIllegalOp<macroni::macroni::MacroExpansionExpr>();
+        trg.markUnknownOpDynamicallyLegal([](auto) { return true; });
+        mlir::RewritePatternSet patterns(&*mctx);
+        patterns.add<macroni::macro_expr_to_get_user>(patterns.getContext());
+
+        // Apply the conversions. Cast the result to void to ignore no_discard
+        // errors
+        (void) mlir::applyPartialConversion(mod.get().getOperation(),
+                                            trg,
+                                            std::move(patterns));
+
+        // Print the result
         mlir::OpPrintingFlags flags;
         flags.enableDebugInfo(false, false);
         mod->print(llvm::outs(), flags);
