@@ -103,6 +103,12 @@ namespace macroni {
                 }
             );
 
+            // NOTE(bpappas): Here we simply copy the operations that the
+            // parameter substitutions expanded to. I don't think this will work
+            // if the parameters expanded to a nested expression, since that
+            // would translate to multiple operations. This is just a proof of
+            // concept.
+
             auto last_x_clone =
                 rewriter.clone(*last_x->getExpansion().getDefiningOp());
             auto last_ptr_clone = 
