@@ -75,7 +75,8 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "csignal": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "typeindex": "cpp"
     },
     "cSpell.words": [
         "Macroni",
