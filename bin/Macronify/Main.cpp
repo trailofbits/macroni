@@ -71,64 +71,64 @@ namespace macroni {
     // all the various definitions of get_user, and all its substitutions of all
     // its parameters.
 
-    struct macro_expr_to_get_user
-        : mlir::OpConversionPattern< macroni::MacroExpansionExpr > {
-        using parent_t = mlir::OpConversionPattern<macroni::MacroExpansionExpr>;
-        using parent_t::parent_t;
+    // struct macro_expr_to_get_user
+    //     : mlir::OpConversionPattern< macroni::MacroExpansionExpr > {
+    //     using parent_t = mlir::OpConversionPattern<macroni::MacroExpansionExpr>;
+    //     using parent_t::parent_t;
 
-        mlir::LogicalResult matchAndRewrite(
-            macroni::MacroExpansionExpr op,
-            macroni::MacroExpansionExpr::Adaptor adaptor,
-            mlir::ConversionPatternRewriter &rewriter) const override {
-            if (op.getMacroName() != "get_user") {
-                return mlir::failure();
-            }
-            if (op.getParameterNames().size() != 2) {
-                return mlir::failure();
-            }
+    //     mlir::LogicalResult matchAndRewrite(
+    //         macroni::MacroExpansionExpr op,
+    //         macroni::MacroExpansionExpr::Adaptor adaptor,
+    //         mlir::ConversionPatternRewriter &rewriter) const override {
+    //         if (op.getMacroName() != "get_user") {
+    //             return mlir::failure();
+    //         }
+    //         if (op.getParameterNames().size() != 2) {
+    //             return mlir::failure();
+    //         }
 
-            std::optional<macroni::MacroParameterExpr> last_x = std::nullopt;
-            std::optional<macroni::MacroParameterExpr> last_ptr = std::nullopt;
+    //         std::optional<macroni::MacroParameter> last_x = std::nullopt;
+    //         std::optional<macroni::MacroParameter> last_ptr = std::nullopt;
 
-            op.getExpansion().getDefiningOp()->walk(
-                [&](mlir::Operation *op) {
-                    if (auto param_op = mlir::dyn_cast<macroni::MacroParameterExpr>(op)) {
-                        auto param_name = param_op.getParameterName();
-                        if (param_name == "x") {
-                            last_x.emplace(param_op);
-                        } else if (param_name == "ptr") {
-                            last_ptr.emplace(param_op);
-                        }
-                    }
-                }
-            );
+    //         op.getExpansion().getDefiningOp()->walk(
+    //             [&](mlir::Operation *op) {
+    //                 if (auto param_op = mlir::dyn_cast<macroni::MacroParameter>(op)) {
+    //                     auto param_name = param_op.getParameterName();
+    //                     if (param_name == "x") {
+    //                         last_x.emplace(param_op);
+    //                     } else if (param_name == "ptr") {
+    //                         last_ptr.emplace(param_op);
+    //                     }
+    //                 }
+    //             }
+    //         );
 
-            // NOTE(bpappas): Here we simply copy the operations that the
-            // parameter substitutions expanded to. I don't think this will work
-            // if the parameters expanded to a nested expression, since that
-            // would translate to multiple operations. This is just a proof of
-            // concept.
+    //         // NOTE(bpappas): Here we simply copy the operations that the
+    //         // parameter substitutions expanded to. I don't think this will work
+    //         // if the parameters expanded to a nested expression, since that
+    //         // would translate to multiple operations. This is just a proof of
+    //         // concept.
 
-            auto last_x_clone =
-                rewriter.clone(*last_x->getExpansion().getDefiningOp());
-            auto last_ptr_clone = 
-                rewriter.clone(*last_ptr->getExpansion().getDefiningOp());
+    //         auto last_x_clone =
+    //             rewriter.clone(*last_x->getExpansion().getDefiningOp());
+    //         auto last_ptr_clone =
+    //             rewriter.clone(*last_ptr->getExpansion().getDefiningOp());
 
-            mlir::Type result_type = op.getType();
-            // mlir::Value x = rewriter.create<vast::hl::ConstantOp>(op.getLoc(), rewriter.getI32Type(), llvm::APSInt("42"));
-            mlir::Value x = last_x_clone->getResult(0);
-            // mlir::Value ptr = rewriter.create<vast::hl::ConstantOp>(op.getLoc(), rewriter.getI32Type(), llvm::APSInt("42"));
-            mlir::Value ptr = last_ptr_clone->getResult(0);
+    //         mlir::Type result_type = op.getType();
+    //         // mlir::Value x = rewriter.create<vast::hl::ConstantOp>(op.getLoc(), rewriter.getI32Type(), llvm::APSInt("42"));
+    //         mlir::Value x = last_x_clone->getResult(0);
+    //         // mlir::Value ptr = rewriter.create<vast::hl::ConstantOp>(op.getLoc(), rewriter.getI32Type(), llvm::APSInt("42"));
+    //         mlir::Value ptr = last_ptr_clone->getResult(0);
 
-            // Erase the original expansion
-            //////
-            rewriter.eraseOp(op.getExpansion().getDefiningOp());
-            //////
-            rewriter.replaceOpWithNewOp<macroni::GetUser>(op, result_type,
-                                                          x, ptr);
-            return mlir::success();
-        }
-    };
+    //         // Erase the original expansion
+    //         //////
+    //         rewriter.eraseOp(op.getExpansion().getDefiningOp());
+    //         //////
+    //         rewriter.replaceOpWithNewOp<macroni::GetUser>(op, result_type,
+    //                                                       x, ptr);
+    //         return mlir::success();
+    //     }
+    // };
 
     struct MetaGenerator {
         MetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
@@ -187,9 +187,7 @@ namespace macroni {
         using DeclVisitor::Visit;
         using TypeVisitor::Visit;
 
-        using HLScope = vast::cg::HighLevelScope;
-
-        std::set<pasta::Macro> visiting;
+        std::set<pasta::Macro> visited;
 
         mlir::Operation *Visit(const clang::Stmt *stmt) {
             if (clang::isa<clang::ImplicitValueInitExpr,
@@ -204,9 +202,13 @@ namespace macroni {
             auto macros = pasta_stmt.CoveringMacros();
             std::reverse(macros.begin(), macros.end());
             for (auto macro : macros) {
-
                 // Don't visit macros more than once
-                if (visiting.contains(macro)) {
+                if (visited.contains(macro)) {
+                    continue;
+                }
+
+                // Don't visit macro arguments, only their substitutions
+                if (auto arg = pasta::MacroArgument::From(macro)) {
                     continue;
                 }
 
@@ -220,11 +222,8 @@ namespace macroni {
                     }
                 }
 
-                // Don't visit macro arguments, only their substitutions
-                if (auto arg = pasta::MacroArgument::From(macro)) {
-                    continue;
-                }
-
+                // Mark this macro as visited so we don't visit it again
+                visited.insert(macro);
                 lowest_macro = macro;
                 break;
             }
@@ -234,7 +233,9 @@ namespace macroni {
                 return StmtVisitor::Visit(stmt);
             }
 
-            // First get the macro's name
+            // Get the macro's location, name, parameter names, and whether it
+            // is function-like
+            mlir::Location loc = StmtVisitor::meta_location(stmt);
             std::string_view macro_name = "<a nameless macro>";
             bool function_like = false;
             std::vector<llvm::StringRef> param_names;
@@ -254,55 +255,30 @@ namespace macroni {
                 }
             }
 
-            auto loc = StmtVisitor::meta_location(stmt);
-            vast::Operation *result = nullptr;
-            visiting.insert(*lowest_macro);
-            if (const auto expr = clang::dyn_cast<clang::Expr>(stmt)) {
-                auto expansion = StmtVisitor::visit(expr)->getResult(0);
-                if (lowest_macro->Kind() ==
-                    pasta::MacroKind::kParameterSubstitution) {
-                    result =
-                        StmtVisitor::template make<macroni::MacroParameterExpr>(
-                            loc,
-                            expansion,
-                            macro_name
-                        );
-                } else {
-                    result =
-                        StmtVisitor::template make<macroni::MacroExpansionExpr>(
-                            loc,
-                            expansion,
-                            macro_name,
-                            builder->getStrArrayAttr(
-                                llvm::ArrayRef(param_names)),
-                            function_like
-                        );
-                }
-            } else {
-                auto expansion_builder = StmtVisitor::make_region_builder(stmt);
-                if (lowest_macro->Kind() ==
-                    pasta::MacroKind::kParameterSubstitution) {
-                    result = StmtVisitor::template
-                        make < macroni::MacroParameterStmt >(
-                            loc,
-                            expansion_builder,
-                            builder->getStringAttr(llvm::Twine(macro_name))
-                        );
-                } else {
-                    result = StmtVisitor::template
-                        make< macroni::MacroExpansionStmt >(
-                            loc,
-                            expansion_builder,
-                            builder->getStringAttr(llvm::Twine(macro_name)),
-                            builder->getStrArrayAttr(
-                                llvm::ArrayRef(param_names)),
-                            builder->getBoolAttr(function_like)
-                        );
-                }
-            }
-            visiting.erase(*lowest_macro);
+            // We call `make_maybe_value_yield_region` here because a macro may
+            // not expand to an expression
+            auto [region, return_type] =
+                StmtVisitor::make_maybe_value_yield_region(stmt);
 
-            return result;
+            // Check if the macro is an expansion or a parameter, and return the
+            // appropriate operation
+            if (lowest_macro->Kind() == pasta::MacroKind::kExpansion) {
+                return StmtVisitor::template make<macroni::MacroExpansion>(
+                    loc,
+                    builder->getStringAttr(llvm::Twine(macro_name)),
+                    builder->getStrArrayAttr(llvm::ArrayRef(param_names)),
+                    builder->getBoolAttr(function_like),
+                    return_type,
+                    std::move(region)
+                );
+            } else {
+                return StmtVisitor::template make<macroni::MacroParameter>(
+                    loc,
+                    builder->getStringAttr(llvm::Twine(macro_name)),
+                    return_type,
+                    std::move(region)
+                );
+            }
         }
     };
 
@@ -381,26 +357,26 @@ int main(int argc, char **argv) {
         // TODO(bpappas): Add a command-line argument to convert special macros
         // into special operations
 
-        // Register conversions
-        mlir::ConversionTarget trg(*mctx);
-        // TODO(bpappas): Apparently MLIR will only transform illegal
-        // operations? I will need to dynamically make MacroExpansionExprs legal
-        // only if they are not invocations of get_user. I will probably have to
-        // do something similar for get_user's arguments.
-        trg.addIllegalOp<macroni::macroni::MacroExpansionExpr>();
-        trg.markUnknownOpDynamicallyLegal([](auto) { return true; });
-        mlir::RewritePatternSet patterns(&*mctx);
-        patterns.add<macroni::macro_expr_to_get_user>(patterns.getContext());
+        // // Register conversions
+        // mlir::ConversionTarget trg(*mctx);
+        // // TODO(bpappas): Apparently MLIR will only transform illegal
+        // // operations? I will need to dynamically make MacroExpansionExprs legal
+        // // only if they are not invocations of get_user. I will probably have to
+        // // do something similar for get_user's arguments.
+        // trg.addIllegalOp<macroni::macroni::MacroExpansionExpr>();
+        // trg.markUnknownOpDynamicallyLegal([](auto) { return true; });
+        // mlir::RewritePatternSet patterns(&*mctx);
+        // patterns.add<macroni::macro_expr_to_get_user>(patterns.getContext());
 
-        // Apply the conversions. Cast the result to void to ignore no_discard
-        // errors
-        (void) mlir::applyPartialConversion(mod.get().getOperation(),
-                                            trg,
-                                            std::move(patterns));
+        // // Apply the conversions. Cast the result to void to ignore no_discard
+        // // errors
+        // (void) mlir::applyPartialConversion(mod.get().getOperation(),
+        //                                     trg,
+        //                                     std::move(patterns));
 
         // Print the result
         mlir::OpPrintingFlags flags;
-        flags.enableDebugInfo(false, false);
+        flags.enableDebugInfo(false, true);
         mod->print(llvm::outs(), flags);
 
         return EXIT_SUCCESS;

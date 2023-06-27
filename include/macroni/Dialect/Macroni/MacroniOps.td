@@ -6,80 +6,55 @@
 include "mlir/IR/BuiltinTypes.td"
 include "mlir/IR/OpBase.td"
 
-/* Expression macros */
+/* Expansion and parameter expansions */
 
-def MacroExpansionExpr :
-  Macroni_Op< "expansion.expr", [SameOperandsAndResultType] >
-  , Arguments<(ins
-    AnyType:$expansion,
-    StrAttr:$macroName,
-    ArrayAttr:$parameterNames,
-    DefaultValuedAttr<BoolAttr, "false">:$functionLike
-  )>
-  , Results<(outs AnyType:$result)> {
-  let summary = "Macro expansion to an expression";
-  let description = "A macro that expands to an expression";
-  let assemblyFormat = "custom<MacroParameters>($macroName, $functionLike, $parameterNames) attr-dict $expansion `->` type($result)";
-}
-
-def MacroParameterExpr :
-  Macroni_Op< "parameter.expr", [SameOperandsAndResultType] >
-  , Arguments<(ins
-    AnyType:$expansion,
-    StrAttr:$parameterName
-  )>
-  , Results<(outs AnyType:$result)> {
-  let summary = "Macro parameter expansion to an expression";
-  let description = "A macro parameter that expands to an expression";
-  let assemblyFormat = "$parameterName attr-dict $expansion `->` type($result)";
-}
-
-// TODO: Add operations for stringifications token-pastings? We will only need
-// these if we add operations for non-aligned macro expansions
-
-/* Statement macros */
-
-def MacroExpansionStmt :
-  Macroni_Op< "expansion.stmt", [NoTerminator] >
+def MacroExpansion :
+  Macroni_Op< "expansion", [SingleBlock, NoTerminator] >
   , Arguments<(ins
     StrAttr:$macroName,
     ArrayAttr:$parameterNames,
     DefaultValuedAttr<BoolAttr, "false">:$functionLike
   )>
-{
-  let summary = "Macro expansion to a non-expression statement";
-  let description = "A macro that expands to a non-expression statement";
+  , Results<(outs Optional<AnyType>:$result)> {
+  let summary = "A macro expansion";
+  let description = "A macro expansion which may result in a a value";
   let regions = (region SizedRegion<1>:$expansion);
   let skipDefaultBuilders = 1;
   let builders = [
     OpBuilder<(ins
-      "std::optional<llvm::function_ref< void(mlir::OpBuilder &, mlir::Location) >>":$expansionBuilder,
       "mlir::StringAttr":$macroName,
       "mlir::ArrayAttr":$parameterNames,
-      "mlir::BoolAttr":$functionLike
+      "mlir::BoolAttr":$functionLike,
+      "mlir::Type":$rty,
+      "std::unique_ptr< mlir::Region > &&":$region
     )>
   ];
-  let assemblyFormat = "custom<MacroParameters>($macroName, $functionLike, $parameterNames) $expansion attr-dict";
+  let assemblyFormat = [{
+    custom<MacroParameters>($macroName, $functionLike, $parameterNames)
+    attr-dict `:` type($result) $expansion
+  }];
 }
 
-def MacroParameterStmt :
-  Macroni_Op< "parameter.stmt", [NoTerminator] >
-  , Arguments<(ins
-    StrAttr:$parameterName
-  )>
-{
-  let summary = "Macro parameter expansion to a non-expression statement";
-  let description = "A macro parameter that expands to a non-expression statement";
+def MacroParameter :
+  Macroni_Op< "parameter", [SingleBlock, NoTerminator] >
+  , Arguments<(ins StrAttr:$parameterName )>
+  , Results<(outs Optional<AnyType>:$result)> {
+  let summary = "A macro parameter substitution";
+  let description = [{
+    A macro parameter substitution which may result in a a value
+  }];
   let regions = (region SizedRegion<1>:$expansion);
   let skipDefaultBuilders = 1;
   let builders = [
     OpBuilder<(ins
-      "std::optional<llvm::function_ref< void(mlir::OpBuilder &, mlir::Location) >>":$expansionBuilder,
-      "mlir::StringAttr":$parameterName
+      "mlir::StringAttr":$parameterName,
+      "mlir::Type":$rty,
+      "std::unique_ptr< mlir::Region > &&":$region
     )>
   ];
-  let assemblyFormat = "$parameterName $expansion attr-dict";
+  let assemblyFormat = "$parameterName attr-dict `:` type($result) $expansion";
 }
+
 
 /* Special macros */
 

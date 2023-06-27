@@ -15,39 +15,39 @@
 
 namespace macroni::macroni {
 
-    void MacroExpansionStmt::build(
+    void MacroExpansion::build(
         mlir::OpBuilder &odsBuilder,
         mlir::OperationState &odsState,
-        std::optional<llvm::function_ref<void(mlir::OpBuilder &,
-                                              mlir::Location) >>
-        expansionBuilder,
         mlir::StringAttr macroName,
         mlir::ArrayAttr parameterNames,
-        mlir::BoolAttr functionLike) {
+        mlir::BoolAttr functionLike,
+        mlir::Type rty,
+        std::unique_ptr<mlir::Region> &&region
+    ) {
         mlir::OpBuilder::InsertionGuard guard(odsBuilder);
+
         odsState.addAttribute("macroName", macroName);
         odsState.addAttribute("parameterNames", parameterNames);
         odsState.addAttribute("functionLike", functionLike);
-        auto reg = odsState.addRegion();
-        if (expansionBuilder.has_value()) {
-            odsBuilder.createBlock(reg);
-            expansionBuilder.value()(odsBuilder, odsState.location);
+        odsState.addRegion(std::move(region));
+        if (rty) {
+            odsState.addTypes(rty);
         }
     }
 
-    void MacroParameterStmt::build(
+    void MacroParameter::build(
         mlir::OpBuilder &odsBuilder,
         mlir::OperationState &odsState,
-        std::optional<llvm::function_ref<void(mlir::OpBuilder &,
-                                              mlir::Location) >>
-        expansionBuilder,
-        mlir::StringAttr parameterName) {
+        mlir::StringAttr parameterName,
+        mlir::Type rty,
+        std::unique_ptr<mlir::Region> &&region
+    ) {
         mlir::OpBuilder::InsertionGuard guard(odsBuilder);
+
         odsState.addAttribute("parameterName", parameterName);
-        auto reg = odsState.addRegion();
-        if (expansionBuilder.has_value()) {
-            odsBuilder.createBlock(reg);
-            expansionBuilder.value()(odsBuilder, odsState.location);
+        odsState.addRegion(std::move(region));
+        if (rty) {
+            odsState.addTypes(rty);
         }
     }
 
@@ -98,13 +98,14 @@ namespace macroni::macroni {
         return mlir::success();
     }
 
-    void printMacroParametersCommon(
+    void printMacroParameters(
         mlir::OpAsmPrinter &printer,
+        MacroExpansion op,
         mlir::StringAttr macroName,
         mlir::BoolAttr functionLike,
         mlir::ArrayAttr parameterNames) {
-        llvm::raw_ostream &os = printer.getStream();
 
+        llvm::raw_ostream &os = printer.getStream();
         os << '"' << macroName.getValue();
         if (functionLike.getValue()) {
             int i = 0;
@@ -121,29 +122,6 @@ namespace macroni::macroni {
         }
         os << '"';
     }
-
-    void printMacroParameters(
-        mlir::OpAsmPrinter &printer,
-        MacroExpansionExpr op,
-        mlir::StringAttr macroName,
-        mlir::BoolAttr functionLike,
-        mlir::ArrayAttr parameterNames) {
-        printMacroParametersCommon(printer, macroName,
-                                   functionLike, parameterNames);
-    }
-
-
-
-    void printMacroParameters(
-        mlir::OpAsmPrinter &printer,
-        MacroExpansionStmt op,
-        mlir::StringAttr macroName,
-        mlir::BoolAttr functionLike,
-        mlir::ArrayAttr parameterNames) {
-        printMacroParametersCommon(printer, macroName,
-                                   functionLike, parameterNames);
-    }
-
 }
 
 #define GET_OP_CLASSES
