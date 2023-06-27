@@ -8,12 +8,12 @@
 
 // After
 %0 = hl.var "x" : !hl.lvalue<!hl.int> = {
-  %1 = hl.expr {MacroKind = "kExpansion", MacroName = "ADD", RawMacroID = 94217236767688 : ui64} : !hl.int {
-    %2 = hl.expr {MacroKind = "kParameterSubstitution", ParameterIndex = 0 : ui64, ParameterName = "X", ParentRawMacroID = 94217236767688 : ui64, RawMacroID = 94217236582528 : ui64} : !hl.int {
+  %1 = macroni.expansion "ADD(X, Y)" : !hl.int {
+    %2 = macroni.parameter "X" : !hl.int {
       %5 = hl.const #hl.integer<1> : !hl.int
       hl.value.yield %5 : !hl.int
     }
-    %3 = hl.expr {MacroKind = "kParameterSubstitution", ParameterIndex = 1 : ui64, ParameterName = "Y", ParentRawMacroID = 94217236767688 : ui64, RawMacroID = 94217236582704 : ui64} : !hl.int {
+    %3 = macroni.parameter "Y" : !hl.int {
       %5 = hl.const #hl.integer<2> : !hl.int
       hl.value.yield %5 : !hl.int
     }

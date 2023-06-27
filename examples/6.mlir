@@ -12,14 +12,14 @@
 
 // After
 %0 = hl.var "x" : !hl.lvalue<!hl.int> = {
-  %1 = hl.expr {MacroKind = "kExpansion", MacroName = "ADD", RawMacroID = 94145659118536 : ui64} : !hl.int {
-    %2 = hl.expr {MacroKind = "kParameterSubstitution", ParameterIndex = 0 : ui64, ParameterName = "X", ParentRawMacroID = 94145659118536 : ui64, RawMacroID = 94145659957648 : ui64} : !hl.int {
-      %5 = hl.expr {MacroKind = "kExpansion", MacroName = "MUL", RawMacroID = 94145659951816 : ui64} : !hl.int {
-        %6 = hl.expr {MacroKind = "kParameterSubstitution", ParameterIndex = 0 : ui64, ParameterName = "A", ParentRawMacroID = 94145659951816 : ui64, RawMacroID = 94145658933376 : ui64} : !hl.int {
+  %1 = macroni.expansion "ADD(X, Y)" : !hl.int {
+    %2 = macroni.parameter "X" : !hl.int {
+      %5 = macroni.expansion "MUL(A, B)" : !hl.int {
+        %6 = macroni.parameter "A" : !hl.int {
           %9 = hl.const #hl.integer<1> : !hl.int
           hl.value.yield %9 : !hl.int
         }
-        %7 = hl.expr {MacroKind = "kParameterSubstitution", ParameterIndex = 1 : ui64, ParameterName = "B", ParentRawMacroID = 94145659951816 : ui64, RawMacroID = 94145658933552 : ui64} : !hl.int {
+        %7 = macroni.parameter "B" : !hl.int {
           %9 = hl.const #hl.integer<2> : !hl.int
           hl.value.yield %9 : !hl.int
         }
@@ -28,13 +28,13 @@
       }
       hl.value.yield %5 : !hl.int
     }
-    %3 = hl.expr {MacroKind = "kParameterSubstitution", ParameterIndex = 1 : ui64, ParameterName = "Y", ParentRawMacroID = 94145659118536 : ui64, RawMacroID = 94145659957824 : ui64} : !hl.int {
-      %5 = hl.expr {MacroKind = "kExpansion", MacroName = "MUL", RawMacroID = 94145659953432 : ui64} : !hl.int {
-        %6 = hl.expr {MacroKind = "kParameterSubstitution", ParameterIndex = 0 : ui64, ParameterName = "A", ParentRawMacroID = 94145659953432 : ui64, RawMacroID = 94145659113152 : ui64} : !hl.int {
+    %3 = macroni.parameter "Y" : !hl.int {
+      %5 = macroni.expansion "MUL(A, B)" : !hl.int {
+        %6 = macroni.parameter "A" : !hl.int {
           %9 = hl.const #hl.integer<3> : !hl.int
           hl.value.yield %9 : !hl.int
         }
-        %7 = hl.expr {MacroKind = "kParameterSubstitution", ParameterIndex = 1 : ui64, ParameterName = "B", ParentRawMacroID = 94145659953432 : ui64, RawMacroID = 94145659113328 : ui64} : !hl.int {
+        %7 = macroni.parameter "B" : !hl.int {
           %9 = hl.const #hl.integer<4> : !hl.int
           hl.value.yield %9 : !hl.int
         }
