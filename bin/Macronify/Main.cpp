@@ -80,7 +80,7 @@ namespace macroni {
             macroni::MacroExpansion op,
             macroni::MacroExpansion::Adaptor adaptor,
             mlir::ConversionPatternRewriter &rewriter) const override {
-            // TODO(bpp): 
+            // TODO(bpp): Add more checks here?
             if (op.getMacroName() != "get_user") {
                 return mlir::failure();
             }
@@ -92,7 +92,7 @@ namespace macroni {
             }
 
             // Find the last-parsed expansions of the x and ptr parameters.
-            // NOTE(bpappas): This assumes that all expansions of these
+            // NOTE(bpp): This assumes that all expansions of these
             // parameters will parse the same.
 
             std::optional<macroni::MacroParameter> last_x = std::nullopt;
@@ -133,35 +133,43 @@ namespace macroni {
         }
     };
 
-    struct MetaGenerator {
-        MetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
+    struct MacroniMetaGenerator {
+        MacroniMetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
             : ast(ast), mctx(mctx) {}
 
         vast::cg::DefaultMeta get(const clang::FullSourceLoc &loc) const {
-            return { mlir::FileLineColLoc::get(mctx, "<input>", 0, 0) };
+            if (!loc.isValid()) {
+                return { mlir::FileLineColLoc::get(mctx, "<invalid>", 0, 0) };
+            }
+            auto file_entry = loc.getFileEntry();
+            auto file = file_entry ? file_entry->getName() : "unknown";
+            auto line = loc.getLineNumber();
+            auto col = loc.getColumnNumber();
+            return { mlir::FileLineColLoc::get(mctx, file, line, col) };
         }
 
         vast::cg::DefaultMeta get(const clang::SourceLocation &loc) const {
-            return get(clang::FullSourceLoc());
+            clang::SourceManager &sm = ast.UnderlyingAST().getSourceManager();
+            return get(clang::FullSourceLoc(loc, sm));
         }
 
         vast::cg::DefaultMeta get(const clang::Decl *decl) const {
-            return get(clang::SourceLocation());
+            return get(decl->getLocation());
         }
 
         vast::cg::DefaultMeta get(const clang::Stmt *stmt) const {
             // TODO: use SourceRange
-            return get(clang::SourceLocation());
+            return get(stmt->getBeginLoc());
         }
 
         vast::cg::DefaultMeta get(const clang::Expr *expr) const {
             // TODO: use SourceRange
-            return get(clang::SourceLocation());
+            return get(expr->getExprLoc());
         }
 
         vast::cg::DefaultMeta get(const clang::TypeLoc &loc) const {
             // TODO: use SourceRange
-            return get(clang::SourceLocation());
+            return get(loc.getBeginLoc());
         }
 
         vast::cg::DefaultMeta get(const clang::Type *type) const {
@@ -170,6 +178,12 @@ namespace macroni {
 
         vast::cg::DefaultMeta get(clang::QualType type) const {
             return get(clang::TypeLoc(type, nullptr));
+        }
+
+        vast::cg::DefaultMeta get(pasta::MacroSubstitution &sub) const {
+            // TODO(bpp): Define this to something that makes sense. Right now
+            // this just returns an invalid source location.
+            return get(clang::SourceLocation());
         }
 
         const pasta::AST &ast;
@@ -232,7 +246,7 @@ namespace macroni {
 
             // Get the substitution's location, name, parameter names, and
             // whether it is function-like
-            mlir::Location loc = StmtVisitor::meta_location(stmt);
+            mlir::Location loc = StmtVisitor::meta_location(*lowest_sub);
             std::string_view macro_name = "<a nameless macro>";
             bool function_like = false;
             std::vector<llvm::StringRef> param_names;
@@ -285,7 +299,8 @@ namespace macroni {
         vast::cg::DefaultFallBackVisitorMixin
     >;
 
-    using Visitor = vast::cg::CodeGenVisitor<VisitorConfig, MetaGenerator>;
+    using Visitor =
+        vast::cg::CodeGenVisitor<VisitorConfig, MacroniMetaGenerator>;
 
 } // namespace macroni
 
@@ -343,7 +358,7 @@ int main(int argc, char **argv) {
             macroni::macroni::MacroniDialect
         >();
         mctx.emplace(registry);
-        macroni::MetaGenerator meta(*ast, &*mctx);
+        macroni::MacroniMetaGenerator meta(*ast, &*mctx);
         vast::cg::CodeGenBase<macroni::Visitor> codegen(&*mctx, meta);
         builder.emplace(&*mctx);
 
@@ -351,25 +366,23 @@ int main(int argc, char **argv) {
         codegen.append_to_module(ast->UnderlyingAST().getTranslationUnitDecl());
         mlir::OwningOpRef<mlir::ModuleOp> mod = codegen.freeze();
 
-        // TODO(bpappas): Add a command-line argument to convert special macros
-        // into special operations
+        // TODO(bpp): Add a command-line argument to convert special macros into
+        // special operations
 
         // Register conversions
         mlir::ConversionTarget trg(*mctx);
-        // TODO(bpappas): Apparently MLIR will only transform illegal
-        // operations? I will need to dynamically make MacroExpansions legal
-        // only if they are not invocations of get_user. I will probably have to
-        // do something similar for get_user's arguments.
+        // TODO(bpp): Apparently MLIR will only transform illegal operations? I
+        // will need to dynamically make MacroExpansions legal only if they are
+        // not invocations of get_user. I will probably have to do something
+        // similar for get_user's arguments.
         trg.addIllegalOp<macroni::macroni::MacroExpansion>();
         trg.markUnknownOpDynamicallyLegal([](auto) { return true; });
         mlir::RewritePatternSet patterns(&*mctx);
         patterns.add<macroni::macro_expansion_to_get_user>(patterns.getContext());
-
+        mlir::Operation *mod_op = mod.get().getOperation();
         // Apply the conversions. Cast the result to void to ignore no_discard
         // errors
-        (void) mlir::applyPartialConversion(mod.get().getOperation(),
-                                            trg,
-                                            std::move(patterns));
+        (void) mlir::applyPartialConversion(mod_op, trg, std::move(patterns));
 
         // Print the result
         mlir::OpPrintingFlags flags;
