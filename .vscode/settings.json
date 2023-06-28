@@ -1,4 +1,29 @@
 {
+    "cmake.configureEnvironment": {
+        "VCPKG_DIR": "/home/bpappas/trail-of-bits/vcpkg_ubuntu-22.04_llvm-16-pasta_amd64",
+        "MACRONI_INSTALL_DIR": "/home/bpappas/macroni-install",
+        "LLVM_LIT": "/home/bpappas/.local/bin/lit"
+    },
+    "cmake.additionalCompilerSearchDirs": [
+        "/home/bpappas/trail-of-bits/vcpkg_ubuntu-22.04_llvm-16-pasta_amd64/installed/x64-linux-rel/bin"
+    ],
+    "cmake.configureSettings": {
+        "CMAKE_PREFIX_PATH": "${env.VCPKG_DIR}/installed/x64-linux-rel",
+        "CMAKE_TOOLCHAIN_FILE": "${env.VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake",
+        "LLVM_ENABLE_RTTI": "ON",
+        "LLVM_SYMBOLIZER_PATH": "${env.VCPKG_DIR}/installed/x64-linux-rel/bin/llvm-symbolizer",
+        "CMAKE_INSTALL_PREFIX": "${env.MACRONI_INSTALL_DIR}",
+        "LLVM_EXTERNAL_LIT": "${env.LLVM_LIT}",
+        "VCPKG_TARGET_TRIPLET": "x64-linux",
+        "VCPKG_HOST_TRIPLET": "x64-linux-rel",
+        "CMAKE_C_COMPILER": "${env.VCPKG_DIR}/installed/x64-linux-rel/bin/clang",
+        "CMAKE_CXX_COMPILER": "${env.VCPKG_DIR}/installed/x64-linux-rel/bin/clang++"
+    },
+    "cmake.parallelJobs": 8,
+    "cSpell.words": [
+        "Macroni",
+        "MLIR"
+    ],
     "files.associations": {
         "*.inc": "cpp",
         "mutex": "cpp",
@@ -78,25 +103,4 @@
         "future": "cpp",
         "typeindex": "cpp"
     },
-    "cSpell.words": [
-        "Macroni",
-        "MLIR"
-    ],
-    "cmake.configureEnvironment": {
-        "VCPKG_DIR": "/home/bpappas/trail-of-bits/vcpkg_ubuntu-22.04_llvm-16-pasta_amd64"
-    },
-    "cmake.additionalCompilerSearchDirs": [
-        "/home/bpappas/trail-of-bits/vcpkg_ubuntu-v2-22.04_llvm-16_amd64/installed/x64-linux-rel/bin"
-    ],
-    "cmake.configureSettings": {
-        "LLVM_ENABLE_RTTI": "ON",
-        "LLVM_SYMBOLIZER_PATH": "${env.VCPKG_DIR}/installed/x64-linux-rel/bin/llvm-symbolizer",
-        "CMAKE_INSTALL_PREFIX": "/home/bpappas/macroni-install",
-        "LLVM_EXTERNAL_LIT": "/home/bpappas/.local/bin/lit",
-        "VCPKG_TARGET_TRIPLET": "x64-linux",
-        "VCPKG_HOST_TRIPLET": "x64-linux-rel",
-        "CMAKE_TOOLCHAIN_FILE": "${env.VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_PREFIX_PATH": "${env.VCPKG_DIR}/installed/x64-linux-rel"
-    },
-    "cmake.parallelJobs": 8
 }
