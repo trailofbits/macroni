@@ -369,13 +369,20 @@ int main(int argc, char **argv) {
         // special operations
 
         // Register conversions
+
+        // Mark expansions of get_user() as illegal
         mlir::ConversionTarget trg(*mctx);
-        // TODO(bpp): Apparently MLIR will only transform illegal operations? I
-        // will need to dynamically make MacroExpansions legal only if they are
-        // not invocations of get_user. I will probably have to do something
-        // similar for get_user's arguments.
-        trg.addIllegalOp<macroni::macroni::MacroExpansion>();
-        trg.markUnknownOpDynamicallyLegal([](auto) { return true; });
+        trg.markUnknownOpDynamicallyLegal(
+            [](mlir::Operation *op) {
+                if (auto exp =
+                    mlir::dyn_cast<macroni::macroni::MacroExpansion>(op)) {
+                    return !(exp.getMacroName() == "get_user" &&
+                             !exp.getResultTypes().empty() &&
+                             exp.getParameterNames().size() == 2);
+                } else {
+                    return true;
+                }
+            });
         mlir::RewritePatternSet patterns(&*mctx);
         patterns.add<macroni::macro_expansion_to_get_user>(patterns.getContext());
         mlir::Operation *mod_op = mod.get().getOperation();
