@@ -217,7 +217,6 @@ namespace macroni {
             const auto pasta_stmt = ast->Adopt(stmt);
             std::optional<pasta::MacroSubstitution> lowest_sub = std::nullopt;
             auto subs = pasta_stmt.AlignedSubstitutions();
-            std::reverse(subs.begin(), subs.end());
             for (auto sub : subs) {
                 // Don't visit macros more than once
                 if (visited.contains(sub)) {
