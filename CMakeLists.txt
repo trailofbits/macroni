@@ -231,11 +231,11 @@ target_include_directories(macroni
 )
 
 # test options
-option(ENABLE_TESTING "Enable Test Builds" ON)
+option(MACRONI_ENABLE_TESTING "Enable Test Builds" ON)
 
-if (ENABLE_TESTING)
+if (MACRONI_ENABLE_TESTING)
   enable_testing()
-  # add_subdirectory(test)
+  add_subdirectory(test)
 endif()
 
 #
