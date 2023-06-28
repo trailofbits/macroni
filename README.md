@@ -82,7 +82,14 @@ ${MACRONIFY} -xc ${INPUT}
 
 ## Testing
 
-<!-- TODO -->
+Macroni uses [llvm-lit](https://llvm.org/docs/CommandGuide/lit.html) to automate
+testing. To set up Macroni's test suite, configure Macroni as normal, with the
+additional option `-DMACRONI_ENABLE_TESTING=ON`. Then run the following command
+to run Macroni's test suite:
+
+```bash
+cmake --build ${MACRONI_BUILD_DIR} --config Debug --target check-macroni -j 8 --
+```
 
 ## License
 Macroni is licensed according to the Apache 2.0 license. Macroni links against
