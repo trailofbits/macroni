@@ -65,70 +65,73 @@ std::optional<mlir::Builder> builder = std::nullopt;
 
 namespace macroni {
 
-    // NOTE(bpp): I think it would be a good idea to also transform
-    // substitutions of get_user's parameters into special operations as well,
-    // to even more information about the macro. This would let us match against
-    // all the various definitions of get_user, and all its substitutions of all
-    // its parameters.
+    // NOTE(bpp): It may be a good idea to also transform substitutions of
+    // get_user()'s parameters into special operations as well, to get even
+    // more information about the macro. This would let us match against all the
+    // various definitions of get_user, and all its substitutions of all its
+    // parameters.
 
-    // struct macro_expr_to_get_user
-    //     : mlir::OpConversionPattern< macroni::MacroExpansionExpr > {
-    //     using parent_t = mlir::OpConversionPattern<macroni::MacroExpansionExpr>;
-    //     using parent_t::parent_t;
+    struct macro_expansion_to_get_user
+        : mlir::OpConversionPattern< macroni::MacroExpansion > {
+        using parent_t = mlir::OpConversionPattern<macroni::MacroExpansion>;
+        using parent_t::parent_t;
 
-    //     mlir::LogicalResult matchAndRewrite(
-    //         macroni::MacroExpansionExpr op,
-    //         macroni::MacroExpansionExpr::Adaptor adaptor,
-    //         mlir::ConversionPatternRewriter &rewriter) const override {
-    //         if (op.getMacroName() != "get_user") {
-    //             return mlir::failure();
-    //         }
-    //         if (op.getParameterNames().size() != 2) {
-    //             return mlir::failure();
-    //         }
+        mlir::LogicalResult matchAndRewrite(
+            macroni::MacroExpansion op,
+            macroni::MacroExpansion::Adaptor adaptor,
+            mlir::ConversionPatternRewriter &rewriter) const override {
+            // TODO(bpp): 
+            if (op.getMacroName() != "get_user") {
+                return mlir::failure();
+            }
+            if (op.getResultTypes().empty()) {
+                return mlir::failure();
+            }
+            if (op.getParameterNames().size() != 2) {
+                return mlir::failure();
+            }
 
-    //         std::optional<macroni::MacroParameter> last_x = std::nullopt;
-    //         std::optional<macroni::MacroParameter> last_ptr = std::nullopt;
+            // Find the last-parsed expansions of the x and ptr parameters.
+            // NOTE(bpappas): This assumes that all expansions of these
+            // parameters will parse the same.
 
-    //         op.getExpansion().getDefiningOp()->walk(
-    //             [&](mlir::Operation *op) {
-    //                 if (auto param_op = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-    //                     auto param_name = param_op.getParameterName();
-    //                     if (param_name == "x") {
-    //                         last_x.emplace(param_op);
-    //                     } else if (param_name == "ptr") {
-    //                         last_ptr.emplace(param_op);
-    //                     }
-    //                 }
-    //             }
-    //         );
+            std::optional<macroni::MacroParameter> last_x = std::nullopt;
+            std::optional<macroni::MacroParameter> last_ptr = std::nullopt;
 
-    //         // NOTE(bpappas): Here we simply copy the operations that the
-    //         // parameter substitutions expanded to. I don't think this will work
-    //         // if the parameters expanded to a nested expression, since that
-    //         // would translate to multiple operations. This is just a proof of
-    //         // concept.
+            op.getExpansion().walk(
+                [&](mlir::Operation *op) {
+                    if (auto param_op = mlir::dyn_cast<macroni::MacroParameter>(op)) {
+                        auto param_name = param_op.getParameterName();
+                        if (param_name == "x") {
+                            last_x.emplace(param_op);
+                        } else if (param_name == "ptr") {
+                            last_ptr.emplace(param_op);
+                        }
+                    }
+                }
+            );
 
-    //         auto last_x_clone =
-    //             rewriter.clone(*last_x->getExpansion().getDefiningOp());
-    //         auto last_ptr_clone =
-    //             rewriter.clone(*last_ptr->getExpansion().getDefiningOp());
+            // Check that we actually found a parameter substitution of the x
+            // and ptr parameters
+            if (!(last_x && last_ptr)) {
+                return mlir::failure();
+            }
 
-    //         mlir::Type result_type = op.getType();
-    //         // mlir::Value x = rewriter.create<vast::hl::ConstantOp>(op.getLoc(), rewriter.getI32Type(), llvm::APSInt("42"));
-    //         mlir::Value x = last_x_clone->getResult(0);
-    //         // mlir::Value ptr = rewriter.create<vast::hl::ConstantOp>(op.getLoc(), rewriter.getI32Type(), llvm::APSInt("42"));
-    //         mlir::Value ptr = last_ptr_clone->getResult(0);
+            // Clone the arguments passed to this invocation of get_user() and
+            // lift them out of the expansion.
+            auto last_x_clone = rewriter.clone(*last_x->getOperation());
+            auto last_ptr_clone = rewriter.clone(*last_ptr->getOperation());
 
-    //         // Erase the original expansion
-    //         //////
-    //         rewriter.eraseOp(op.getExpansion().getDefiningOp());
-    //         //////
-    //         rewriter.replaceOpWithNewOp<macroni::GetUser>(op, result_type,
-    //                                                       x, ptr);
-    //         return mlir::success();
-    //     }
-    // };
+            // Create the replacement operation.
+            mlir::Type result_type = op.getType(0);
+            mlir::Value x = last_x_clone->getResult(0);
+            mlir::Value ptr = last_ptr_clone->getResult(0);
+            rewriter.replaceOpWithNewOp<macroni::GetUser>(op, result_type,
+                                                          x, ptr);
+
+            return mlir::success();
+        }
+    };
 
     struct MetaGenerator {
         MetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
@@ -187,7 +190,7 @@ namespace macroni {
         using DeclVisitor::Visit;
         using TypeVisitor::Visit;
 
-        std::set<pasta::Macro> visited;
+        std::set<pasta::MacroSubstitution> visited;
 
         mlir::Operation *Visit(const clang::Stmt *stmt) {
             if (clang::isa<clang::ImplicitValueInitExpr,
@@ -198,23 +201,17 @@ namespace macroni {
 
             // Find the lowest macro that covers this statement, if any
             const auto pasta_stmt = ast->Adopt(stmt);
-            std::optional<pasta::Macro> lowest_macro = std::nullopt;
-            auto macros = pasta_stmt.CoveringMacros();
-            std::reverse(macros.begin(), macros.end());
-            for (auto macro : macros) {
+            std::optional<pasta::MacroSubstitution> lowest_sub = std::nullopt;
+            auto subs = pasta_stmt.AlignedSubstitutions();
+            std::reverse(subs.begin(), subs.end());
+            for (auto sub : subs) {
                 // Don't visit macros more than once
-                if (visited.contains(macro)) {
+                if (visited.contains(sub)) {
                     continue;
                 }
 
-                // Don't visit macro arguments, only their substitutions
-                if (auto arg = pasta::MacroArgument::From(macro)) {
-                    continue;
-                }
-
-                // Only visit pre-expanded forms of function-like macro
-                // expansions.
-                if (auto exp = pasta::MacroExpansion::From(macro)) {
+                // Only visit pre-expanded forms of function-like expansions.
+                if (auto exp = pasta::MacroExpansion::From(sub)) {
                     bool is_pre_expansion = (exp->Arguments().empty() ||
                                              exp->IsArgumentPreExpansion());
                     if (!is_pre_expansion) {
@@ -222,24 +219,24 @@ namespace macroni {
                     }
                 }
 
-                // Mark this macro as visited so we don't visit it again
-                visited.insert(macro);
-                lowest_macro = macro;
+                // Mark this substitution as visited so we don't visit it again.
+                visited.insert(sub);
+                lowest_sub = sub;
                 break;
             }
 
-            if (!lowest_macro.has_value()) {
-                // If no macro covers this statement, visit it normally.
+            if (!lowest_sub) {
+                // If no substitution covers this statement, visit it normally.
                 return StmtVisitor::Visit(stmt);
             }
 
-            // Get the macro's location, name, parameter names, and whether it
-            // is function-like
+            // Get the substitution's location, name, parameter names, and
+            // whether it is function-like
             mlir::Location loc = StmtVisitor::meta_location(stmt);
             std::string_view macro_name = "<a nameless macro>";
             bool function_like = false;
             std::vector<llvm::StringRef> param_names;
-            if (auto sub = pasta::MacroSubstitution::From(*lowest_macro)) {
+            if (auto sub = pasta::MacroSubstitution::From(*lowest_sub)) {
                 if (auto name = sub->NameOrOperator()) {
                     macro_name = name->Data();
                 }
@@ -262,7 +259,7 @@ namespace macroni {
 
             // Check if the macro is an expansion or a parameter, and return the
             // appropriate operation
-            if (lowest_macro->Kind() == pasta::MacroKind::kExpansion) {
+            if (lowest_sub->Kind() == pasta::MacroKind::kExpansion) {
                 return StmtVisitor::template make<macroni::MacroExpansion>(
                     loc,
                     builder->getStringAttr(llvm::Twine(macro_name)),
@@ -357,22 +354,22 @@ int main(int argc, char **argv) {
         // TODO(bpappas): Add a command-line argument to convert special macros
         // into special operations
 
-        // // Register conversions
-        // mlir::ConversionTarget trg(*mctx);
-        // // TODO(bpappas): Apparently MLIR will only transform illegal
-        // // operations? I will need to dynamically make MacroExpansionExprs legal
-        // // only if they are not invocations of get_user. I will probably have to
-        // // do something similar for get_user's arguments.
-        // trg.addIllegalOp<macroni::macroni::MacroExpansionExpr>();
-        // trg.markUnknownOpDynamicallyLegal([](auto) { return true; });
-        // mlir::RewritePatternSet patterns(&*mctx);
-        // patterns.add<macroni::macro_expr_to_get_user>(patterns.getContext());
+        // Register conversions
+        mlir::ConversionTarget trg(*mctx);
+        // TODO(bpappas): Apparently MLIR will only transform illegal
+        // operations? I will need to dynamically make MacroExpansions legal
+        // only if they are not invocations of get_user. I will probably have to
+        // do something similar for get_user's arguments.
+        trg.addIllegalOp<macroni::macroni::MacroExpansion>();
+        trg.markUnknownOpDynamicallyLegal([](auto) { return true; });
+        mlir::RewritePatternSet patterns(&*mctx);
+        patterns.add<macroni::macro_expansion_to_get_user>(patterns.getContext());
 
-        // // Apply the conversions. Cast the result to void to ignore no_discard
-        // // errors
-        // (void) mlir::applyPartialConversion(mod.get().getOperation(),
-        //                                     trg,
-        //                                     std::move(patterns));
+        // Apply the conversions. Cast the result to void to ignore no_discard
+        // errors
+        (void) mlir::applyPartialConversion(mod.get().getOperation(),
+                                            trg,
+                                            std::move(patterns));
 
         // Print the result
         mlir::OpPrintingFlags flags;
