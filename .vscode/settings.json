@@ -11,6 +11,7 @@
         "CMAKE_PREFIX_PATH": "${env.VCPKG_DIR}/installed/x64-linux-rel",
         "CMAKE_TOOLCHAIN_FILE": "${env.VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake",
         "LLVM_ENABLE_RTTI": "ON",
+        "MACRONI_ENABLE_TESTING": "ON",
         "LLVM_SYMBOLIZER_PATH": "${env.VCPKG_DIR}/installed/x64-linux-rel/bin/llvm-symbolizer",
         "CMAKE_INSTALL_PREFIX": "${env.MACRONI_INSTALL_DIR}",
         "LLVM_EXTERNAL_LIT": "${env.LLVM_LIT}",
@@ -22,6 +23,7 @@
     "cmake.parallelJobs": 8,
     "cSpell.words": [
         "Macroni",
+        "macronify",
         "MLIR"
     ],
     "files.associations": {
