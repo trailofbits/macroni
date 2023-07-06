@@ -14,6 +14,7 @@ target_link_libraries(macronify
     MLIRPass
     MLIRSupport
 
+    MLIRKernel
     MLIRMacroni
 
     vast_high_level_transforms
