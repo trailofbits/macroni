@@ -258,6 +258,57 @@ namespace macroni {
         }
     };
 
+    struct macro_parameter_to_list_for_each
+        : mlir::OpConversionPattern< vast::hl::ForOp > {
+        using parent_t = mlir::OpConversionPattern<vast::hl::ForOp>;
+        using parent_t::parent_t;
+
+        mlir::LogicalResult matchAndRewrite(
+            vast::hl::ForOp for_op,
+            vast::hl::ForOp::Adaptor adaptor,
+            mlir::ConversionPatternRewriter &rewriter) const override {
+            // TODO(bpp): Add more checks here?
+
+            std::optional<macroni::MacroParameter> pos = std::nullopt;
+            std::optional<macroni::MacroParameter> head = std::nullopt;
+
+            for_op.getCondRegion().walk(
+                [&](mlir::Operation *op) {
+                    if (auto param_op =
+                        mlir::dyn_cast<macroni::MacroParameter>(op)) {
+                        if (param_op.getParameterName() == "pos") {
+                            pos.emplace(param_op);
+                        } else if (param_op.getParameterName() == "head") {
+                            head.emplace(param_op);
+                        }
+                    }
+                }
+            );
+
+            // Check that we actually found a parameter substitution of pos and
+            // head.
+            if (!(pos && head)) {
+                return mlir::failure();
+            }
+
+            auto pos_clone = rewriter.clone(*pos->getOperation());
+            auto head_clone = rewriter.clone(*head->getOperation());
+
+            // Create the replacement operation.
+            mlir::Value pos_val = pos_clone->getResult(0);
+            mlir::Value head_val = head_clone->getResult(0);
+            auto list_for_each = rewriter.create<macroni::ListForEach>(
+                for_op.getLoc(),
+                pos_val, head_val, std::make_unique<mlir::Region>());
+
+            // Take the body from the ForOp we are replacing, then erase it.
+            list_for_each.getBodyRegion().takeBody(for_op.getBodyRegion());
+            rewriter.eraseOp(for_op);
+
+            return mlir::success();
+        }
+    };
+
     struct MacroniMetaGenerator {
         MacroniMetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
             : ast(ast), mctx(mctx) {}
@@ -511,6 +562,11 @@ int main(int argc, char **argv) {
                         !(exp.getMacroName() == "container_of" &&
                           !exp.getResultTypes().empty() &&
                           exp.getParameterNames().size() == 3);
+                } else if (auto for_op =
+                           mlir::dyn_cast<vast::hl::ForOp>(op)) {
+                    // TODO: Only mark for loops expanded from
+                    // list_for_each as illegal.
+                    return false;
                 } else {
                     return true;
                 }
@@ -519,6 +575,7 @@ int main(int argc, char **argv) {
         patterns.add<macroni::macro_expansion_to_get_user>(patterns.getContext());
         patterns.add<macroni::macro_expansion_to_offsetof>(patterns.getContext());
         patterns.add<macroni::macro_expansion_to_container_of>(patterns.getContext());
+        patterns.add<macroni::macro_parameter_to_list_for_each>(patterns.getContext());
         mlir::Operation *mod_op = mod.get().getOperation();
         // Apply the conversions. Cast the result to void to ignore no_discard
         // errors
