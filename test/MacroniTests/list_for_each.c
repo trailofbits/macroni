@@ -82,22 +82,15 @@
 
 typedef unsigned long size_t;
 
-struct list_head {
-	struct list_head *next, *prev;
-};
+struct list_head { struct list_head *next, *prev; };
 
-static inline int list_is_head(const struct list_head *list, const struct list_head *head) {
+static inline int list_is_head(const struct list_head *list,
+			       const struct list_head *head) {
 	return list == head;
 }
 
 #define list_for_each(pos, head) \
 	for (pos = (head)->next; !list_is_head(pos, (head)); pos = pos->next)
-
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
-
-#define container_of(ptr, type, member) ({          \
-	const typeof(((type *)0)->member)*__mptr = (ptr);    \
-		     (type *)((char *)__mptr - offsetof(type, member)); })
 
 int main(void) {
 	struct list_head *head, *pos;
