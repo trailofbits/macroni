@@ -16,6 +16,7 @@ target_link_libraries(macronify
 
     MLIRMacroni
 
+    vast_high_level_transforms
     vast_conversion_from_hl
 
     FromSourceParser
