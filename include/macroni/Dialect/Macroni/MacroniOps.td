@@ -65,7 +65,7 @@ def GetUser :
     AnyType:$ptr
   )>
   , Results<(outs AnyType:$result)> {
-  let summary = "An expansion of the Linux kernel macro, get_user";
+  let summary = "An expansion of the Linux kernel macro, get_user()";
   let description = [{
     The get_user macro copies a single simple variable from user space to kernel
     space. It accepts two arguments:
@@ -75,16 +75,57 @@ def GetUser :
 
     More information: https://www.cs.bham.ac.uk/~exr/lectures/opsys/12_13/docs/kernelAPI/r3776.html
   }];
-  
-  // GOAL: Rewrite certain MacroExpansionExpr operations with GetUser
-  // operations. To improve dataflow analysis, GetUser should return two values,
-  // the modified value and whether the operation was successful
-  
-  // Problem: In order to use the MLIR rewriter to rewrite one operation into
-  // another, the results of the two operations must be the same, but GetUser
-  // returns two values, whereas MacroExpansionExpr returns one.
-  
   let assemblyFormat = "`get_user` `(` $x `,` $ptr `)` attr-dict `:` functional-type( operands, results )";
 }
+
+def OffsetOf :
+  Macroni_Op< "offsetof", [] >
+  , Arguments<(ins
+    TypeAttr:$type,
+    StrAttr:$member
+  )>
+  , Results<(outs AnyType:$result)> {
+  let summary = "An expansion of the Linux kernel macro, offsetof()";
+  let description = [{
+     The macro offsetof() returns the offset of the field member from
+     the start of the structure type.
+
+     This macro is useful because the sizes of the fields that compose
+     a structure can vary across implementations, and compilers may
+     insert different numbers of padding bytes between fields.
+     Consequently, an element's offset is not necessarily given by the
+     sum of the sizes of the previous elements.
+
+     A compiler error will result if member is not aligned to a byte
+     boundary (i.e., it is a bit field).
+
+    More information: https://man7.org/linux/man-pages/man3/offsetof.3.html
+  }];
+  let assemblyFormat = "`offsetof` `(` $type `,` $member `)` attr-dict `:` functional-type( operands, results )";
+}
+
+def ContainerOf :
+  Macroni_Op< "container_of", [] >
+  , Arguments<(ins
+    AnyType:$ptr,
+    TypeAttr:$type,
+    StrAttr:$member
+  )>
+  , Results<(outs AnyType:$result)> {
+  let summary = "An expansion of the Linux kernel macro, container_of()";
+  let description = [{
+     The macro container_of() returns an address pointing to the container of
+     of type type that contains a instance ptr of the member named member named
+     member.
+  }];
+  let assemblyFormat = [{
+    `container_of` `(` $ptr `,` $type `,` $member `)`
+    attr-dict `:` functional-type( operands, results )
+  }];
+}
+
+// TODO(bpp): list_for_each(). This will be tricky since the parameters are
+// aligned but the macro expansion isn't. Will need two values and a region.
+
 
 #endif // MACRONI_DIALECT_IR_MACRONIOPS
