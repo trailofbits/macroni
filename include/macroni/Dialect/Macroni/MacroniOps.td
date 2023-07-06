@@ -124,8 +124,29 @@ def ContainerOf :
   }];
 }
 
-// TODO(bpp): list_for_each(). This will be tricky since the parameters are
-// aligned but the macro expansion isn't. Will need two values and a region.
+def ListForEach :
+  Macroni_Op< "list_for_each()", [SingleBlock, NoTerminator] >
+  , Arguments<(ins
+    AnyType:$pos,
+    AnyType:$head
+  )> {
+  let summary = "An expansion of the Linux kernel macro, list_for_each()";
+  let description = [{
+     The macro list_for_each() uses a temporary variable pos to iterate the list
+     starting at head. It performs the following statement for each node in the
+     list.
+  }];
+  let regions = (region SizedRegion<1>:$bodyRegion);
+  let skipDefaultBuilders = 1;
+  let builders = [
+    OpBuilder<(ins
+      "mlir::Value":$pos,
+      "mlir::Value":$head,
+      "std::unique_ptr< mlir::Region > &&":$bodyRegion
+    )>
+  ];
+  let assemblyFormat = "`list_for_each` `(` $pos `,` $head `)` attr-dict `:` functional-type( operands, results ) $bodyRegion";
+}
 
 
 #endif // MACRONI_DIALECT_IR_MACRONIOPS
