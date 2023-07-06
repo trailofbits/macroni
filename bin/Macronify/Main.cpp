@@ -133,6 +133,131 @@ namespace macroni {
         }
     };
 
+    struct macro_expansion_to_offsetof
+        : mlir::OpConversionPattern< macroni::MacroExpansion > {
+        using parent_t = mlir::OpConversionPattern<macroni::MacroExpansion>;
+        using parent_t::parent_t;
+
+        mlir::LogicalResult matchAndRewrite(
+            macroni::MacroExpansion op,
+            macroni::MacroExpansion::Adaptor adaptor,
+            mlir::ConversionPatternRewriter &rewriter) const override {
+            // TODO(bpp): Add more checks here?
+            if (op.getMacroName() != "offsetof") {
+                return mlir::failure();
+            }
+            if (op.getResultTypes().empty()) {
+                return mlir::failure();
+            }
+            if (op.getParameterNames().size() != 2) {
+                return mlir::failure();
+            }
+
+
+            // Find the type and member name that was passed to the invocation.
+
+            std::optional<mlir::TypeAttr> type = std::nullopt;
+            std::optional<mlir::StringAttr> member = std::nullopt;
+
+            op.getExpansion().walk(
+                [&](mlir::Operation *op) {
+                    if (type) {
+                        return;
+                    } else if (auto member_op =
+                               mlir::dyn_cast<vast::hl::RecordMemberOp>(op)) {
+                        mlir::Type record_ty = member_op.getRecord().getType();
+                        if (auto ptr_ty =
+                            mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
+                            mlir::Type element_ty = ptr_ty.getElementType();
+                            type.emplace(mlir::TypeAttr::get(element_ty));
+                        } else {
+                            type.emplace(mlir::TypeAttr::get(record_ty));
+                        }
+                        member.emplace(member_op.getNameAttr());
+                    }
+                }
+            );
+
+            if (!(type && member)) {
+                return mlir::failure();
+            }
+
+            // Create the replacement operation.
+            mlir::Type result_type = op.getType(0);
+            rewriter.replaceOpWithNewOp<macroni::OffsetOf>(op, result_type,
+                                                           *type, *member);
+
+            return mlir::success();
+        }
+    };
+
+    struct macro_expansion_to_container_of
+        : mlir::OpConversionPattern< macroni::MacroExpansion > {
+        using parent_t = mlir::OpConversionPattern<macroni::MacroExpansion>;
+        using parent_t::parent_t;
+
+        mlir::LogicalResult matchAndRewrite(
+            macroni::MacroExpansion op,
+            macroni::MacroExpansion::Adaptor adaptor,
+            mlir::ConversionPatternRewriter &rewriter) const override {
+            // TODO(bpp): Add more checks here?
+            if (op.getMacroName() != "container_of") {
+                return mlir::failure();
+            }
+            if (op.getResultTypes().empty()) {
+                return mlir::failure();
+            }
+            if (op.getParameterNames().size() != 3) {
+                return mlir::failure();
+            }
+
+
+            // Find the ptr, type and member name that was passed to the
+            // invocation.
+
+            std::optional<macroni::MacroParameter> param_ptr = std::nullopt;
+            std::optional<mlir::TypeAttr> type = std::nullopt;
+            std::optional<mlir::StringAttr> member = std::nullopt;
+
+            op.getExpansion().walk(
+                [&](mlir::Operation *op) {
+                    if (auto param_op =
+                        mlir::dyn_cast<macroni::MacroParameter>(op)) {
+                        param_ptr.emplace(param_op);
+                    } else if (auto member_op =
+                               mlir::dyn_cast<vast::hl::RecordMemberOp>(op)) {
+                        mlir::Type record_ty = member_op.getRecord().getType();
+                        if (auto ptr_ty =
+                            mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
+                            mlir::Type element_ty = ptr_ty.getElementType();
+                            type.emplace(mlir::TypeAttr::get(element_ty));
+                        } else {
+                            type.emplace(mlir::TypeAttr::get(record_ty));
+                        }
+                        member.emplace(member_op.getNameAttr());
+                    }
+                }
+            );
+
+            // Check that we actually found a parameter substitution of the x
+            // and ptr parameters
+            if (!(param_ptr && type && member)) {
+                return mlir::failure();
+            }
+
+            auto param_ptr_clone = rewriter.clone(*param_ptr->getOperation());
+
+            // Create the replacement operation.
+            mlir::Type result_type = op.getType(0);
+            mlir::Value ptr = param_ptr_clone->getResult(0);
+            rewriter.replaceOpWithNewOp<macroni::ContainerOf>(op, result_type,
+                                                              ptr,
+                                                              *type, *member);
+
+            return mlir::success();
+        }
+    };
+
     struct MacroniMetaGenerator {
         MacroniMetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
             : ast(ast), mctx(mctx) {}
@@ -370,7 +495,8 @@ int main(int argc, char **argv) {
 
         // Register conversions
 
-        // Mark expansions of get_user() as illegal
+        // Mark expansions of get_user(), offsetof() and container_of() as
+        // illegal
         mlir::ConversionTarget trg(*mctx);
         trg.markUnknownOpDynamicallyLegal(
             [](mlir::Operation *op) {
@@ -378,13 +504,21 @@ int main(int argc, char **argv) {
                     mlir::dyn_cast<macroni::macroni::MacroExpansion>(op)) {
                     return !(exp.getMacroName() == "get_user" &&
                              !exp.getResultTypes().empty() &&
-                             exp.getParameterNames().size() == 2);
+                             exp.getParameterNames().size() == 2) &&
+                        !(exp.getMacroName() == "offsetof" &&
+                          !exp.getResultTypes().empty() &&
+                          exp.getParameterNames().size() == 2) &&
+                        !(exp.getMacroName() == "container_of" &&
+                          !exp.getResultTypes().empty() &&
+                          exp.getParameterNames().size() == 3);
                 } else {
                     return true;
                 }
             });
         mlir::RewritePatternSet patterns(&*mctx);
         patterns.add<macroni::macro_expansion_to_get_user>(patterns.getContext());
+        patterns.add<macroni::macro_expansion_to_offsetof>(patterns.getContext());
+        patterns.add<macroni::macro_expansion_to_container_of>(patterns.getContext());
         mlir::Operation *mod_op = mod.get().getOperation();
         // Apply the conversions. Cast the result to void to ignore no_discard
         // errors
