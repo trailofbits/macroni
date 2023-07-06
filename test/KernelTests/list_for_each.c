@@ -62,7 +62,7 @@
 // CHECK:           %11 = hl.ref %0 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:           hl.value.yield %11 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:         }
-// CHECK:         macroni.list_for_each() list_for_each(%9, %10) : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>, !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> () {
+// CHECK:         kernel.list_for_each() list_for_each(%9, %10) : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>, !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> () {
 // CHECK:           hl.scope {
 // CHECK:             %11 = hl.var "prev" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> = {
 // CHECK:               %12 = hl.ref %1 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>

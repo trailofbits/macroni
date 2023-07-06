@@ -29,7 +29,7 @@
 // CHECK:       %6 = hl.ref %1 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:       hl.value.yield %6 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:     }
-// CHECK:     %4 = macroni.get_user get_user(%2, %3) : (!hl.lvalue<!hl.int>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
+// CHECK:     %4 = kernel.get_user get_user(%2, %3) : (!hl.lvalue<!hl.int>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
 // CHECK:     %5 = hl.const #hl.integer<0> : !hl.int
 // CHECK:     hl.return %5 : !hl.int
 // CHECK:   }

@@ -26,7 +26,7 @@
 // CHECK:   }
 // CHECK:   hl.func external @main () -> !hl.int {
 // CHECK:     hl.scope {
-// CHECK:       %0 = macroni.offsetof offsetof(!hl.elaborated<!hl.record<"location">>, "line") : () -> !hl.elaborated<!hl.typedef<"size_t">>
+// CHECK:       %0 = kernel.offsetof offsetof(!hl.elaborated<!hl.record<"location">>, "line") : () -> !hl.elaborated<!hl.typedef<"size_t">>
 // CHECK:       %1 = hl.const #hl.integer<0> : !hl.int
 // CHECK:       hl.return %1 : !hl.int
 // CHECK:     }

@@ -34,7 +34,7 @@
 // CHECK:         %7 = hl.addressof %6 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>> -> !hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>
 // CHECK:         hl.value.yield %7 : !hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>
 // CHECK:       }
-// CHECK:       %2 = macroni.container_of container_of(%1, !hl.elaborated<!hl.record<"container">>, "contained_member") : (!hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>) -> !hl.ptr<!hl.elaborated<!hl.record<"container">>>
+// CHECK:       %2 = kernel.container_of container_of(%1, !hl.elaborated<!hl.record<"container">>, "contained_member") : (!hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>) -> !hl.ptr<!hl.elaborated<!hl.record<"container">>>
 // CHECK:       %3 = hl.const #hl.integer<0> : !hl.int
 // CHECK:       hl.return %3 : !hl.int
 // CHECK:     }
