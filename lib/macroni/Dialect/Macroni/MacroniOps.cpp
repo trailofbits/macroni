@@ -51,19 +51,6 @@ namespace macroni::macroni {
         }
     }
 
-    void ListForEach::build(
-        mlir::OpBuilder &odsBuilder,
-        mlir::OperationState &odsState,
-        mlir::Value pos,
-        mlir::Value head,
-        std::unique_ptr<mlir::Region> &&region
-    ) {
-        mlir::OpBuilder::InsertionGuard guard(odsBuilder);
-        odsState.addOperands(pos);
-        odsState.addOperands(head);
-        odsState.addRegion(std::move(region));
-    }
-
     mlir::ParseResult parseMacroParameters(
         mlir::OpAsmParser &parser,
         mlir::StringAttr &macroName,
