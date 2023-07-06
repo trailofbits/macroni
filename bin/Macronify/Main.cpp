@@ -47,6 +47,8 @@
 
 #include <macroni/Dialect/Macroni/MacroniDialect.hpp>
 #include <macroni/Dialect/Macroni/MacroniOps.hpp>
+#include <macroni/Dialect/Kernel/KernelDialect.hpp>
+#include <macroni/Dialect/Kernel/KernelOps.hpp>
 
 #include <cstdlib>
 #include <iostream>
@@ -126,8 +128,8 @@ namespace macroni {
             mlir::Type result_type = op.getType(0);
             mlir::Value x = last_x_clone->getResult(0);
             mlir::Value ptr = last_ptr_clone->getResult(0);
-            rewriter.replaceOpWithNewOp<macroni::GetUser>(op, result_type,
-                                                          x, ptr);
+            rewriter.replaceOpWithNewOp<::macroni::kernel::GetUser>(
+                op, result_type, x, ptr);
 
             return mlir::success();
         }
@@ -184,8 +186,8 @@ namespace macroni {
 
             // Create the replacement operation.
             mlir::Type result_type = op.getType(0);
-            rewriter.replaceOpWithNewOp<macroni::OffsetOf>(op, result_type,
-                                                           *type, *member);
+            rewriter.replaceOpWithNewOp<::macroni::kernel::OffsetOf>(
+                op, result_type, *type, *member);
 
             return mlir::success();
         }
@@ -250,9 +252,8 @@ namespace macroni {
             // Create the replacement operation.
             mlir::Type result_type = op.getType(0);
             mlir::Value ptr = param_ptr_clone->getResult(0);
-            rewriter.replaceOpWithNewOp<macroni::ContainerOf>(op, result_type,
-                                                              ptr,
-                                                              *type, *member);
+            rewriter.replaceOpWithNewOp<::macroni::kernel::ContainerOf>(
+                op, result_type, ptr, *type, *member);
 
             return mlir::success();
         }
@@ -297,9 +298,10 @@ namespace macroni {
             // Create the replacement operation.
             mlir::Value pos_val = pos_clone->getResult(0);
             mlir::Value head_val = head_clone->getResult(0);
-            auto list_for_each = rewriter.create<macroni::ListForEach>(
-                for_op.getLoc(),
-                pos_val, head_val, std::make_unique<mlir::Region>());
+            auto list_for_each = rewriter.create<
+                ::macroni::kernel::ListForEach>(
+                    for_op.getLoc(),
+                    pos_val, head_val, std::make_unique<mlir::Region>());
 
             // Take the body from the ForOp we are replacing, then erase it.
             list_for_each.getBodyRegion().takeBody(for_op.getBodyRegion());
@@ -530,7 +532,8 @@ int main(int argc, char **argv) {
         // Register the MLIR dialects we will be converting to
         registry.insert<
             vast::hl::HighLevelDialect,
-            macroni::macroni::MacroniDialect
+            macroni::macroni::MacroniDialect,
+            macroni::kernel::KernelDialect
         >();
         mctx.emplace(registry);
         macroni::MacroniMetaGenerator meta(*ast, &*mctx);
