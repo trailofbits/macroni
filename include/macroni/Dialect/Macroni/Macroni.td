@@ -24,19 +24,12 @@ def Macroni_Dialect : Dialect {
         analysis and optimization.
     }];
 
-    let extraClassDeclaration = [{
-        void registerTypes();
-        void registerAttributes();
-    }];
-
     let useFoldAPI = kEmitFoldAdaptorFolder;
 }
 
 class Macroni_Op<string mnemonic, list<Trait> traits = []>
     : Op<Macroni_Dialect, mnemonic, traits>;
 
-include "MacroniAttributes.td"
-include "MacroniTypes.td"
 include "MacroniOps.td"
 
 #endif // MACRONI_DIALECT_IR_MACRONI

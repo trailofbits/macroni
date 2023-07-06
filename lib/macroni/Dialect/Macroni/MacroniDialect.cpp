@@ -15,8 +15,6 @@ namespace macroni::macroni
 {
     void MacroniDialect::initialize()
     {
-        registerTypes();
-        registerAttributes();
         addOperations<
             #define GET_OP_LIST
             #include "macroni/Dialect/Macroni/Macroni.cpp.inc"

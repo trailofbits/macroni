@@ -3,16 +3,12 @@
 add_mlir_dialect_library(MLIRMacroni
     MacroniDialect.cpp
     MacroniOps.cpp
-    MacroniTypes.cpp
-    MacroniAttributes.cpp
 
     ADDITIONAL_HEADER_DIRS
         ${PROJECT_SOURCE_DIR}/include/macroni
 
     DEPENDS
         MLIRMacroniIncGen
-        MLIRMacroniAttributesIncGen
-        MLIRMacroniEnumsIncGen
 
     LINK_LIBS PUBLIC
         MLIRIR

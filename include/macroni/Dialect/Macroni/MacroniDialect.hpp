@@ -12,6 +12,3 @@
 
 // Pull in the dialect definition.
 #include "macroni/Dialect/Macroni/MacroniDialect.h.inc"
-
-// Pull in all enum type definitions and utility function declarations.
-#include "macroni/Dialect/Macroni/MacroniEnums.h.inc"

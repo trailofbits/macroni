@@ -2,9 +2,7 @@
 
 #pragma once
 
-#include "macroni/Dialect/Macroni/MacroniAttributes.hpp"
 #include "macroni/Dialect/Macroni/MacroniDialect.hpp"
-#include "macroni/Dialect/Macroni/MacroniTypes.hpp"
 
 #include <mlir/IR/FunctionInterfaces.h>
 #include <mlir/Interfaces/CallInterfaces.h>
