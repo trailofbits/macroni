@@ -80,7 +80,7 @@ hl.func external @main () -> !hl.int {
         %11 = hl.ref %0 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
         hl.value.yield %11 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
       }
-      macroni.list_for_each() list_for_each(%9, %10) : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>, !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> () {
+      kernel.list_for_each() list_for_each(%9, %10) : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>, !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> () {
         hl.scope {
           %11 = hl.var "prev" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> = {
             %12 = hl.ref %1 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>

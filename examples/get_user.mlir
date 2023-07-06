@@ -42,7 +42,7 @@ hl.func external @main () -> !hl.int {
     %6 = hl.ref %1 : !hl.lvalue<!hl.ptr<!hl.int>>
     hl.value.yield %6 : !hl.lvalue<!hl.ptr<!hl.int>>
   }
-  %4 = macroni.get_user get_user(%2, %3) : (!hl.lvalue<!hl.int>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
+  %4 = kernel.get_user get_user(%2, %3) : (!hl.lvalue<!hl.int>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
   %5 = hl.const #hl.integer<0> : !hl.int
   hl.return %5 : !hl.int
 }

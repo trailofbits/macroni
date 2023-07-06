@@ -52,7 +52,7 @@ hl.func external @main () -> !hl.int {
       %7 = hl.addressof %6 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>> -> !hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>
       hl.value.yield %7 : !hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>
     }
-    %2 = macroni.container_of container_of(%1, !hl.elaborated<!hl.record<"container">>, "contained_member") : (!hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>) -> !hl.ptr<!hl.elaborated<!hl.record<"container">>>
+    %2 = kernel.container_of container_of(%1, !hl.elaborated<!hl.record<"container">>, "contained_member") : (!hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>) -> !hl.ptr<!hl.elaborated<!hl.record<"container">>>
     %3 = hl.const #hl.integer<0> : !hl.int
     hl.return %3 : !hl.int
   }

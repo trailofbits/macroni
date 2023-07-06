@@ -21,7 +21,7 @@ hl.func external @main () -> !hl.int {
 // After
 hl.func external @main () -> !hl.int {
   hl.scope {
-    %0 = macroni.offsetof offsetof(!hl.elaborated<!hl.record<"A">>, "x") : () -> !hl.elaborated<!hl.typedef<"size_t">>
+    %0 = kernel.offsetof offsetof(!hl.elaborated<!hl.record<"A">>, "x") : () -> !hl.elaborated<!hl.typedef<"size_t">>
     %1 = hl.const #hl.integer<0> : !hl.int
     hl.return %1 : !hl.int
   }
