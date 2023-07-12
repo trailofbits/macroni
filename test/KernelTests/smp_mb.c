@@ -20,7 +20,8 @@
 // CHECK:   hl.typedef "__builtin_va_list" : !hl.array<1, !hl.record<"__va_list_tag">>
 // CHECK:   hl.func external @barrier () -> !hl.int {
 // CHECK:     hl.scope {
-// CHECK:       hl.unreachable
+// CHECK:       %0 = hl.const #hl.integer<0> : !hl.int
+// CHECK:       hl.return %0 : !hl.int
 // CHECK:     }
 // CHECK:   }
 // CHECK:   hl.func external @main () -> !hl.int {
@@ -32,7 +33,7 @@
 // CHECK:   }
 // CHECK: }
 
-int barrier(void) {}
+int barrier(void) { return 0; }
 #define smp_mb() barrier()
 
 int main(void) {
