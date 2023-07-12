@@ -59,11 +59,40 @@
 #include <set>
 #include <map>
 
+using Op = mlir::Operation;
+
+static const constexpr char get_user[] = "get_user";
+static const constexpr char offsetof[] = "offsetof";
+static const constexpr char container_of[] = "container_of";
+static const constexpr char rcu_read_lock[] = "rcu_read_lock";
+static const constexpr char rcu_read_unlock[] = "rcu_read_unlock";
+
 // TODO(bpp): Instead of using a global variable for the PASTA AST and MLIR
 // context, find out how to pass these to a CodeGen object.
 std::optional<pasta::AST> ast = std::nullopt;
 std::optional<mlir::MLIRContext> mctx = std::nullopt;
 std::optional<mlir::Builder> builder = std::nullopt;
+
+// TODO(bpp): Find a way to pass information along from the dynamic legality
+// callbacks to the conversion methods without using global variables
+std::map<Op *, Op *> get_user_to_x;
+std::map<Op *, Op *> get_user_to_ptr;
+
+std::map<Op *, mlir::TypeAttr> offsetof_to_type;
+std::map<Op *, mlir::StringAttr> offsetof_to_member;
+
+std::map<Op *, Op *> container_of_to_ptr;
+std::map<Op *, mlir::TypeAttr> container_of_to_type;
+std::map<Op *, mlir::StringAttr> container_of_to_member;
+
+std::map<Op *, Op *> list_for_each_to_pos;
+std::map<Op *, Op *> list_for_each_to_head;
+
+std::map<Op *, Op *> unlock_to_lock;
+
+static inline llvm::APInt get_lock_level(Op *op) {
+    return op->getAttrOfType<mlir::IntegerAttr>("lock_level").getValue();
+}
 
 namespace macroni {
 
@@ -79,57 +108,25 @@ namespace macroni {
         using parent_t::parent_t;
 
         mlir::LogicalResult matchAndRewrite(
-            macroni::MacroExpansion op,
+            macroni::MacroExpansion exp,
             macroni::MacroExpansion::Adaptor adaptor,
             mlir::ConversionPatternRewriter &rewriter) const override {
-            // TODO(bpp): Add more checks here?
-            if (op.getMacroName() != "get_user") {
-                return mlir::failure();
-            }
-            if (op.getResultTypes().empty()) {
-                return mlir::failure();
-            }
-            if (op.getParameterNames().size() != 2) {
+
+            if (exp.getMacroName() != get_user) {
                 return mlir::failure();
             }
 
-            // Find the last-parsed expansions of the x and ptr parameters.
-            // NOTE(bpp): This assumes that all expansions of these
-            // parameters will parse the same.
+            Op *op = exp.getOperation(),
+                *x = get_user_to_x.at(op),
+                *ptr = get_user_to_ptr.at(op),
+                *x_clone = rewriter.clone(*x),
+                *ptr_clone = rewriter.clone(*ptr);
+            mlir::Type result_type = exp.getType(0);
+            mlir::Value x_val = x_clone->getResult(0),
+                ptr_val = ptr_clone->getResult(0);
 
-            std::optional<macroni::MacroParameter> last_x = std::nullopt;
-            std::optional<macroni::MacroParameter> last_ptr = std::nullopt;
-
-            op.getExpansion().walk(
-                [&](mlir::Operation *op) {
-                    if (auto param_op = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-                        auto param_name = param_op.getParameterName();
-                        if (param_name == "x") {
-                            last_x.emplace(param_op);
-                        } else if (param_name == "ptr") {
-                            last_ptr.emplace(param_op);
-                        }
-                    }
-                }
-            );
-
-            // Check that we actually found a parameter substitution of the x
-            // and ptr parameters
-            if (!(last_x && last_ptr)) {
-                return mlir::failure();
-            }
-
-            // Clone the arguments passed to this invocation of get_user() and
-            // lift them out of the expansion.
-            auto last_x_clone = rewriter.clone(*last_x->getOperation());
-            auto last_ptr_clone = rewriter.clone(*last_ptr->getOperation());
-
-            // Create the replacement operation.
-            mlir::Type result_type = op.getType(0);
-            mlir::Value x = last_x_clone->getResult(0);
-            mlir::Value ptr = last_ptr_clone->getResult(0);
-            rewriter.replaceOpWithNewOp<::macroni::kernel::GetUser>(
-                op, result_type, x, ptr);
+            using GE = ::macroni::kernel::GetUser;
+            rewriter.replaceOpWithNewOp<GE>(op, result_type, x_val, ptr_val);
 
             return mlir::success();
         }
@@ -141,53 +138,21 @@ namespace macroni {
         using parent_t::parent_t;
 
         mlir::LogicalResult matchAndRewrite(
-            macroni::MacroExpansion op,
+            macroni::MacroExpansion exp,
             macroni::MacroExpansion::Adaptor adaptor,
             mlir::ConversionPatternRewriter &rewriter) const override {
-            // TODO(bpp): Add more checks here?
-            if (op.getMacroName() != "offsetof") {
-                return mlir::failure();
-            }
-            if (op.getResultTypes().empty()) {
-                return mlir::failure();
-            }
-            if (op.getParameterNames().size() != 2) {
+
+            if (exp.getMacroName() != offsetof) {
                 return mlir::failure();
             }
 
+            Op *op = exp.getOperation();
+            mlir::TypeAttr type = offsetof_to_type.at(op);
+            mlir::StringAttr member = offsetof_to_member.at(op);
+            mlir::Type result_type = exp.getType(0);
 
-            // Find the type and member name that was passed to the invocation.
-
-            std::optional<mlir::TypeAttr> type = std::nullopt;
-            std::optional<mlir::StringAttr> member = std::nullopt;
-
-            op.getExpansion().walk(
-                [&](mlir::Operation *op) {
-                    if (type) {
-                        return;
-                    } else if (auto member_op =
-                               mlir::dyn_cast<vast::hl::RecordMemberOp>(op)) {
-                        mlir::Type record_ty = member_op.getRecord().getType();
-                        if (auto ptr_ty =
-                            mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
-                            mlir::Type element_ty = ptr_ty.getElementType();
-                            type.emplace(mlir::TypeAttr::get(element_ty));
-                        } else {
-                            type.emplace(mlir::TypeAttr::get(record_ty));
-                        }
-                        member.emplace(member_op.getNameAttr());
-                    }
-                }
-            );
-
-            if (!(type && member)) {
-                return mlir::failure();
-            }
-
-            // Create the replacement operation.
-            mlir::Type result_type = op.getType(0);
-            rewriter.replaceOpWithNewOp<::macroni::kernel::OffsetOf>(
-                op, result_type, *type, *member);
+            using OO = ::macroni::kernel::OffsetOf;
+            rewriter.replaceOpWithNewOp<OO>(op, result_type, type, member);
 
             return mlir::success();
         }
@@ -199,67 +164,29 @@ namespace macroni {
         using parent_t::parent_t;
 
         mlir::LogicalResult matchAndRewrite(
-            macroni::MacroExpansion op,
+            macroni::MacroExpansion exp,
             macroni::MacroExpansion::Adaptor adaptor,
             mlir::ConversionPatternRewriter &rewriter) const override {
-            // TODO(bpp): Add more checks here?
-            if (op.getMacroName() != "container_of") {
-                return mlir::failure();
-            }
-            if (op.getResultTypes().empty()) {
-                return mlir::failure();
-            }
-            if (op.getParameterNames().size() != 3) {
+            if (exp.getMacroName() != container_of) {
                 return mlir::failure();
             }
 
+            Op *op = exp.getOperation(),
+                *ptr = container_of_to_ptr.at(op),
+                *ptr_clone = rewriter.clone(*ptr);
+            mlir::TypeAttr type = container_of_to_type.at(op);
+            mlir::StringAttr member = container_of_to_member.at(op);
+            mlir::Type res_ty = exp.getType(0);
+            mlir::Value ptr_val = ptr_clone->getResult(0);
 
-            // Find the ptr, type and member name that was passed to the
-            // invocation.
-
-            std::optional<macroni::MacroParameter> param_ptr = std::nullopt;
-            std::optional<mlir::TypeAttr> type = std::nullopt;
-            std::optional<mlir::StringAttr> member = std::nullopt;
-
-            op.getExpansion().walk(
-                [&](mlir::Operation *op) {
-                    if (auto param_op =
-                        mlir::dyn_cast<macroni::MacroParameter>(op)) {
-                        param_ptr.emplace(param_op);
-                    } else if (auto member_op =
-                               mlir::dyn_cast<vast::hl::RecordMemberOp>(op)) {
-                        mlir::Type record_ty = member_op.getRecord().getType();
-                        if (auto ptr_ty =
-                            mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
-                            mlir::Type element_ty = ptr_ty.getElementType();
-                            type.emplace(mlir::TypeAttr::get(element_ty));
-                        } else {
-                            type.emplace(mlir::TypeAttr::get(record_ty));
-                        }
-                        member.emplace(member_op.getNameAttr());
-                    }
-                }
-            );
-
-            // Check that we actually found a parameter substitution of the x
-            // and ptr parameters
-            if (!(param_ptr && type && member)) {
-                return mlir::failure();
-            }
-
-            auto param_ptr_clone = rewriter.clone(*param_ptr->getOperation());
-
-            // Create the replacement operation.
-            mlir::Type result_type = op.getType(0);
-            mlir::Value ptr = param_ptr_clone->getResult(0);
-            rewriter.replaceOpWithNewOp<::macroni::kernel::ContainerOf>(
-                op, result_type, ptr, *type, *member);
+            using CO = ::macroni::kernel::ContainerOf;
+            rewriter.replaceOpWithNewOp<CO>(op, res_ty, ptr_val, type, member);
 
             return mlir::success();
         }
     };
 
-    struct macro_parameter_to_list_for_each
+    struct for_to_list_for_each
         : mlir::OpConversionPattern< vast::hl::ForOp > {
         using parent_t = mlir::OpConversionPattern<vast::hl::ForOp>;
         using parent_t::parent_t;
@@ -268,44 +195,52 @@ namespace macroni {
             vast::hl::ForOp for_op,
             vast::hl::ForOp::Adaptor adaptor,
             mlir::ConversionPatternRewriter &rewriter) const override {
-            // TODO(bpp): Add more checks here?
+            Op *op = for_op.getOperation(),
+                *pos = list_for_each_to_pos.at(op),
+                *head = list_for_each_to_head.at(op),
+                *pos_clone = rewriter.clone(*pos),
+                *head_clone = rewriter.clone(*head);
 
-            std::optional<macroni::MacroParameter> pos = std::nullopt;
-            std::optional<macroni::MacroParameter> head = std::nullopt;
+            mlir::Value pos_val = pos_clone->getResult(0),
+                head_val = head_clone->getResult(0);
 
-            for_op.getCondRegion().walk(
-                [&](mlir::Operation *op) {
-                    if (auto param_op =
-                        mlir::dyn_cast<macroni::MacroParameter>(op)) {
-                        if (param_op.getParameterName() == "pos") {
-                            pos.emplace(param_op);
-                        } else if (param_op.getParameterName() == "head") {
-                            head.emplace(param_op);
-                        }
-                    }
-                }
-            );
+            auto reg = std::make_unique<mlir::Region>();
 
-            // Check that we actually found a parameter substitution of pos and
-            // head.
-            if (!(pos && head)) {
-                return mlir::failure();
+            reg->takeBody(for_op.getBodyRegion());
+
+            using LFE = ::macroni::kernel::ListForEach;
+            rewriter.replaceOpWithNewOp<LFE>(for_op, pos_val, head_val,
+                                             std::move(reg));
+
+            return mlir::success();
+        }
+    };
+
+    struct rcu_read_unlock_to_rcu_critical_section
+        : mlir::OpConversionPattern< vast::hl::CallOp > {
+        using parent_t = mlir::OpConversionPattern<vast::hl::CallOp>;
+        using parent_t::parent_t;
+
+        mlir::LogicalResult matchAndRewrite(
+            vast::hl::CallOp rcu_read_unlock_call,
+            vast::hl::CallOp::Adaptor adaptor,
+            mlir::ConversionPatternRewriter &rewriter) const override {
+
+            Op *unlock_op = rcu_read_unlock_call.getOperation(),
+                *lock_op = unlock_to_lock.at(unlock_op);
+
+            using CS = kernel::RCUCriticalSection;
+            rewriter.setInsertionPointAfter(lock_op);
+            CS cs = rewriter.replaceOpWithNewOp<CS>(lock_op);
+            mlir::Block *cs_block = rewriter.createBlock(&cs.getBodyRegion());
+
+            Op *op = cs->getNextNode();
+            while (op != unlock_op) {
+                Op *temp = op->getNextNode();
+                op->moveBefore(cs_block, cs_block->end());
+                op = temp;
             }
-
-            auto pos_clone = rewriter.clone(*pos->getOperation());
-            auto head_clone = rewriter.clone(*head->getOperation());
-
-            // Create the replacement operation.
-            mlir::Value pos_val = pos_clone->getResult(0);
-            mlir::Value head_val = head_clone->getResult(0);
-            auto list_for_each = rewriter.create<
-                ::macroni::kernel::ListForEach>(
-                    for_op.getLoc(),
-                    pos_val, head_val, std::make_unique<mlir::Region>());
-
-            // Take the body from the ForOp we are replacing, then erase it.
-            list_for_each.getBodyRegion().takeBody(for_op.getBodyRegion());
-            rewriter.eraseOp(for_op);
+            rewriter.eraseOp(unlock_op);
 
             return mlir::success();
         }
@@ -384,11 +319,13 @@ namespace macroni {
 
         std::set<pasta::MacroSubstitution> visited;
 
-        mlir::Operation *Visit(const clang::Stmt *stmt) {
+        int64_t lock_level = 0;
+
+        Op *Visit(const clang::Stmt *stmt) {
             if (clang::isa<clang::ImplicitValueInitExpr,
                 clang::ImplicitCastExpr>(stmt)) {
                 // Don't visit implicit expressions
-                return StmtVisitor::Visit(stmt);
+                return VisitNonMacro(stmt);
             }
 
             // Find the lowest macro that covers this statement, if any
@@ -418,7 +355,7 @@ namespace macroni {
 
             if (!lowest_sub) {
                 // If no substitution covers this statement, visit it normally.
-                return StmtVisitor::Visit(stmt);
+                return VisitNonMacro(stmt);
             }
 
             // Get the substitution's location, name, parameter names, and
@@ -467,6 +404,26 @@ namespace macroni {
                     std::move(region)
                 );
             }
+        }
+
+        Op *VisitNonMacro(const clang::Stmt *stmt) {
+            auto op = StmtVisitor::Visit(stmt);
+            if (vast::hl::CallOp call_op =
+                mlir::dyn_cast<vast::hl::CallOp>(op)) {
+                auto name = call_op.getCalleeAttr().getValue();
+                if ("rcu_read_lock" == name) {
+                    call_op.getOperation()->setAttr(
+                        "lock_level",
+                        builder->getI64IntegerAttr(lock_level));
+                    lock_level++;
+                } else if ("rcu_read_unlock" == name) {
+                    lock_level--;
+                    call_op.getOperation()->setAttr(
+                        "lock_level",
+                        builder->getI64IntegerAttr(lock_level));
+                }
+            }
+            return op;
         }
     };
 
@@ -540,7 +497,6 @@ int main(int argc, char **argv) {
         vast::cg::CodeGenBase<macroni::Visitor> codegen(&*mctx, meta);
         builder.emplace(&*mctx);
 
-        // Generate the MLIR code and freeze the result
         codegen.append_to_module(ast->UnderlyingAST().getTranslationUnitDecl());
         mlir::OwningOpRef<mlir::ModuleOp> mod = codegen.freeze();
 
@@ -552,34 +508,138 @@ int main(int argc, char **argv) {
         // Mark expansions of get_user(), offsetof() and container_of() as
         // illegal
         mlir::ConversionTarget trg(*mctx);
-        trg.markUnknownOpDynamicallyLegal(
-            [](mlir::Operation *op) {
-                if (auto exp =
-                    mlir::dyn_cast<macroni::macroni::MacroExpansion>(op)) {
-                    return !(exp.getMacroName() == "get_user" &&
-                             !exp.getResultTypes().empty() &&
-                             exp.getParameterNames().size() == 2) &&
-                        !(exp.getMacroName() == "offsetof" &&
-                          !exp.getResultTypes().empty() &&
-                          exp.getParameterNames().size() == 2) &&
-                        !(exp.getMacroName() == "container_of" &&
-                          !exp.getResultTypes().empty() &&
-                          exp.getParameterNames().size() == 3);
-                } else if (auto for_op =
-                           mlir::dyn_cast<vast::hl::ForOp>(op)) {
-                    // TODO: Only mark for loops expanded from
-                    // list_for_each as illegal.
-                    return false;
+        trg.addDynamicallyLegalOp<macroni::macroni::MacroExpansion>(
+            [](Op *op) {
+                using ME = macroni::macroni::MacroExpansion;
+                ME exp = mlir::dyn_cast<ME>(op);
+                bool has_results = !exp.getResultTypes().empty();
+                llvm::StringRef macro_name = exp.getMacroName();
+                size_t num_params = exp.getParameterNames().size();
+                bool is_get_user = (has_results &&
+                                    num_params == 2 &&
+                                    macro_name == get_user),
+                    is_offsetof = (has_results &&
+                                   num_params == 2 &&
+                                   macro_name == offsetof),
+                    is_container_of = (has_results &&
+                                       num_params == 3 &&
+                                       macro_name == container_of);
+
+                using MP = macroni::macroni::MacroParameter;
+                using RMO = vast::hl::RecordMemberOp;
+                using PT = vast::hl::PointerType;
+                using TA = mlir::TypeAttr;
+                if (is_get_user) {
+                    exp.getExpansion().walk([&](Op *cur) {
+                        if (auto param_op = mlir::dyn_cast<MP>(cur)) {
+                            auto param_name = param_op.getParameterName();
+                            if (param_name == "x") {
+                                get_user_to_x.insert({ op, cur });
+                            } else if (param_name == "ptr") {
+                                get_user_to_ptr.insert({ op, cur });
+                            }
+                        }});
+                    bool found_op = get_user_to_x.contains(op),
+                        found_ptr = get_user_to_ptr.contains(op),
+                        is_legal = !(found_op && found_ptr);
+                    return is_legal;
+                } else if (is_offsetof) {
+                    exp.getExpansion().walk([&](Op *cur) {
+                        if (auto member_op = mlir::dyn_cast<RMO>(cur)) {
+                            mlir::Value record = member_op.getRecord();
+                            mlir::Type record_ty = record.getType();
+                            if (auto pty = mlir::dyn_cast<PT>(record_ty)) {
+                                mlir::Type element_ty = pty.getElementType();
+                                auto ty_attr = TA::get(element_ty);
+                                offsetof_to_type.insert({ op, ty_attr });
+                            } else {
+                                auto ty_attr = TA::get(record_ty);
+                                offsetof_to_type.insert({ op, ty_attr });
+                            }
+                            mlir::StringAttr name = member_op.getNameAttr();
+                            offsetof_to_member[op] = name;
+                        }});
+                    bool found_type = offsetof_to_type.contains(op),
+                        found_member = offsetof_to_member.contains(op),
+                        is_legal = !(found_type && found_member);
+                    return is_legal;
+                } else if (is_container_of) {
+                    exp.getExpansion().walk([&](Op *cur) {
+                        if (mlir::isa<MP>(cur)) {
+                            container_of_to_ptr.insert({ op, cur });
+                        } else if (auto mem_op = mlir::dyn_cast<RMO>(cur)) {
+                            mlir::Value record = mem_op.getRecord();
+                            mlir::Type record_ty = record.getType();
+                            if (auto pty = mlir::dyn_cast<PT>(record_ty)) {
+                                mlir::Type elem_ty = pty.getElementType();
+                                TA ty_attr = TA::get(elem_ty);
+                                container_of_to_type.insert({ op, ty_attr });
+                            } else {
+                                TA ty_attr = TA::get(record_ty);
+                                container_of_to_type.insert({ op, ty_attr });
+                            }
+                            mlir::StringAttr mem_name = mem_op.getNameAttr();
+                            container_of_to_member.insert({ op, mem_name });
+                        }});
+                    bool found_ptr = container_of_to_ptr.contains(op),
+                        found_type = container_of_to_type.contains(op),
+                        found_member = container_of_to_member.contains(op),
+                        is_legal = !(found_ptr && found_type && found_member);
+                    return is_legal;
                 } else {
                     return true;
                 }
             });
+        trg.addDynamicallyLegalOp<vast::hl::ForOp>(
+            [](Op *op) {
+                auto for_op = mlir::dyn_cast<vast::hl::ForOp>(op);
+                using MP = macroni::macroni::MacroParameter;
+                for_op.getCondRegion().walk(
+                    [&](Op *op2) {
+                        if (auto param_op = mlir::dyn_cast<MP>(op2)) {
+                            if (param_op.getParameterName() == "pos") {
+                                list_for_each_to_pos[op] = op2;
+                            } else if (param_op.getParameterName() == "head") {
+                                list_for_each_to_head[op] = op2;
+                            }
+                        }
+                    }
+                );
+                return !(list_for_each_to_pos.contains(op) &&
+                         list_for_each_to_head.contains(op));
+            });
+        trg.addDynamicallyLegalOp<vast::hl::CallOp>(
+            [](Op *op) {
+                using CO = vast::hl::CallOp;
+                CO call_op = mlir::dyn_cast<CO>(op);
+                llvm::StringRef name = call_op.getCalleeAttr().getValue();
+                if (rcu_read_unlock != name) {
+                    return true;
+                }
+                llvm::APInt unlock_level = get_lock_level(op);
+                for (auto cur = op; cur; cur = cur->getPrevNode()) {
+                    if (CO call_op = mlir::dyn_cast<CO>(cur)) {
+                        name = call_op.getCalleeAttr().getValue();
+                        if (rcu_read_lock == name) {
+                            llvm::APInt lock_level = get_lock_level(cur);
+                            if (unlock_level == lock_level) {
+                                unlock_to_lock[op] = cur;
+                                break;
+                            }
+                        }
+                    }
+                }
+                return !unlock_to_lock.contains(op);
+            });
+        trg.markUnknownOpDynamicallyLegal([](Op *op) { return true;});
+
         mlir::RewritePatternSet patterns(&*mctx);
         patterns.add<macroni::macro_expansion_to_get_user>(patterns.getContext());
         patterns.add<macroni::macro_expansion_to_offsetof>(patterns.getContext());
         patterns.add<macroni::macro_expansion_to_container_of>(patterns.getContext());
-        patterns.add<macroni::macro_parameter_to_list_for_each>(patterns.getContext());
-        mlir::Operation *mod_op = mod.get().getOperation();
+        patterns.add<macroni::for_to_list_for_each>(patterns.getContext());
+        patterns.add<macroni::rcu_read_unlock_to_rcu_critical_section>(patterns.getContext());
+        Op *mod_op = mod.get().getOperation();
         // Apply the conversions. Cast the result to void to ignore no_discard
         // errors
         (void) mlir::applyPartialConversion(mod_op, trg, std::move(patterns));
