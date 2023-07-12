@@ -98,4 +98,17 @@ def ListForEach :
   let assemblyFormat = "`list_for_each` `(` $pos `,` $head `)` attr-dict `:` functional-type( operands, results ) $bodyRegion";
 }
 
+def RCUCriticalSection :
+  Kernel_Op< "rcu.critical_section", [NoTerminator] >
+{
+  let summary = "An RCU critical section";
+  let description = [{
+    An RCU critical section denoted by an rcu_read_lock() and rcu_read_unlock()
+    pair. This operation only creates a section for lock/unlock that are called
+    in the same region of C source code.
+  }];
+  let regions = (region AnyRegion:$bodyRegion);
+  let assemblyFormat = "$bodyRegion attr-dict";
+}
+
 #endif // MACRONI_DIALECT_IR_KERNELOPS
