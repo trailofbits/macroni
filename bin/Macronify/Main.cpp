@@ -66,6 +66,7 @@ static const constexpr char offsetof[] = "offsetof";
 static const constexpr char container_of[] = "container_of";
 static const constexpr char rcu_read_lock[] = "rcu_read_lock";
 static const constexpr char rcu_read_unlock[] = "rcu_read_unlock";
+static const constexpr char rcu_dereference[] = "rcu_dereference";
 
 // TODO(bpp): Instead of using a global variable for the PASTA AST and MLIR
 // context, find out how to pass these to a CodeGen object.
@@ -89,6 +90,8 @@ std::map<Op *, Op *> list_for_each_to_pos;
 std::map<Op *, Op *> list_for_each_to_head;
 
 std::map<Op *, Op *> unlock_to_lock;
+
+std::map<Op *, Op *> rcu_dereference_to_p;
 
 static inline llvm::APInt get_lock_level(Op *op) {
     return op->getAttrOfType<mlir::IntegerAttr>("lock_level").getValue();
@@ -181,6 +184,32 @@ namespace macroni {
 
             using CO = ::macroni::kernel::ContainerOf;
             rewriter.replaceOpWithNewOp<CO>(op, res_ty, ptr_val, type, member);
+
+            return mlir::success();
+        }
+    };
+
+    struct macro_expansion_to_rcu_dereference
+        : mlir::OpConversionPattern< macroni::MacroExpansion > {
+        using parent_t = mlir::OpConversionPattern<macroni::MacroExpansion>;
+        using parent_t::parent_t;
+
+        mlir::LogicalResult matchAndRewrite(
+            macroni::MacroExpansion exp,
+            macroni::MacroExpansion::Adaptor adaptor,
+            mlir::ConversionPatternRewriter &rewriter) const override {
+            if (exp.getMacroName() != rcu_dereference) {
+                return mlir::failure();
+            }
+
+            Op *op = exp.getOperation(),
+                *p = rcu_dereference_to_p.at(op),
+                *p_clone = rewriter.clone(*p);
+            mlir::Type res_ty = exp.getType(0);
+            mlir::Value p_val = p_clone->getResult(0);
+
+            using RCUD = ::macroni::kernel::RCUDereference;
+            rewriter.replaceOpWithNewOp<RCUD>(op, res_ty, p_val);
 
             return mlir::success();
         }
@@ -523,7 +552,10 @@ int main(int argc, char **argv) {
                                    macro_name == offsetof),
                     is_container_of = (has_results &&
                                        num_params == 3 &&
-                                       macro_name == container_of);
+                                       macro_name == container_of),
+                    is_rcu_dereference = (has_results &&
+                                          num_params == 1 &&
+                                          macro_name == rcu_dereference);
 
                 using MP = macroni::macroni::MacroParameter;
                 using RMO = vast::hl::RecordMemberOp;
@@ -586,6 +618,17 @@ int main(int argc, char **argv) {
                         found_member = container_of_to_member.contains(op),
                         is_legal = !(found_ptr && found_type && found_member);
                     return is_legal;
+                } else if (is_rcu_dereference) {
+                    exp.getExpansion().walk([&](Op *cur) {
+                        if (auto param = mlir::dyn_cast<MP>(cur)) {
+                            auto param_name = param.getParameterName();
+                            if (param_name == "p") {
+                                rcu_dereference_to_p.insert({ op, cur });
+                            }
+                        }});
+                    bool found_p = rcu_dereference_to_p.contains(op),
+                        is_legal = !found_p;
+                    return is_legal;
                 } else {
                     return true;
                 }
@@ -637,6 +680,7 @@ int main(int argc, char **argv) {
         patterns.add<macroni::macro_expansion_to_get_user>(patterns.getContext());
         patterns.add<macroni::macro_expansion_to_offsetof>(patterns.getContext());
         patterns.add<macroni::macro_expansion_to_container_of>(patterns.getContext());
+        patterns.add<macroni::macro_expansion_to_rcu_dereference>(patterns.getContext());
         patterns.add<macroni::for_to_list_for_each>(patterns.getContext());
         patterns.add<macroni::rcu_read_unlock_to_rcu_critical_section>(patterns.getContext());
         Op *mod_op = mod.get().getOperation();
