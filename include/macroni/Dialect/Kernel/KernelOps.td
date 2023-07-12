@@ -127,4 +127,14 @@ def RCUDereference :
   }];
 }
 
+def SMPMB :
+  Kernel_Op< "smp_mb", [] >
+  , Results<(outs AnyType:$result)> {
+  let summary = "An expansion of the Linux kernel macro, smp_mb()";
+  let description = "smp_mb() activates a memory barrier";
+  let assemblyFormat = [{
+    `smp_mb` `(` `)` attr-dict `:` functional-type( operands, results )
+  }];
+}
+
 #endif // MACRONI_DIALECT_IR_KERNELOPS
