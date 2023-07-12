@@ -111,4 +111,20 @@ def RCUCriticalSection :
   let assemblyFormat = "$bodyRegion attr-dict";
 }
 
+def RCUDereference :
+  Kernel_Op< "rcu_dereference", [] >
+  , Arguments<(ins AnyType:$p)>
+  , Results<(outs AnyType:$result)> {
+  let summary = "An expansion of the Linux kernel macro, rcu_dereference()";
+  let description = [{
+    rcu_dereference() - fetch RCU-protected pointer for dereferencing
+    @p: The pointer to read, prior to dereferencing
+    This is a simple wrapper around rcu_dereference_check().
+  }];
+  let assemblyFormat = [{
+    `rcu_dereference` `(` $p `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
 #endif // MACRONI_DIALECT_IR_KERNELOPS
