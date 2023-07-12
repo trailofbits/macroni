@@ -597,8 +597,11 @@ int main(int argc, char **argv) {
                     return is_legal;
                 } else if (is_container_of) {
                     exp.getExpansion().walk([&](Op *cur) {
-                        if (mlir::isa<MP>(cur)) {
-                            container_of_to_ptr.insert({ op, cur });
+                        if (auto param = mlir::dyn_cast<MP>(cur)) {
+                            auto param_name = param.getParameterName();
+                            if ("ptr" == param_name) {
+                                container_of_to_ptr.insert({ op, cur });
+                            }
                         } else if (auto mem_op = mlir::dyn_cast<RMO>(cur)) {
                             mlir::Value record = mem_op.getRecord();
                             mlir::Type record_ty = record.getType();
