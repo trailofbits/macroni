@@ -67,6 +67,7 @@ static const constexpr char container_of[] = "container_of";
 static const constexpr char rcu_read_lock[] = "rcu_read_lock";
 static const constexpr char rcu_read_unlock[] = "rcu_read_unlock";
 static const constexpr char rcu_dereference[] = "rcu_dereference";
+static const constexpr char smp_mb[] = "smp_mb";
 
 // TODO(bpp): Instead of using a global variable for the PASTA AST and MLIR
 // context, find out how to pass these to a CodeGen object.
@@ -210,6 +211,29 @@ namespace macroni {
 
             using RCUD = ::macroni::kernel::RCUDereference;
             rewriter.replaceOpWithNewOp<RCUD>(op, res_ty, p_val);
+
+            return mlir::success();
+        }
+    };
+
+    struct macro_expansion_to_smp_mb
+        : mlir::OpConversionPattern< macroni::MacroExpansion > {
+        using parent_t = mlir::OpConversionPattern<macroni::MacroExpansion>;
+        using parent_t::parent_t;
+
+        mlir::LogicalResult matchAndRewrite(
+            macroni::MacroExpansion exp,
+            macroni::MacroExpansion::Adaptor adaptor,
+            mlir::ConversionPatternRewriter &rewriter) const override {
+            if (exp.getMacroName() != smp_mb) {
+                return mlir::failure();
+            }
+
+            Op *op = exp.getOperation();
+            mlir::Type res_ty = exp.getType(0);
+
+            using SMPMB = ::macroni::kernel::SMPMB;
+            rewriter.replaceOpWithNewOp<SMPMB>(op, res_ty);
 
             return mlir::success();
         }
@@ -555,7 +579,12 @@ int main(int argc, char **argv) {
                                        macro_name == container_of),
                     is_rcu_dereference = (has_results &&
                                           num_params == 1 &&
-                                          macro_name == rcu_dereference);
+                                          macro_name == rcu_dereference),
+                    //   NOTE(bpp): The actual smp_mb() macro may not have
+                    //   results! This check will need to be updated if so.
+                    is_smp_mb = (has_results &&
+                                 num_params == 0 &&
+                                 macro_name == smp_mb);
 
                 using MP = macroni::macroni::MacroParameter;
                 using RMO = vast::hl::RecordMemberOp;
@@ -632,6 +661,8 @@ int main(int argc, char **argv) {
                     bool found_p = rcu_dereference_to_p.contains(op),
                         is_legal = !found_p;
                     return is_legal;
+                } else if (is_smp_mb) {
+                    return false;
                 } else {
                     return true;
                 }
@@ -684,6 +715,7 @@ int main(int argc, char **argv) {
         patterns.add<macroni::macro_expansion_to_offsetof>(patterns.getContext());
         patterns.add<macroni::macro_expansion_to_container_of>(patterns.getContext());
         patterns.add<macroni::macro_expansion_to_rcu_dereference>(patterns.getContext());
+        patterns.add<macroni::macro_expansion_to_smp_mb>(patterns.getContext());
         patterns.add<macroni::for_to_list_for_each>(patterns.getContext());
         patterns.add<macroni::rcu_read_unlock_to_rcu_critical_section>(patterns.getContext());
         Op *mod_op = mod.get().getOperation();
