@@ -45,13 +45,14 @@ config.test_source_root = os.path.dirname(__file__)
 
 # test_exec_root: The root path where tests should be run.
 config.test_exec_root = os.path.join(config.macroni_obj_root, 'test')
+# TODO: Enable testing of Debug, Release, and RelWithDebInfo builds
 config.macroni_tools_dir = os.path.join(config.macroni_obj_root, 'bin')
 
 tools = [
     ToolSubst(
         "macronify",
-        os.path.join(config.macroni_obj_root, 'bin', 'Macronify', 'macronify'),
-        extra_args=["-x", "c"]),
+        os.path.join(config.macroni_obj_root, 'bin',
+                     'Macronify', 'RelWithDebInfo', 'macronify')),
 
     ToolSubst(
         "FileCheck",
