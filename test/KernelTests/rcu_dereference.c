@@ -1,4 +1,4 @@
-// RUN: macronify %s | FileCheck %s --match-full-lines
+// RUN: macronify -xc %s --convert | FileCheck %s --match-full-lines
 
 // CHECK: hl.translation_unit {
 // CHECK:   hl.typedef "__int128_t" : !hl.int128
@@ -38,7 +38,10 @@
 // CHECK:         %4 = macroni.expansion "deref(p)" : !hl.lvalue<!hl.int> {
 // CHECK:           %6 = hl.expr : !hl.lvalue<!hl.int> {
 // CHECK:             %7 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:               %9 = hl.ref %0 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:               %9 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
+// CHECK:                 %10 = hl.ref %0 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:                 hl.value.yield %10 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:               }
 // CHECK:               hl.value.yield %9 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:             }
 // CHECK:             %8 = kernel.rcu_dereference rcu_dereference(%7) : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.int>

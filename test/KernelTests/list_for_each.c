@@ -1,4 +1,4 @@
-// RUN: macronify %s | FileCheck %s --match-full-lines
+// RUN: macronify -xc %s --convert | FileCheck %s --match-full-lines
 
 // CHECK: hl.translation_unit {
 // CHECK:   hl.typedef "__int128_t" : !hl.int128
