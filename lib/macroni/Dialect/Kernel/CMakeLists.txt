@@ -20,9 +20,6 @@ add_mlir_dialect_library(MLIRKernel
         MLIRControlFlowInterfaces
         MLIRDataLayoutInterfaces
         MLIRInferTypeOpInterface
-
-        VASTSymbolInterface
-        VASTTypeQualifiersInterfaces
 )
 
 target_link_libraries(MLIRKernel PRIVATE macroni)
