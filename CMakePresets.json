@@ -1,0 +1,44 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 21,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "macroni-rel-with-debinfo",
+            "displayName": "Macroni release with debug info",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja Multi-Config",
+            "toolchainFile": "$...",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "LLVM_EXTERNAL_LIT": "$...",
+                "LLVM_ENABLE_RTTI": "ON",
+                "MACRONI_ENABLE_TESTING": "ON",
+                "VCPKG_TARGET_TRIPLET": "x64-linux",
+                "VCPKG_HOST_TRIPLET": "x64-linux-rel",
+                "CMAKE_C_COMPILER": "$...",
+                "CMAKE_CXX_COMPILER": "$..."
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "macroni-debug-build",
+            "displayName": "Macroni debug build",
+            "configurePreset": "macroni-rel-with-debinfo",
+            "configuration": "RelWithDebInfo"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "default",
+            "displayName": "Default",
+            "configuration": "macroni-rel-with-debinfo"
+        }
+    ]
+}
