@@ -23,6 +23,12 @@ def Kernel_Dialect : Dialect {
         list_for_each().
     }];
 
+    let extraClassDeclaration = [{
+        void registerTypes();
+    }];
+
+    let useDefaultTypePrinterParser = 1;
+
     let useFoldAPI = kEmitFoldAdaptorFolder;
 }
 
@@ -30,5 +36,6 @@ class Kernel_Op<string mnemonic, list<Trait> traits = []>
     : Op<Kernel_Dialect, mnemonic, traits>;
 
 include "KernelOps.td"
+include "KernelTypes.td"
 
 #endif // MACRONI_DIALECT_IR_KERNEL

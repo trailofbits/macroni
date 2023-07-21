@@ -15,6 +15,8 @@ namespace macroni::kernel
 {
     void KernelDialect::initialize()
     {
+        registerTypes();
+
         addOperations<
             #define GET_OP_LIST
             #include "macroni/Dialect/Kernel/Kernel.cpp.inc"
