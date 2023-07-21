@@ -1,10 +1,16 @@
 #pragma once
 
-#include "Globals.hpp"
-#include "MacroniMetaGenerator.hpp"
 #include <macroni/Dialect/Macroni/MacroniDialect.hpp>
 #include <macroni/Dialect/Macroni/MacroniOps.hpp>
+#include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <vast/Translation/CodeGenVisitor.hpp>
+
+#include <pasta/AST/AST.h>
+#include <pasta/AST/Macro.h>
+
+// TODO(bpp): Instead of using a global variable for the PASTA AST and MLIR
+// context, find out how to pass these to a CodeGen object.
+extern std::optional<pasta::AST> ast;
 
 namespace macroni {
     // Given a set of visited substitutions, returns the lowest substitutions in

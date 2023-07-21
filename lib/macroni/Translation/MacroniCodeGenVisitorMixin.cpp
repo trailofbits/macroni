@@ -1,4 +1,5 @@
-#include "MacroniCodeGenVisitorMixin.hpp"
+#include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
+#include <pasta/AST/Macro.h>
 
 namespace macroni {
     std::optional<pasta::MacroSubstitution> lowest_unvisited_substitution(

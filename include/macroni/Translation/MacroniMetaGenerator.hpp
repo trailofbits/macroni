@@ -1,6 +1,8 @@
 #pragma once
 
-#include "vast/Translation/CodeGenMeta.hpp"
+#include <pasta/AST/AST.h>
+#include <pasta/AST/Macro.h>
+#include <vast/Translation/CodeGenMeta.hpp>
 
 namespace macroni {
     struct MacroniMetaGenerator {
