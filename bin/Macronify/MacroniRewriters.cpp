@@ -48,11 +48,8 @@ namespace macroni {
                     ptr = op;
                 }
             }});
-        auto is_legal = (x &&
-                         ptr &&
-                         x->getNumResults() == 1 &&
-                         ptr->getNumResults() == 1);
-        if (!is_legal) {
+        if (!(x && ptr &&
+              x->getNumResults() == 1 && ptr->getNumResults() == 1)) {
             return mlir::failure();
         }
 
@@ -66,11 +63,10 @@ namespace macroni {
         // parameters from ones that have been lifted?
         auto x_clone = rewriter.clone(*x);
         auto ptr_clone = rewriter.clone(*ptr);
-        auto result_type = exp.getType(0);
-        auto x_res = x_clone->getResult(0);
-        auto ptr_res = ptr_clone->getResult(0);
         using GE = ::macroni::kernel::GetUser;
-        rewriter.replaceOpWithNewOp<GE>(exp, result_type, x_res, ptr_res);
+        rewriter.replaceOpWithNewOp<GE>(exp, exp.getType(0),
+                                        x_clone->getResult(0),
+                                        ptr_clone->getResult(0));
         return mlir::success();
     }
 
@@ -97,15 +93,12 @@ namespace macroni {
                 }
                 member = member_op.getNameAttr();
             }});
-        auto is_legal = type && member;
-        if (!is_legal) {
+        if (!(type && member)) {
             return mlir::failure();
         }
 
-        auto op = exp.getOperation();
-        auto result_type = exp.getType(0);
         using OO = ::macroni::kernel::OffsetOf;
-        rewriter.replaceOpWithNewOp<OO>(op, result_type, *type, *member);
+        rewriter.replaceOpWithNewOp<OO>(exp, exp.getType(0), *type, *member);
         return mlir::success();
     }
 
@@ -139,18 +132,15 @@ namespace macroni {
                 }
                 member = member_op.getNameAttr();
             }});
-        auto is_legal = ptr && type && member;
-        if (!is_legal) {
+        if (!(ptr && type && member && ptr->getNumResults() == 1)) {
             return mlir::failure();
         }
 
-        auto op = exp.getOperation();
         auto ptr_clone = rewriter.clone(*ptr);
-        auto exp_ty = exp.getType(0);
-        auto ptr_res = ptr_clone->getResult(0);
-
         using CO = ::macroni::kernel::ContainerOf;
-        rewriter.replaceOpWithNewOp<CO>(op, exp_ty, ptr_res, *type, *member);
+        rewriter.replaceOpWithNewOp<CO>(exp, exp.getType(0),
+                                        ptr_clone->getResult(0), *type,
+                                        *member);
         return mlir::success();
     }
 
@@ -168,17 +158,14 @@ namespace macroni {
                     p = op;
                 }
             }});
-        auto is_legal = p != nullptr;
-        if (!is_legal) {
+        if (!(p && p->getNumResults() == 1)) {
             return mlir::failure();
         }
 
-        auto op = exp.getOperation();
         auto p_clone = rewriter.clone(*p);
-        auto res_ty = exp.getType(0);
-        auto p_res = p_clone->getResult(0);
         using RCUD = ::macroni::kernel::RCUDereference;
-        rewriter.replaceOpWithNewOp<RCUD>(op, res_ty, p_res);
+        rewriter.replaceOpWithNewOp<RCUD>(exp, exp.getType(0),
+                                          p_clone->getResult(0));
         return mlir::success();
     }
 
@@ -189,9 +176,7 @@ namespace macroni {
             return mlir::failure();
         }
 
-        auto op = exp.getOperation();
-        auto res_ty = exp.getType(0);
-        rewriter.replaceOpWithNewOp<kernel::SMPMB>(op, res_ty);
+        rewriter.replaceOpWithNewOp<kernel::SMPMB>(exp, exp.getType(0));
         return mlir::success();
     }
 
@@ -212,20 +197,18 @@ namespace macroni {
                 }
             }
         );
-        auto is_legal = pos && head;
-        if (!is_legal) {
+        if (!(pos && head)) {
             return mlir::failure();
         }
 
-        auto op = for_op.getOperation();
         auto pos_clone = rewriter.clone(*pos);
         auto head_clone = rewriter.clone(*head);
-        auto pos_res = pos_clone->getResult(0);
-        auto head_res = head_clone->getResult(0);
         auto reg = std::make_unique<mlir::Region>();
         reg->takeBody(for_op.getBodyRegion());
         using LFE = ::macroni::kernel::ListForEach;
-        rewriter.replaceOpWithNewOp<LFE>(op, pos_res, head_res, std::move(reg));
+        rewriter.replaceOpWithNewOp<LFE>(for_op, pos_clone->getResult(0),
+                                         head_clone->getResult(0),
+                                         std::move(reg));
         return mlir::success();
     }
 
@@ -256,8 +239,7 @@ namespace macroni {
                 }
             }
         }
-        auto is_legal = lock_op != nullptr;
-        if (!is_legal) {
+        if (!lock_op) {
             return mlir::failure();
         }
 
