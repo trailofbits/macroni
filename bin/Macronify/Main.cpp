@@ -18,10 +18,6 @@
 #include <pasta/AST/AST.h>
 #include <vast/Translation/CodeGen.hpp>
 
-// TODO(bpp): Instead of using a global variable for the PASTA AST and MLIR
-// context, find out how to pass these to a CodeGen object.
-std::optional<pasta::AST> ast;
-
 int main(int argc, char **argv) {
     bool convert = false;
     for (int i = 0; i < argc; i++) {
@@ -35,7 +31,7 @@ int main(int argc, char **argv) {
         std::cerr << maybe_ast.TakeError() << '\n';
         return EXIT_FAILURE;
     }
-    ast = maybe_ast.TakeValue();
+    auto ast = maybe_ast.TakeValue();
 
     // Register the MLIR dialects we will be lowering to
     mlir::DialectRegistry registry;
@@ -45,11 +41,11 @@ int main(int argc, char **argv) {
         macroni::kernel::KernelDialect
     >();
     auto mctx = mlir::MLIRContext(registry);
-    macroni::MacroniMetaGenerator meta(*ast, &mctx);
+    macroni::MacroniMetaGenerator meta(ast, &mctx);
     vast::cg::CodeGenBase<macroni::MacroniVisitor> codegen(&mctx, meta);
 
     // Generate the MLIR
-    codegen.append_to_module(ast->UnderlyingAST().getTranslationUnitDecl());
+    codegen.append_to_module(ast.UnderlyingAST().getTranslationUnitDecl());
     auto mod = codegen.freeze();
 
     if (convert) {
