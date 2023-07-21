@@ -4,10 +4,10 @@
 // This source code is licensed in accordance with the terms specified in
 // the LICENSE file found in the root directory of this source tree.
 
-#include "MacroniRewriters.hpp"
 #include "ParseAST.hpp"
 #include <iostream>
 #include <llvm/Support/CommandLine.h>
+#include <macroni/Conversion/MacroniRewriters.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <mlir/Pass/Pass.h>
