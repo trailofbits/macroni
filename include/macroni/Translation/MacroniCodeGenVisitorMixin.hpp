@@ -1,16 +1,12 @@
 #pragma once
 
+#include <macroni/Dialect/Kernel/KernelTypes.hpp>
 #include <macroni/Dialect/Macroni/MacroniDialect.hpp>
 #include <macroni/Dialect/Macroni/MacroniOps.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
-#include <vast/Translation/CodeGenVisitor.hpp>
-
 #include <pasta/AST/AST.h>
 #include <pasta/AST/Macro.h>
-
-// TODO(bpp): Instead of using a global variable for the PASTA AST and MLIR
-// context, find out how to pass these to a CodeGen object.
-extern std::optional<pasta::AST> ast;
+#include <vast/Translation/CodeGenVisitor.hpp>
 
 namespace macroni {
     // Given a set of visited substitutions, returns the lowest substitutions in
@@ -41,12 +37,42 @@ namespace macroni {
             vast::cg::CodeGenTypeVisitorWithDataLayoutMixin<Derived>;
 
         using DeclVisitor::Visit;
-        using TypeVisitor::Visit;
         using StmtVisitor::make_maybe_value_yield_region;
         using StmtVisitor::builder;
+        using StmtVisitor::LensType::mcontext;
+        using StmtVisitor::LensType::meta_gen;
 
         std::set<pasta::MacroSubstitution> visited;
         std::int64_t lock_level = 0;
+
+        mlir::Type Visit(const clang::Type *type) {
+            return TypeVisitor::Visit(type);
+        }
+
+        mlir::Type Visit(clang::QualType type) {
+            auto ty = TypeVisitor::Visit(type);
+            auto attributed_type = clang::dyn_cast<clang::AttributedType>(type);
+            if (!attributed_type) {
+                return ty;
+            }
+            auto attr = attributed_type->getAttr();
+            using ASA = clang::AddressSpaceAttr;
+            auto addr_space = clang::dyn_cast_or_null<ASA>(attr);
+            if (!addr_space) {
+                return ty;
+            }
+            // NOTE(bpp): Clang does not record to address space passed to the
+            // attribute in the source code. Instead, it record the value passed
+            // PLUS the value of the last enumerator in Clang's LangAS enum. So
+            // to get the original value, we just subtract this enumerator's
+            // value from the value attached to the AddressSpaceAttr.
+            using clang::LangAS;
+            using std::underlying_type_t;
+            auto FirstAddrSpace = LangAS::FirstTargetAddressSpace;
+            int first = static_cast<underlying_type_t<LangAS>>(FirstAddrSpace);
+            int space = addr_space->getAddressSpace() - first;
+            return kernel::AddressSpaceType::get(&mcontext(), ty, space);
+        }
 
         mlir::Operation *Visit(const clang::Stmt *stmt) {
             if (clang::isa<clang::ImplicitValueInitExpr,
@@ -56,7 +82,7 @@ namespace macroni {
             }
 
             // Find the lowest macro that covers this statement, if any
-            auto pasta_stmt = ast->Adopt(stmt);
+            auto pasta_stmt = meta_gen().ast.Adopt(stmt);
             auto sub = lowest_unvisited_substitution(pasta_stmt, visited);
             if (!sub) {
                 // If no substitution covers this statement, visit it normally.
