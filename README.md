@@ -15,10 +15,12 @@ Macroni is an MLIR dialect that adds macro expansions to VAST's tower of IRS.
 ## Requirements
 
 The [latest release](https://github.com/lifting-bits/cxx-common/releases/) of
-Trail of Bits' cxx-common repository. Choose the release has `pasta` in the name
-and matches your platform. This provides `llvm`, `mlir`, and a version of
+Trail of Bits' cxx-common repository. Choose the release that has `pasta` in the
+name and matches your platform. This provides `llvm`, `mlir`, and a version of
 `clang` with patches to track macro expansion information; Macroni requires all
 these dependencies.
+
+We also recommend installing `ccache` to improve build times.
 
 ## Setting up
 
@@ -32,32 +34,37 @@ git submodule update
 
 Set the following environment variables:
 
-| Variable name         | Definition                                                                                                                       |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `VCPKG_DIR`           | The path to an extracted release of Trail of Bits' cxx-common repository. This provides a path to all of Macroni's dependencies. |
-| `LLVM_LIT`            | The path to your install of `llvm-lit`. This enables automated testing of Macroni.                                               |
-| `MACRONI_INSTALL_DIR` | The directory to install Macroni to.                                                                                             |
-| `MACRONI_SRC`         | The directory macroni has been downloaded to.                                                                                    |
-| `MACRONI_BUILD_DIR`   | The directory to build Macroni in.                                                                                               |
+| Variable name          | Definition                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `CMAKE_INSTALL_PREFIX` | The path to where you would like to install Macroni to.                            |
+| `LLVM_EXTERNAL_LIT`    | The path to your install of `llvm-lit`. This enables automated testing of Macroni. |
+| `CMAKE_TOOLCHAIN_FILE` | The path to your `cxx-common` version's toolchain file (`vcpkg.cmake`).            |
+| `CMAKE_C_COMPILER`     | The path to your `cxx-common` version's C compiler.                                |
+| `CMAKE_CXX_COMPILER`   | The path to your `cxx-common` version's C++ compiler.                              |
 
+**Tip**: If you are developing in Visual Studio or Visual Studio Code, use the
+provided CMakePresets.json file to make your development easier. Just edit the
+file by assigning values to these variables in the `cacheVariables` object. Note
+that the `CMAKE_TOOLCHAIN_FILE` should be set separately by assigning a value to
+the `toolchainFile` field.
 
 Configure Macroni:
 
 ```bash
-cmake --no-warn-unused-cli \
-      -DCMAKE_BUILD_TYPE:STRING=Debug \
-      -DCMAKE_TOOLCHAIN_FILE:STRING="${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake" \
-      -DLLVM_ENABLE_RTTI:STRING=ON \
-      -DLLVM_SYMBOLIZER_PATH:STRING="${VCPKG_DIR}/installed/x64-linux-rel/bin/llvm-symbolizer" \
-      -DCMAKE_INSTALL_PREFIX:STRING="${INSTALL_DIR}" \
-      -DLLVM_EXTERNAL_LIT:STRING="${LLVM_LIT}" \
-      -DVCPKG_TARGET_TRIPLET:STRING=x64-linux \
-      -DVCPKG_HOST_TRIPLET:STRING=x64-linux-rel \
-      -DCMAKE_PREFIX_PATH:STRING="${VCPKG_DIR}/installed/x64-linux-rel" \
-      -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE \
-      -S${MACRONI_SRC} \
-      -B${MACRONI_BUILD_DIR} \
-      -G Ninja
+cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+      -DCMAKE_INSTALL_PREFIX=... \
+      -DLLVM_EXTERNAL_LIT=... \
+      -DLLVM_ENABLE_RTTI=ON \
+      -DMACRONI_ENABLE_TESTING=ON \
+      -DVCPKG_TARGET_TRIPLET=x64-linux \
+      -DVCPKG_HOST_TRIPLET=x64-linux-rel \
+      -DCMAKE_C_COMPILER=... \
+      -DCMAKE_CXX_COMPILER=... \
+      -DCMAKE_TOOLCHAIN_FILE=...\
+      -Smacroni \
+      -B${CMAKE_INSTALL_PREFIX} \
+      -G "Ninja Multi-Config"
 ```
 
 
@@ -67,8 +74,8 @@ Build the `macronify` binary for translating C code to a mix of `VAST` and
 cmake --build ${MACRONI_BUILD_DIR} --config Debug --target macronify -j 8 --
 ```
 
-This will build the `macronify` binary and place it in the directory
-`${MACRONI_BUILD_DIR}/Macronify`.
+This will build the `macronify` binary and place it in the directory specified
+by the `-B` option in the configure command.
 
 ## Running Macroni
 Once the `macronify` binary has been built, you can run it on a C source file.
@@ -79,6 +86,15 @@ look like:
 ```bash
 ${MACRONIFY} -xc ${INPUT}
 ```
+
+To run Macroni's conversions, pass the `--convert` option:
+
+```bash
+${MACRONIFY} -xc ${INPUT} --convert
+```
+
+This will convert certain macros and constructs found in the Linux kernel into
+operations of Macroni's `Kernel` dialect.
 
 ## Testing
 
