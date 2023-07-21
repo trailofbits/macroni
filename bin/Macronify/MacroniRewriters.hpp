@@ -8,12 +8,6 @@
 #include <vast/Dialect/HighLevel/HighLevelOps.hpp>
 
 namespace macroni {
-    bool is_get_user(macroni::MacroExpansion &exp);
-    bool is_offsetof(macroni::MacroExpansion &exp);
-    bool is_container_of(macroni::MacroExpansion &exp);
-    bool is_rcu_dereference(macroni::MacroExpansion &exp);
-    bool is_smp_mb(macroni::MacroExpansion &exp);
-
     using ME = macroni::MacroExpansion;
     using PR = mlir::PatternRewriter;
     mlir::LogicalResult rewrite_get_user(ME exp, PR &rewriter);
