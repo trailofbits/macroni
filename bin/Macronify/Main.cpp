@@ -20,7 +20,6 @@
 #include <vast/Translation/CodeGen.hpp>
 
 std::optional<pasta::AST> ast;
-std::optional<mlir::Builder> builder;
 
 int main(int argc, char **argv) {
     bool convert = false;
@@ -47,7 +46,6 @@ int main(int argc, char **argv) {
     auto mctx = mlir::MLIRContext(registry);
     macroni::MacroniMetaGenerator meta(*ast, &mctx);
     vast::cg::CodeGenBase<macroni::MacroniVisitor> codegen(&mctx, meta);
-    builder.emplace(&mctx);
 
     // Generate the MLIR
     codegen.append_to_module(ast->UnderlyingAST().getTranslationUnitDecl());

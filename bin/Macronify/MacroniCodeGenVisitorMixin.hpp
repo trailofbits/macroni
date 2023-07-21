@@ -37,6 +37,7 @@ namespace macroni {
         using DeclVisitor::Visit;
         using TypeVisitor::Visit;
         using StmtVisitor::make_maybe_value_yield_region;
+        using StmtVisitor::builder;
 
         std::set<pasta::MacroSubstitution> visited;
         std::int64_t lock_level = 0;
@@ -75,16 +76,16 @@ namespace macroni {
             if (sub->Kind() == pasta::MacroKind::kExpansion) {
                 return StmtVisitor::template make<macroni::MacroExpansion>(
                     loc,
-                    builder->getStringAttr(llvm::Twine(macro_name)),
-                    builder->getStrArrayAttr(llvm::ArrayRef(parameter_names)),
-                    builder->getBoolAttr(function_like),
+                    builder().getStringAttr(llvm::Twine(macro_name)),
+                    builder().getStrArrayAttr(llvm::ArrayRef(parameter_names)),
+                    builder().getBoolAttr(function_like),
                     return_type,
                     std::move(region)
                 );
             } else {
                 return StmtVisitor::template make<macroni::MacroParameter>(
                     loc,
-                    builder->getStringAttr(llvm::Twine(macro_name)),
+                    builder().getStringAttr(llvm::Twine(macro_name)),
                     return_type,
                     std::move(region)
                 );
@@ -92,7 +93,7 @@ namespace macroni {
         }
 
         void set_lock_level(mlir::Operation *op) {
-            op->setAttr("lock_level", builder->getI64IntegerAttr(lock_level));
+            op->setAttr("lock_level", builder().getI64IntegerAttr(lock_level));
         }
 
         mlir::Operation *VisitNonMacro(const clang::Stmt *stmt) {
