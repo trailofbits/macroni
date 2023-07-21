@@ -1,36 +1,32 @@
 #include "MacroniRewriters.hpp"
 
 namespace macroni {
-    bool has_results(mlir::Operation *op) {
-        return op->getNumResults() > 0;
-    }
-
-    bool is_get_user(macroni::MacroExpansion &exp) {
-        return has_results(exp) &&
+    bool is_get_user(macroni::MacroExpansion exp) {
+        return exp.getNumResults() > 0 &&
             exp.getParameterNames().size() == 2 &&
             exp.getMacroName() == "get_user";
     }
 
-    bool is_offsetof(macroni::MacroExpansion &exp) {
-        return has_results(exp) &&
+    bool is_offsetof(macroni::MacroExpansion exp) {
+        return exp.getNumResults() > 0 &&
             exp.getParameterNames().size() == 2 &&
             exp.getMacroName() == "offsetof";
     }
 
-    bool is_container_of(macroni::MacroExpansion &exp) {
-        return has_results(exp) &&
+    bool is_container_of(macroni::MacroExpansion exp) {
+        return exp.getNumResults() > 0 &&
             exp.getParameterNames().size() == 3 &&
             exp.getMacroName() == "container_of";
     }
 
-    bool is_rcu_dereference(macroni::MacroExpansion &exp) {
-        return has_results(exp) &&
+    bool is_rcu_dereference(macroni::MacroExpansion exp) {
+        return exp.getNumResults() > 0 &&
             exp.getParameterNames().size() == 1 &&
             exp.getMacroName() == "rcu_dereference";
     }
 
-    bool is_smp_mb(macroni::MacroExpansion &exp) {
-        return has_results(exp) &&
+    bool is_smp_mb(macroni::MacroExpansion exp) {
+        return exp.getNumResults() > 0 &&
             exp.getParameterNames().size() == 0 &&
             exp.getMacroName() == "smp_mb";
     }
