@@ -41,16 +41,19 @@ namespace macroni {
     std::vector<llvm::StringRef> get_parameter_names(
         pasta::MacroSubstitution &sub) {
         std::vector<llvm::StringRef> param_names;
-        if (auto exp = pasta::MacroExpansion::From(sub)) {
-            if (auto def = exp->Definition()) {
-                for (auto macro_tok : def->Parameters()) {
-                    if (auto bt = macro_tok.BeginToken()) {
-                        param_names.push_back(bt->Data());
-                    } else {
-                        param_names.push_back(
-                            "<a nameless macro parameter>");
-                    }
-                }
+        auto exp = pasta::MacroExpansion::From(sub);
+        if (!exp) {
+            return param_names;
+        }
+        auto def = exp->Definition();
+        if (!def) {
+            return param_names;
+        }
+        for (auto macro_tok : def->Parameters()) {
+            if (auto bt = macro_tok.BeginToken()) {
+                param_names.push_back(bt->Data());
+            } else {
+                param_names.push_back("<a nameless macro parameter>");
             }
         }
         return param_names;
