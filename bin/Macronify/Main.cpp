@@ -4,13 +4,12 @@
 // This source code is licensed in accordance with the terms specified in
 // the LICENSE file found in the root directory of this source tree.
 
-#include "Globals.hpp"
-#include "MacroniCodeGenVisitorMixin.hpp"
-#include "MacroniMetaGenerator.hpp"
 #include "MacroniRewriters.hpp"
 #include "ParseAST.hpp"
 #include <iostream>
 #include <llvm/Support/CommandLine.h>
+#include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
+#include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <mlir/Pass/Pass.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
@@ -19,6 +18,8 @@
 #include <pasta/AST/AST.h>
 #include <vast/Translation/CodeGen.hpp>
 
+// TODO(bpp): Instead of using a global variable for the PASTA AST and MLIR
+// context, find out how to pass these to a CodeGen object.
 std::optional<pasta::AST> ast;
 
 int main(int argc, char **argv) {
