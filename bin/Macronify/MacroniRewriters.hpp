@@ -8,7 +8,6 @@
 #include <vast/Dialect/HighLevel/HighLevelOps.hpp>
 
 namespace macroni {
-    bool has_results(mlir::Operation *op);
     bool is_get_user(macroni::MacroExpansion &exp);
     bool is_offsetof(macroni::MacroExpansion &exp);
     bool is_container_of(macroni::MacroExpansion &exp);
@@ -26,7 +25,6 @@ namespace macroni {
     using FO = vast::hl::ForOp;
     mlir::LogicalResult rewrite_list_for_each(FO for_op, PR &rewriter);
 
-    llvm::APInt get_lock_level(mlir::Operation *op);
     using CO = vast::hl::CallOp;
     mlir::LogicalResult rewrite_rcu_read_unlock(CO call_op, PR &rewriter);
 
