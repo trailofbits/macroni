@@ -91,6 +91,10 @@ namespace macroni {
             }
         }
 
+        void set_lock_level(mlir::Operation *op) {
+            op->setAttr("lock_level", builder->getI64IntegerAttr(lock_level));
+        }
+
         mlir::Operation *VisitNonMacro(const clang::Stmt *stmt) {
             auto op = StmtVisitor::Visit(stmt);
             auto call_op = mlir::dyn_cast<vast::hl::CallOp>(op);
@@ -100,15 +104,11 @@ namespace macroni {
 
             auto name = call_op.getCalleeAttr().getValue();
             if ("rcu_read_lock" == name) {
-                call_op.getOperation()->setAttr(
-                    "lock_level",
-                    builder->getI64IntegerAttr(lock_level));
+                set_lock_level(call_op);
                 lock_level++;
             } else if ("rcu_read_unlock" == name) {
                 lock_level--;
-                call_op.getOperation()->setAttr(
-                    "lock_level",
-                    builder->getI64IntegerAttr(lock_level));
+                set_lock_level(call_op);
             }
             return op;
         }
