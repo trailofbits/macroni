@@ -212,9 +212,9 @@ namespace macroni {
         return mlir::success();
     }
 
-    llvm::APInt get_lock_level(mlir::Operation *op) {
+    llvm::APInt get_lock_level(mlir::Operation &op) {
         using IA = mlir::IntegerAttr;
-        return op->getAttrOfType<IA>("lock_level").getValue();
+        return op.getAttrOfType<IA>("lock_level").getValue();
     }
 
     mlir::LogicalResult rewrite_rcu_read_unlock(
@@ -225,13 +225,13 @@ namespace macroni {
             return mlir::failure();
         }
         auto unlock_op = call_op.getOperation();
-        auto unlock_level = get_lock_level(unlock_op);
+        auto unlock_level = get_lock_level(*unlock_op);
         mlir::Operation *lock_op = nullptr;
         for (auto op = unlock_op; op; op = op->getPrevNode()) {
             if (auto call_op = mlir::dyn_cast<vast::hl::CallOp>(op)) {
                 name = call_op.getCalleeAttr().getValue();
                 if ("rcu_read_lock" == name) {
-                    auto lock_level = get_lock_level(op);
+                    auto lock_level = get_lock_level(*op);
                     if (unlock_level == lock_level) {
                         lock_op = op;
                         break;
