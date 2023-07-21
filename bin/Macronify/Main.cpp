@@ -56,13 +56,13 @@ int main(int argc, char **argv) {
     if (convert) {
         // Register conversions
         mlir::RewritePatternSet patterns(&mctx);
-        patterns.add(macroni::rewrite_get_user);
-        patterns.add(macroni::rewrite_offsetof);
-        patterns.add(macroni::rewrite_container_of);
-        patterns.add(macroni::rewrite_rcu_dereference);
-        patterns.add(macroni::rewrite_smp_mb);
-        patterns.add(macroni::rewrite_list_for_each);
-        patterns.add(macroni::rewrite_rcu_read_unlock);
+        patterns.add(macroni::rewrite_get_user)
+            .add(macroni::rewrite_offsetof)
+            .add(macroni::rewrite_container_of)
+            .add(macroni::rewrite_rcu_dereference)
+            .add(macroni::rewrite_smp_mb)
+            .add(macroni::rewrite_list_for_each)
+            .add(macroni::rewrite_rcu_read_unlock);
 
         // Apply the conversions.
         mlir::FrozenRewritePatternSet frozen_pats(std::move(patterns));
