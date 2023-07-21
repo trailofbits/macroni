@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
         macroni::kernel::KernelDialect
     >();
     auto mctx = mlir::MLIRContext(registry);
-    macroni::MacroniMetaGenerator meta(ast, &mctx);
+    macroni::MacroniMetaGenerator meta(ast, &mctx, convert);
     vast::cg::CodeGenBase<macroni::MacroniVisitor> codegen(&mctx, meta);
 
     // Generate the MLIR

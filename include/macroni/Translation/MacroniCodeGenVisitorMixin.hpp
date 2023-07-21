@@ -49,8 +49,15 @@ namespace macroni {
             return TypeVisitor::Visit(type);
         }
 
+        // Overload the TypeVisitor's visit method for QualTypes to convert
+        // special VAST types to Kernel types.
         mlir::Type Visit(clang::QualType type) {
             auto ty = TypeVisitor::Visit(type);
+
+            // Return early if we are not converting.
+            if (!meta_gen().convert) {
+                return ty;
+            }
             auto attributed_type = clang::dyn_cast<clang::AttributedType>(type);
             if (!attributed_type) {
                 return ty;
