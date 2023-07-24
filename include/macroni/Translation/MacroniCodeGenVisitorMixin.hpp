@@ -53,7 +53,6 @@ namespace macroni {
         // special VAST types to Kernel types.
         mlir::Type Visit(clang::QualType type) {
             auto ty = TypeVisitor::Visit(type);
-
             // Return early if we are not converting.
             if (!meta_gen().convert) {
                 return ty;
