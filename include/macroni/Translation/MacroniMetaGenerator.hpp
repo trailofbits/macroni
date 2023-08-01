@@ -59,6 +59,10 @@ namespace macroni {
             return get(clang::SourceLocation());
         }
 
+        vast::cg::DefaultMeta get(const clang::CXXBaseSpecifier &spec) const {
+            return get(spec.getBeginLoc());
+        }
+
         const pasta::AST &ast;
         mlir::MLIRContext *mctx;
 
