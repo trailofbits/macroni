@@ -130,24 +130,64 @@ namespace macroni {
             }
         }
 
+        mlir::Operation *VisitNonMacro(const clang::Stmt *stmt) {
+            if (auto call_expr = clang::dyn_cast<clang::CallExpr>(stmt)) {
+                return VisitCallExpr(call_expr);
+            } else if (auto if_stmt = clang::dyn_cast<clang::IfStmt>(stmt)) {
+                return VisitIfStmt(if_stmt);
+            }
+            return StmtVisitor::Visit(stmt);
+        }
+
         void set_lock_level(mlir::Operation *op) {
             op->setAttr("lock_level", builder().getI64IntegerAttr(lock_level));
         }
 
-        mlir::Operation *VisitNonMacro(const clang::Stmt *stmt) {
-            auto op = StmtVisitor::Visit(stmt);
+        mlir::Operation *VisitCallExpr(const clang::CallExpr *call_expr) {
+            auto op = StmtVisitor::Visit(call_expr);
             auto call_op = mlir::dyn_cast<vast::hl::CallOp>(op);
             if (!call_op) {
                 return op;
             }
-
             auto name = call_op.getCalleeAttr().getValue();
             if ("rcu_read_lock" == name) {
-                set_lock_level(call_op);
+                set_lock_level(op);
                 lock_level++;
             } else if ("rcu_read_unlock" == name) {
                 lock_level--;
-                set_lock_level(call_op);
+                set_lock_level(op);
+            }
+            return op;
+        }
+
+        mlir::Operation *VisitIfStmt(const clang::IfStmt *if_stmt) {
+            auto op = StmtVisitor::Visit(if_stmt);
+            pasta::Stmt pasta_stmt = meta_gen().ast.Adopt(if_stmt);
+            auto pasta_if = pasta::IfStmt::From(pasta_stmt);
+            if (!pasta_if) {
+                return op;
+            }
+            auto token_range = pasta::TokenRange::From(pasta_if->BeginToken(),
+                                                       pasta_if->RParenToken());
+            if (!token_range) {
+                return op;
+            }
+            auto aligned_subs = token_range->AlignedSubstitutions(false);
+            for (auto sub : aligned_subs) {
+                auto exp = pasta::MacroExpansion::From(sub);
+                if (!exp) {
+                    continue;
+                }
+                auto name = exp->NameOrOperator();
+                if (!name) {
+                    continue;
+                }
+                auto data = name->Data();
+                if ("safe" == data) {
+                    op->setAttr("safe", builder().getBoolAttr(true));
+                } else if ("unsafe" == data) {
+                    op->setAttr("unsafe", builder().getBoolAttr(true));
+                }
             }
             return op;
         }
