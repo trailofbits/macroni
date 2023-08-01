@@ -62,8 +62,8 @@
 // CHECK:             %5 = hl.ref %0 : !hl.lvalue<!hl.int>
 // CHECK:             %6 = hl.implicit_cast %5 LValueToRValue : !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:             %7 = hl.const #hl.integer<10> : !hl.int
-// CHECK:             %8 = hl.cmp slt %6, %7 : !hl.int, !hl.int -> !hl.bool
-// CHECK:             hl.cond.yield %8 : !hl.bool
+// CHECK:             %8 = hl.cmp slt %6, %7 : !hl.int, !hl.int -> !hl.int
+// CHECK:             hl.cond.yield %8 : !hl.int
 // CHECK:           } incr {
 // CHECK:             %5 = hl.ref %0 : !hl.lvalue<!hl.int>
 // CHECK:             %6 = hl.post.inc %5 : !hl.lvalue<!hl.int> -> !hl.int
@@ -87,8 +87,7 @@
 // CHECK:           }
 // CHECK:         } while {
 // CHECK:           %2 = hl.const #hl.integer<0> : !hl.int
-// CHECK:           %3 = hl.implicit_cast %2 IntegralToBoolean : !hl.int -> !hl.bool
-// CHECK:           hl.cond.yield %3 : !hl.bool
+// CHECK:           hl.cond.yield %2 : !hl.int
 // CHECK:         }
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
@@ -108,8 +107,7 @@
 // CHECK:           }
 // CHECK:         } while {
 // CHECK:           %2 = hl.const #hl.integer<0> : !hl.int
-// CHECK:           %3 = hl.implicit_cast %2 IntegralToBoolean : !hl.int -> !hl.bool
-// CHECK:           hl.cond.yield %3 : !hl.bool
+// CHECK:           hl.cond.yield %2 : !hl.int
 // CHECK:         }
 // CHECK:       }
 // CHECK:       hl.do {
@@ -129,14 +127,12 @@
 // CHECK:         }
 // CHECK:       } while {
 // CHECK:         %2 = hl.const #hl.integer<0> : !hl.int
-// CHECK:         %3 = hl.implicit_cast %2 IntegralToBoolean : !hl.int -> !hl.bool
-// CHECK:         hl.cond.yield %3 : !hl.bool
+// CHECK:         hl.cond.yield %2 : !hl.int
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
 // CHECK:         hl.if {
 // CHECK:           %2 = hl.const #hl.integer<1> : !hl.int
-// CHECK:           %3 = hl.implicit_cast %2 IntegralToBoolean : !hl.int -> !hl.bool
-// CHECK:           hl.cond.yield %3 : !hl.bool
+// CHECK:           hl.cond.yield %2 : !hl.int
 // CHECK:         } then {
 // CHECK:           hl.scope {
 // CHECK:             hl.call @rcu_read_unlock() {lock_level = 0 : i64} : () -> ()

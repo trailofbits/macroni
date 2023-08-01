@@ -29,9 +29,8 @@
 // CHECK:       %1 = hl.implicit_cast %0 LValueToRValue : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>> -> !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>
 // CHECK:       %2 = hl.ref %arg1 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>
 // CHECK:       %3 = hl.implicit_cast %2 LValueToRValue : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>> -> !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>
-// CHECK:       %4 = hl.cmp eq %1, %3 : !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>, !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >> -> !hl.bool
-// CHECK:       %5 = hl.implicit_cast %4 IntegralCast : !hl.bool -> !hl.int
-// CHECK:       hl.return %5 : !hl.int
+// CHECK:       %4 = hl.cmp eq %1, %3 : !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>, !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >> -> !hl.int
+// CHECK:       hl.return %4 : !hl.int
 // CHECK:     }
 // CHECK:   }
 // CHECK:   hl.func external @main () -> !hl.int {
