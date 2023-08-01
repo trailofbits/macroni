@@ -42,11 +42,12 @@ int main(int argc, char **argv) {
     >();
     auto mctx = mlir::MLIRContext(registry);
     macroni::MacroniMetaGenerator meta(ast, &mctx, convert);
-    vast::cg::CodeGenBase<macroni::MacroniVisitor> codegen(&mctx, meta);
+    vast::cg::CodeGenContext cgctx(mctx, ast.UnderlyingAST());
+    vast::cg::CodeGenBase<macroni::MacroniVisitor> codegen(cgctx, meta);
 
     // Generate the MLIR
-    codegen.append_to_module(ast.UnderlyingAST().getTranslationUnitDecl());
-    auto mod = codegen.freeze();
+    auto tud_decl = ast.UnderlyingAST().getTranslationUnitDecl();
+    auto mod = codegen.emit_module(tud_decl);
 
     if (convert) {
         // Register conversions
@@ -57,7 +58,8 @@ int main(int argc, char **argv) {
             .add(macroni::rewrite_rcu_dereference)
             .add(macroni::rewrite_smp_mb)
             .add(macroni::rewrite_list_for_each)
-            .add(macroni::rewrite_rcu_read_unlock);
+            .add(macroni::rewrite_rcu_read_unlock)
+            .add(macroni::rewrite_safe_unsafe);
 
         // Apply the conversions.
         mlir::FrozenRewritePatternSet frozen_pats(std::move(patterns));
@@ -65,7 +67,8 @@ int main(int argc, char **argv) {
             using ME = macroni::macroni::MacroExpansion;
             using FO = vast::hl::ForOp;
             using CO = vast::hl::CallOp;
-            if (mlir::isa<ME, FO, CO>(op)) {
+            using IO = vast::hl::IfOp;
+            if (mlir::isa<ME, FO, CO, IO>(op)) {
                 std::ignore = mlir::applyOpPatternsAndFold(op, frozen_pats);
             }}
         );
