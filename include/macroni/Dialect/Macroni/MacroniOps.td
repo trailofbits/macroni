@@ -55,4 +55,22 @@ def MacroParameter :
   let assemblyFormat = "$parameterName attr-dict `:` type($result) $expansion";
 }
 
+def SafeRegion :
+  Macroni_Op< "safe", [SingleBlock, NoTerminator] > {
+  let summary = "A superficially safe region of code.";
+  let description = [{
+    A region of code wrapped in an expansion of the "safe" macro.
+  }];
+  let regions = (region SizedRegion<1>:$bodyRegion);
+}
+
+def UnsafeRegion :
+  Macroni_Op< "unsafe", [SingleBlock, NoTerminator] > {
+  let summary = "A superficially unsafe region of code.";
+  let description = [{
+    A region of code wrapped in an expansion of the "unsafe" macro.
+  }];
+  let regions = (region SizedRegion<1>:$bodyRegion);
+}
+
 #endif // MACRONI_DIALECT_IR_MACRONIOPS
