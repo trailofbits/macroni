@@ -256,4 +256,25 @@ namespace macroni {
         return mlir::success();
     }
 
+    mlir::LogicalResult rewrite_safe_unsafe(
+        vast::hl::IfOp if_op,
+        mlir::PatternRewriter &rewriter) {
+        if (if_op->hasAttr("safe")) {
+            using SR = ::macroni::macroni::SafeRegion;
+            auto safe_op = rewriter.create<SR>(if_op.getLoc());
+            auto &reg = safe_op.getBodyRegion();
+            rewriter.inlineRegionBefore(if_op.getThenRegion(), reg, reg.end());
+            rewriter.eraseOp(if_op);
+            return mlir::success();
+        } else if (if_op->hasAttr("unsafe")) {
+            using UR = ::macroni::macroni::UnsafeRegion;
+            auto unsafe_op = rewriter.create<UR>(if_op.getLoc());
+            auto &reg = unsafe_op.getBodyRegion();
+            rewriter.inlineRegionBefore(if_op.getThenRegion(), reg, reg.end());
+            rewriter.eraseOp(if_op);
+            return mlir::success();
+        }
+        return mlir::failure();
+    }
+
 } // namespace macroni

@@ -21,5 +21,8 @@ namespace macroni {
 
     using CO = vast::hl::CallOp;
     mlir::LogicalResult rewrite_rcu_read_unlock(CO call_op, PR &rewriter);
+    
+    using IO = vast::hl::IfOp;
+    mlir::LogicalResult rewrite_safe_unsafe(IO if_op, PR &rewriter);
 
 } // namespace macroni
