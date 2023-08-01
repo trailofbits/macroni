@@ -6,7 +6,7 @@ namespace pasta {
         FileManager fm(FileSystem::CreateNative());
         auto maybe_compiler = Compiler::CreateHostCompiler(
             fm,
-            TargetLanguage::kCXX);
+            TargetLanguage::kC);
         if (!maybe_compiler.Succeeded()) {
             return maybe_compiler.TakeError();
         }
