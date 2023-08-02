@@ -46,8 +46,8 @@ int main(int argc, char **argv) {
     vast::cg::CodeGenBase<macroni::MacroniVisitor> codegen(cgctx, meta);
 
     // Generate the MLIR
-    auto tud_decl = ast.UnderlyingAST().getTranslationUnitDecl();
-    auto mod = codegen.emit_module(tud_decl);
+    auto tu_decl = ast.UnderlyingAST().getTranslationUnitDecl();
+    auto mod = codegen.emit_module(tu_decl);
 
     if (convert) {
         // Register conversions
