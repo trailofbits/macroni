@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
             .add(macroni::rewrite_smp_mb)
             .add(macroni::rewrite_list_for_each)
             .add(macroni::rewrite_rcu_read_unlock)
-            .add(macroni::rewrite_safe_unsafe);
+            .add(macroni::rewrite_unsafe);
 
         // Apply the conversions.
         mlir::FrozenRewritePatternSet frozen_pats(std::move(patterns));

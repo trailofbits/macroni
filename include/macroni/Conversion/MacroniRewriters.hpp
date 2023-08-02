@@ -23,6 +23,6 @@ namespace macroni {
     mlir::LogicalResult rewrite_rcu_read_unlock(CO call_op, PR &rewriter);
     
     using IO = vast::hl::IfOp;
-    mlir::LogicalResult rewrite_safe_unsafe(IO if_op, PR &rewriter);
+    mlir::LogicalResult rewrite_unsafe(IO if_op, PR &rewriter);
 
 } // namespace macroni
