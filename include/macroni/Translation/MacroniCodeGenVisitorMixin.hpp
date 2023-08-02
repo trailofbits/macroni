@@ -167,27 +167,34 @@ namespace macroni {
             if (!pasta_if) {
                 return op;
             }
-            auto token_range = pasta::TokenRange::From(pasta_if->BeginToken(),
-                                                       pasta_if->RParenToken());
+            // The `unsafe` macro expands to `if (0) ; else`. Therefore, any if
+            // statement expanded from `unsafe` should be a NullStmt.
+            if (!pasta::NullStmt::From(pasta_if->Then())) {
+                return op;
+            }
+            // Find the macro that aligns with the statement's `if` and `else`
+            // tokens.
+            auto token_range = pasta::TokenRange::From(pasta_if->IfToken(),
+                                                       pasta_if->ElseToken());
             if (!token_range) {
                 return op;
             }
             auto aligned_subs = token_range->AlignedSubstitutions(false);
-            for (auto sub : aligned_subs) {
-                auto exp = pasta::MacroExpansion::From(sub);
-                if (!exp) {
-                    continue;
-                }
-                auto name = exp->NameOrOperator();
-                if (!name) {
-                    continue;
-                }
-                auto data = name->Data();
-                if ("safe" == data) {
-                    op->setAttr("safe", builder().getBoolAttr(true));
-                } else if ("unsafe" == data) {
-                    op->setAttr("unsafe", builder().getBoolAttr(true));
-                }
+            if (std::any_of(
+                aligned_subs.begin(),
+                aligned_subs.end(),
+                [](pasta::MacroSubstitution &sub) {
+                    auto exp = pasta::MacroSubstitution::From(sub);
+                    if (!exp) {
+                        return false;
+                    }
+                    auto name = exp->NameOrOperator();
+                    if (!name) {
+                        return false;
+                    }
+                    return "unsafe" == name->Data();
+                })) {
+                op->setAttr("unsafe", builder().getBoolAttr(true));
             }
             return op;
         }
