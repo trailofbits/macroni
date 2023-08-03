@@ -1,4 +1,4 @@
-// RUN: macronify -xc %s --convert | FileCheck %s --match-full-lines
+// RUN: safe-c -x c %s | FileCheck %s --match-full-lines
 
 // CHECK: hl.translation_unit {
 // CHECK:   hl.typedef "__int128_t" : !hl.int128
@@ -20,7 +20,7 @@
 // CHECK:   hl.typedef "__builtin_va_list" : !hl.array<1, !hl.record<"__va_list_tag">>
 // CHECK:   hl.func external @main () -> !hl.int {
 // CHECK:     hl.scope {
-// CHECK:       "macroni.unsafe"() ({
+// CHECK:       "safety.unsafe"() ({
 // CHECK:         hl.skip
 // CHECK:       }) : () -> ()
 // CHECK:       %0 = hl.const #hl.integer<0> : !hl.int
