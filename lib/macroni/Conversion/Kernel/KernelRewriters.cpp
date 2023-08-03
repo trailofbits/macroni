@@ -1,6 +1,6 @@
-#include <macroni/Conversion/MacroniRewriters.hpp>
+#include <macroni/Conversion/Kernel/KernelRewriters.hpp>
 
-namespace macroni {
+namespace macroni::kernel {
     bool is_get_user(macroni::MacroExpansion exp) {
         return exp.getNumResults() > 0 &&
             exp.getParameterNames().size() == 2 &&
@@ -256,18 +256,4 @@ namespace macroni {
         return mlir::success();
     }
 
-    mlir::LogicalResult rewrite_unsafe(
-        vast::hl::IfOp if_op,
-        mlir::PatternRewriter &rewriter) {
-        if (if_op->hasAttr("unsafe")) {
-            using UR = ::macroni::macroni::UnsafeRegion;
-            auto unsafe_op = rewriter.create<UR>(if_op.getLoc());
-            auto &reg = unsafe_op.getBodyRegion();
-            rewriter.inlineRegionBefore(if_op.getThenRegion(), reg, reg.end());
-            rewriter.eraseOp(if_op);
-            return mlir::success();
-        }
-        return mlir::failure();
-    }
-
-} // namespace macroni
+} // namespace macroni::kernel

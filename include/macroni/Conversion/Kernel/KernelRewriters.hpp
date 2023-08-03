@@ -7,7 +7,7 @@
 #include <mlir/Transforms/DialectConversion.h>
 #include <vast/Dialect/HighLevel/HighLevelOps.hpp>
 
-namespace macroni {
+namespace macroni::kernel {
     using ME = macroni::MacroExpansion;
     using PR = mlir::PatternRewriter;
     mlir::LogicalResult rewrite_get_user(ME exp, PR &rewriter);
@@ -21,8 +21,4 @@ namespace macroni {
 
     using CO = vast::hl::CallOp;
     mlir::LogicalResult rewrite_rcu_read_unlock(CO call_op, PR &rewriter);
-    
-    using IO = vast::hl::IfOp;
-    mlir::LogicalResult rewrite_unsafe(IO if_op, PR &rewriter);
-
-} // namespace macroni
+} // namespace macroni::kernel
