@@ -12,6 +12,7 @@ add_library( macroni_api INTERFACE )
 
 target_link_libraries( macroni_api
     INTERFACE
+        macroni_common
         macroni_translation_api
         macroni_settings
 )
