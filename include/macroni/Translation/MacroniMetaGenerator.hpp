@@ -6,9 +6,8 @@
 
 namespace macroni {
     struct MacroniMetaGenerator {
-        MacroniMetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx,
-                             bool convert)
-            : ast(ast), mctx(mctx), convert(convert) {}
+        MacroniMetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
+            : ast(ast), mctx(mctx) {}
 
         vast::cg::DefaultMeta get(const clang::FullSourceLoc &loc) const {
             if (!loc.isValid()) {
@@ -65,9 +64,5 @@ namespace macroni {
 
         const pasta::AST &ast;
         mlir::MLIRContext *mctx;
-
-        // Whether to convert special VAST types to Kernel types while lowering
-        // code to MLIR.
-        bool convert;
     };
 } // namespace macroni
