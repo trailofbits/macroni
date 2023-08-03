@@ -2,14 +2,13 @@ set(LLVM_LINK_COMPONENTS Core Support AsmParser)
 
 add_executable(macronify
     Main.cpp
-    ParseAST.cpp
 )
 llvm_update_compile_flags(macronify)
 
 target_link_libraries(macronify
     macroni
+    macroni_common
     macroni_translation_api
-    macroni_conversion
 
     MLIROptLib
     MLIRHighLevel
@@ -19,7 +18,6 @@ target_link_libraries(macronify
     MLIRPass
     MLIRSupport
 
-    MLIRKernel
     MLIRMacroni
 
     vast_high_level_transforms
