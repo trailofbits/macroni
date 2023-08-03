@@ -50,9 +50,19 @@ config.macroni_tools_dir = os.path.join(config.macroni_obj_root, 'bin')
 
 tools = [
     ToolSubst(
+        "kernelize",
+        os.path.join(config.macroni_obj_root, 'bin',
+                     'Kernelize', 'RelWithDebInfo', 'kernelize')),
+
+    ToolSubst(
         "macronify",
         os.path.join(config.macroni_obj_root, 'bin',
                      'Macronify', 'RelWithDebInfo', 'macronify')),
+
+    ToolSubst(
+        "safe-c",
+        os.path.join(config.macroni_obj_root, 'bin',
+                     'SafeC', 'RelWithDebInfo', 'safe-c')),
 
     ToolSubst(
         "FileCheck",
