@@ -8,17 +8,31 @@
 #include <vast/Dialect/HighLevel/HighLevelOps.hpp>
 
 namespace macroni::kernel {
-    using ME = macroni::MacroExpansion;
-    using PR = mlir::PatternRewriter;
-    mlir::LogicalResult rewrite_get_user(ME exp, PR &rewriter);
-    mlir::LogicalResult rewrite_offsetof(ME exp, PR &rewriter);
-    mlir::LogicalResult rewrite_container_of(ME exp, PR &rewriter);
-    mlir::LogicalResult rewrite_rcu_dereference(ME exp, PR &rewriter);
-    mlir::LogicalResult rewrite_smp_mb(ME exp, PR &rewriter);
+    mlir::LogicalResult rewrite_get_user(
+        macroni::MacroExpansion exp,
+        mlir::PatternRewriter &rewriter);
 
-    using FO = vast::hl::ForOp;
-    mlir::LogicalResult rewrite_list_for_each(FO for_op, PR &rewriter);
+    mlir::LogicalResult rewrite_offsetof(
+        macroni::MacroExpansion exp,
+        mlir::PatternRewriter &rewriter);
 
-    using CO = vast::hl::CallOp;
-    mlir::LogicalResult rewrite_rcu_read_unlock(CO call_op, PR &rewriter);
+    mlir::LogicalResult rewrite_container_of(
+        macroni::MacroExpansion exp,
+        mlir::PatternRewriter &rewriter);
+
+    mlir::LogicalResult rewrite_rcu_dereference(
+        macroni::MacroExpansion exp,
+        mlir::PatternRewriter &rewriter);
+
+    mlir::LogicalResult rewrite_smp_mb(
+        macroni::MacroExpansion exp,
+        mlir::PatternRewriter &rewriter);
+
+    mlir::LogicalResult rewrite_list_for_each(
+        vast::hl::ForOp for_op,
+        mlir::PatternRewriter &rewriter);
+
+    mlir::LogicalResult rewrite_rcu_read_unlock(
+        vast::hl::CallOp call_op,
+        mlir::PatternRewriter &rewriter);
 } // namespace macroni::kernel

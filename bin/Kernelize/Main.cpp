@@ -55,10 +55,10 @@ int main(int argc, char **argv) {
     // Apply the conversions.
     mlir::FrozenRewritePatternSet frozen_pats(std::move(patterns));
     mod->walk([&frozen_pats](mlir::Operation *op) {
-        using ME = macroni::macroni::MacroExpansion;
-        using FO = vast::hl::ForOp;
-        using CO = vast::hl::CallOp;
-        if (mlir::isa<ME, FO, CO>(op)) {
+        if (mlir::isa<
+            macroni::macroni::MacroExpansion,
+            vast::hl::ForOp,
+            vast::hl::CallOp>(op)) {
             std::ignore = mlir::applyOpPatternsAndFold(op, frozen_pats);
         }}
     );

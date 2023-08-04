@@ -8,8 +8,7 @@
 #include <vast/Dialect/HighLevel/HighLevelOps.hpp>
 
 namespace macroni::safety {
-    using PR = mlir::PatternRewriter;
-
-    using IO = vast::hl::IfOp;
-    mlir::LogicalResult rewrite_unsafe(IO if_op, PR &rewriter);
+    mlir::LogicalResult rewrite_unsafe(
+        vast::hl::IfOp if_op,
+        mlir::PatternRewriter &rewriter);
 } // namespace macroni::safety
