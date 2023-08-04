@@ -104,24 +104,23 @@ namespace macroni {
 
             // Check if the macro is an expansion or a parameter, and return the
             // appropriate operation
-            mlir::Operation *op = nullptr;
-            if (sub->Kind() == pasta::MacroKind::kExpansion) {
-                op = StmtVisitor::template make<macroni::MacroExpansion>(
+            auto macroni_op = [&]() -> mlir::Operation *{
+                if (sub->Kind() == pasta::MacroKind::kExpansion) {
+                    return StmtVisitor::template make<macroni::MacroExpansion>(
+                        loc,
+                        builder().getStringAttr(llvm::Twine(macro_name)),
+                        builder().getStrArrayAttr(llvm::ArrayRef(parameter_names)),
+                        builder().getBoolAttr(function_like),
+                        return_type,
+                        std::move(region));
+                }
+                return StmtVisitor::template make<macroni::MacroParameter>(
                     loc,
                     builder().getStringAttr(llvm::Twine(macro_name)),
-                    builder().getStrArrayAttr(llvm::ArrayRef(parameter_names)),
-                    builder().getBoolAttr(function_like),
                     return_type,
-                    std::move(region)
-                );
-            } else {
-                op = StmtVisitor::template make<macroni::MacroParameter>(
-                    loc,
-                    builder().getStringAttr(llvm::Twine(macro_name)),
-                    return_type,
-                    std::move(region)
-                );
-            }
+                    std::move(region));
+                };
+            mlir::Operation *op = macroni_op();
             derived().AlignedStmtVisited(pasta_stmt, *sub, op);
             return op;
         }
