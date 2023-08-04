@@ -38,20 +38,21 @@ struct SafeCCodeGenVisitorMixin
             return;
         }
         auto aligned_subs = token_range->AlignedSubstitutions(false);
-        if (std::any_of(
-            aligned_subs.begin(),
-            aligned_subs.end(),
-            [](pasta::MacroSubstitution &sub) {
-                auto exp = pasta::MacroSubstitution::From(sub);
-                if (!exp) {
-                    return false;
-                }
-                auto name = exp->NameOrOperator();
-                if (!name) {
-                    return false;
-                }
-                return macroni::safety::SafetyDialect::unsafe() == name->Data();
-            })) {
+        auto is_unsafe_exp = [](pasta::MacroSubstitution &sub) -> bool {
+            auto exp = pasta::MacroSubstitution::From(sub);
+            if (!exp) {
+                return false;
+            }
+            auto name = exp->NameOrOperator();
+            if (!name) {
+                return false;
+            }
+            // Use .equals() instead of == to avoid operator ambiguity.
+            return macroni::safety::SafetyDialect::unsafe().
+                equals(name->Data());
+            };
+        if (std::any_of(aligned_subs.begin(), aligned_subs.end(),
+                        is_unsafe_exp)) {
             op->setAttr(macroni::safety::SafetyDialect::unsafe(),
                         builder().getBoolAttr(true));
         }
