@@ -25,6 +25,8 @@ def Kernel_Dialect : Dialect {
 
     let extraClassDeclaration = [{
         void registerTypes();
+        static llvm::StringRef rcu_read_lock() { return "rcu_read_lock"; }
+        static llvm::StringRef rcu_read_unlock() { return "rcu_read_unlock"; }
     }];
 
     let useDefaultTypePrinterParser = 1;

@@ -2,6 +2,7 @@
 
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
+#include <macroni/Dialect/Kernel/KernelDialect.hpp>
 #include <pasta/AST/Stmt.h>
 #include <stdint.h>
 
@@ -60,10 +61,10 @@ struct KernelCodeGenVisitorMixin
             return;
         }
         auto name = call_op.getCalleeAttr().getValue();
-        if ("rcu_read_lock" == name) {
+        if (name == macroni::kernel::KernelDialect::rcu_read_lock()) {
             set_lock_level(op);
             lock_level++;
-        } else if ("rcu_read_unlock" == name) {
+        } else if (name == macroni::kernel::KernelDialect::rcu_read_unlock()) {
             lock_level--;
             set_lock_level(op);
         }
