@@ -21,6 +21,10 @@ def Safety_Dialect : Dialect {
         macroni::Safety provides C support Rust-like safety regions.
     }];
 
+    let extraClassDeclaration = [{
+        static llvm::StringRef unsafe() { return "unsafe"; }
+    }];
+
     let useFoldAPI = kEmitFoldAdaptorFolder;
 }
 

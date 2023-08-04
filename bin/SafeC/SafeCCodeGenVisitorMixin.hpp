@@ -1,5 +1,6 @@
 #pragma once
 
+#include <macroni/Dialect/Safety/SafetyDialect.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <pasta/AST/Macro.h>
@@ -49,9 +50,10 @@ struct SafeCCodeGenVisitorMixin
                 if (!name) {
                     return false;
                 }
-                return "unsafe" == name->Data();
+                return macroni::safety::SafetyDialect::unsafe() == name->Data();
             })) {
-            op->setAttr("unsafe", builder().getBoolAttr(true));
+            op->setAttr(macroni::safety::SafetyDialect::unsafe(),
+                        builder().getBoolAttr(true));
         }
     }
 };
