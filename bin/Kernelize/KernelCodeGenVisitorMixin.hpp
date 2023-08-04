@@ -1,8 +1,8 @@
 #pragma once
 
+#include <macroni/Dialect/Kernel/KernelDialect.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
-#include <macroni/Dialect/Kernel/KernelDialect.hpp>
 #include <pasta/AST/Stmt.h>
 #include <stdint.h>
 
