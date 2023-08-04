@@ -17,7 +17,7 @@ struct SafeCCodeGenVisitorMixin
     using parent_t::Visit;
 
     void UnalignedStmtVisited(pasta::Stmt &pasta_stmt,
-                              mlir::Operation *op) override {
+                              mlir::Operation *op) {
         if (auto if_stmt = pasta::IfStmt::From(pasta_stmt)) {
             VisitIfStmt(*if_stmt, op);
         }

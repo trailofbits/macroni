@@ -45,7 +45,7 @@ struct KernelCodeGenVisitorMixin
     }
 
     void UnalignedStmtVisited(pasta::Stmt &pasta_stmt,
-                              mlir::Operation *op) override {
+                              mlir::Operation *op) {
         if (auto call_expr = pasta::CallExpr::From(pasta_stmt)) {
             VisitCallExpr(*call_expr, op);
         }

@@ -30,19 +30,28 @@ namespace macroni {
     struct MacroniCodeGenVisitorMixin
         : vast::cg::CodeGenDeclVisitorMixin<Derived>
         , vast::cg::CodeGenStmtVisitorMixin<Derived>
-        , vast::cg::CodeGenTypeVisitorWithDataLayoutMixin<Derived> {
+        , vast::cg::CodeGenTypeVisitorWithDataLayoutMixin<Derived>
+        , vast::cg::CodeGenVisitorLens<MacroniCodeGenVisitorMixin<Derived>,
+        Derived>
+        , vast::cg::CodeGenBuilderMixin<MacroniCodeGenVisitorMixin<Derived>,
+        Derived> {
+
+        using LensType = vast::cg::CodeGenVisitorLens<
+            MacroniCodeGenVisitorMixin<Derived>, Derived>;
+        using LensType::meta_gen;
+        using LensType::derived;
+
+        using Builder = vast::cg::CodeGenBuilderMixin<
+            MacroniCodeGenVisitorMixin<Derived>, Derived>;
+        using Builder::builder;
+        using Builder::make_maybe_value_yield_region;
+
         using DeclVisitor = vast::cg::CodeGenDeclVisitorMixin<Derived>;
         using StmtVisitor = vast::cg::CodeGenStmtVisitorMixin<Derived>;
         using TypeVisitor =
             vast::cg::CodeGenTypeVisitorWithDataLayoutMixin<Derived>;
 
-        using StmtVisitor::make_maybe_value_yield_region;
-        using StmtVisitor::builder;
-        using StmtVisitor::LensType::meta_gen;
-
         std::set<pasta::MacroSubstitution> visited;
-
-        virtual ~MacroniCodeGenVisitorMixin() {}
 
         mlir::Type Visit(const clang::Type *type) {
             return TypeVisitor::Visit(type);
@@ -66,7 +75,7 @@ namespace macroni {
                 clang::ImplicitCastExpr>(stmt)) {
                 // Don't visit implicit expressions
                 auto op = StmtVisitor::Visit(stmt);
-                UnalignedStmtVisited(pasta_stmt, op);
+                derived().UnalignedStmtVisited(pasta_stmt, op);
                 return op;
             }
 
@@ -75,7 +84,7 @@ namespace macroni {
             if (!sub) {
                 // If no substitution covers this statement, visit it normally.
                 auto op = StmtVisitor::Visit(stmt);
-                UnalignedStmtVisited(pasta_stmt, op);
+                derived().UnalignedStmtVisited(pasta_stmt, op);
                 return op;
             }
 
@@ -113,7 +122,7 @@ namespace macroni {
                     std::move(region)
                 );
             }
-            AlignedStmtVisited(pasta_stmt, *sub, op);
+            derived().AlignedStmtVisited(pasta_stmt, *sub, op);
             return op;
         }
 
@@ -122,8 +131,8 @@ namespace macroni {
         // \param pasta_stmt The `pasta::Stmt` that does not align with a macro
         // substitution.
         // \param op The `mlir::Operation` obtained from visiting the `Stmt`.
-        virtual void UnalignedStmtVisited(pasta::Stmt &pasta_stmt,
-                                          mlir::Operation *op) {}
+        void UnalignedStmtVisited(pasta::Stmt &pasta_stmt,
+                                  mlir::Operation *op) {}
 
         // Hook called whenever Macroni finishes visiting a Stmt that align with
         // a macro substitution.
@@ -132,9 +141,9 @@ namespace macroni {
         // \param sub The `pasta::MacroSubstitution` that `pasta_stmt` aligns
         // with.
         // \param op The `mlir::Operation` obtained from visiting the `Stmt`.
-        virtual void AlignedStmtVisited(pasta::Stmt &pasta_stmt,
-                                        pasta::MacroSubstitution &sub,
-                                        mlir::Operation *op) {}
+        void AlignedStmtVisited(pasta::Stmt &pasta_stmt,
+                                pasta::MacroSubstitution &sub,
+                                mlir::Operation *op) {}
 
     };
 
