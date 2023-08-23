@@ -1,6 +1,6 @@
-#include <macroni/Conversion/MacroniRewriters.hpp>
+#include <macroni/Conversion/Kernel/KernelRewriters.hpp>
 
-namespace macroni {
+namespace macroni::kernel {
     bool is_get_user(macroni::MacroExpansion exp) {
         return exp.getNumResults() > 0 &&
             exp.getParameterNames().size() == 2 &&
@@ -63,10 +63,9 @@ namespace macroni {
         // parameters from ones that have been lifted?
         auto x_clone = rewriter.clone(*x);
         auto ptr_clone = rewriter.clone(*ptr);
-        using GE = ::macroni::kernel::GetUser;
-        rewriter.replaceOpWithNewOp<GE>(exp, exp.getType(0),
-                                        x_clone->getResult(0),
-                                        ptr_clone->getResult(0));
+        rewriter.replaceOpWithNewOp<GetUser>(exp, exp.getType(0),
+                                             x_clone->getResult(0),
+                                             ptr_clone->getResult(0));
         return mlir::success();
     }
 
@@ -82,8 +81,8 @@ namespace macroni {
             if (auto member_op = mlir::dyn_cast<vast::hl::RecordMemberOp>(op)) {
                 auto record = member_op.getRecord();
                 auto record_ty = record.getType();
-                using PT = vast::hl::PointerType;
-                if (auto pty = mlir::dyn_cast<PT>(record_ty)) {
+                if (auto pty =
+                    mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
                     auto element_ty = pty.getElementType();
                     auto ty_attr = mlir::TypeAttr::get(element_ty);
                     type = ty_attr;
@@ -97,8 +96,8 @@ namespace macroni {
             return mlir::failure();
         }
 
-        using OO = ::macroni::kernel::OffsetOf;
-        rewriter.replaceOpWithNewOp<OO>(exp, exp.getType(0), *type, *member);
+        rewriter.replaceOpWithNewOp<OffsetOf>(exp, exp.getType(0), *type,
+                                              *member);
         return mlir::success();
     }
 
@@ -111,18 +110,18 @@ namespace macroni {
         mlir::Operation *ptr = nullptr;
         std::optional<mlir::TypeAttr> type;
         std::optional<mlir::StringAttr> member;
-        using RMO = vast::hl::RecordMemberOp;
         exp.getExpansion().walk([&](mlir::Operation *op) {
             if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
                 auto param_name = mp.getParameterName();
                 if ("ptr" == param_name) {
                     ptr = op;
                 }
-            } else if (auto member_op = mlir::dyn_cast<RMO>(op)) {
+            } else if (auto member_op
+                       = mlir::dyn_cast<vast::hl::RecordMemberOp>(op)) {
                 auto record = member_op.getRecord();
                 auto record_ty = record.getType();
-                using PT = vast::hl::PointerType;
-                if (auto pty = mlir::dyn_cast<PT>(record_ty)) {
+                if (auto pty =
+                    mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
                     auto elem_ty = pty.getElementType();
                     auto ty_attr = mlir::TypeAttr::get(elem_ty);
                     type = ty_attr;
@@ -137,10 +136,9 @@ namespace macroni {
         }
 
         auto ptr_clone = rewriter.clone(*ptr);
-        using CO = ::macroni::kernel::ContainerOf;
-        rewriter.replaceOpWithNewOp<CO>(exp, exp.getType(0),
-                                        ptr_clone->getResult(0), *type,
-                                        *member);
+        rewriter.replaceOpWithNewOp<ContainerOf>(exp, exp.getType(0),
+                                                 ptr_clone->getResult(0), *type,
+                                                 *member);
         return mlir::success();
     }
 
@@ -163,9 +161,8 @@ namespace macroni {
         }
 
         auto p_clone = rewriter.clone(*p);
-        using RCUD = ::macroni::kernel::RCUDereference;
-        rewriter.replaceOpWithNewOp<RCUD>(exp, exp.getType(0),
-                                          p_clone->getResult(0));
+        rewriter.replaceOpWithNewOp<RCUDereference>(exp, exp.getType(0),
+                                                    p_clone->getResult(0));
         return mlir::success();
     }
 
@@ -187,8 +184,8 @@ namespace macroni {
         mlir::Operation *head = nullptr;
         for_op.getCondRegion().walk(
             [&](mlir::Operation *op) {
-                using MP = macroni::MacroParameter;
-                if (auto param_op = mlir::dyn_cast<MP>(op)) {
+                if (auto param_op =
+                    mlir::dyn_cast<macroni::MacroParameter>(op)) {
                     if (param_op.getParameterName() == "pos") {
                         pos = op;
                     } else if (param_op.getParameterName() == "head") {
@@ -205,16 +202,15 @@ namespace macroni {
         auto head_clone = rewriter.clone(*head);
         auto reg = std::make_unique<mlir::Region>();
         reg->takeBody(for_op.getBodyRegion());
-        using LFE = ::macroni::kernel::ListForEach;
-        rewriter.replaceOpWithNewOp<LFE>(for_op, pos_clone->getResult(0),
-                                         head_clone->getResult(0),
-                                         std::move(reg));
+        rewriter.replaceOpWithNewOp<ListForEach>(for_op,
+                                                 pos_clone->getResult(0),
+                                                 head_clone->getResult(0),
+                                                 std::move(reg));
         return mlir::success();
     }
 
     llvm::APInt get_lock_level(mlir::Operation &op) {
-        using IA = mlir::IntegerAttr;
-        return op.getAttrOfType<IA>("lock_level").getValue();
+        return op.getAttrOfType<mlir::IntegerAttr>("lock_level").getValue();
     }
 
     mlir::LogicalResult rewrite_rcu_read_unlock(
@@ -244,8 +240,7 @@ namespace macroni {
         }
 
         rewriter.setInsertionPointAfter(lock_op);
-        using CS = kernel::RCUCriticalSection;
-        auto cs = rewriter.replaceOpWithNewOp<CS>(lock_op);
+        auto cs = rewriter.replaceOpWithNewOp<RCUCriticalSection>(lock_op);
         auto cs_block = rewriter.createBlock(&cs.getBodyRegion());
         for (auto op = cs->getNextNode(); op != unlock_op;) {
             auto temp = op->getNextNode();
@@ -256,18 +251,4 @@ namespace macroni {
         return mlir::success();
     }
 
-    mlir::LogicalResult rewrite_unsafe(
-        vast::hl::IfOp if_op,
-        mlir::PatternRewriter &rewriter) {
-        if (if_op->hasAttr("unsafe")) {
-            using UR = ::macroni::macroni::UnsafeRegion;
-            auto unsafe_op = rewriter.create<UR>(if_op.getLoc());
-            auto &reg = unsafe_op.getBodyRegion();
-            rewriter.inlineRegionBefore(if_op.getThenRegion(), reg, reg.end());
-            rewriter.eraseOp(if_op);
-            return mlir::success();
-        }
-        return mlir::failure();
-    }
-
-} // namespace macroni
+} // namespace macroni::kernel

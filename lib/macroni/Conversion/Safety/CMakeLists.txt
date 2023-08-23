@@ -1,0 +1,20 @@
+add_library(safety_conversion
+    SafetyRewriters.cpp
+)
+
+target_link_libraries(safety_conversion
+  PRIVATE
+    MLIRLowLevel
+    MLIRHighLevel
+    MLIRIR
+    MLIRPass
+    MLIRTransformUtils
+    MLIRExecutionEngine
+    MLIRLLVMCommonConversion
+    MLIRTargetLLVMIRExport
+    MLIRLLVMToLLVMIRTranslation
+    MLIRToLLVMIRTranslationRegistration
+
+    macroni::settings
+)
+add_library(macroni::safety_conversion ALIAS safety_conversion)

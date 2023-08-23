@@ -19,7 +19,9 @@ configure_lit_site_cfg(
 )
 
 set(MACRONI_TEST_DEPENDS
+  kernelize
   macronify
+  safe-c
 )
 
 add_lit_testsuite(check-macroni "Running Macroni regression tests"

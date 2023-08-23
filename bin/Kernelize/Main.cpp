@@ -4,8 +4,10 @@
 // This source code is licensed in accordance with the terms specified in
 // the LICENSE file found in the root directory of this source tree.
 
+#include "KernelCodeGenVisitorMixin.hpp"
 #include <iostream>
 #include <macroni/Common/ParseAST.hpp>
+#include <macroni/Conversion/Kernel/KernelRewriters.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <mlir/Pass/Pass.h>
@@ -28,17 +30,38 @@ int main(int argc, char **argv) {
     mlir::DialectRegistry registry;
     registry.insert<
         vast::hl::HighLevelDialect,
-        macroni::macroni::MacroniDialect
+        macroni::macroni::MacroniDialect,
+        macroni::kernel::KernelDialect
     >();
     auto mctx = mlir::MLIRContext(registry);
     macroni::MacroniMetaGenerator meta(ast, &mctx);
     vast::cg::CodeGenContext cgctx(mctx, ast.UnderlyingAST());
-    vast::cg::CodeGenBase<macroni::MacroniVisitor> codegen(cgctx, meta);
+    vast::cg::CodeGenBase<KernelVisitor> codegen(cgctx, meta);
 
     // Generate the MLIR
     auto tu_decl = ast.UnderlyingAST().getTranslationUnitDecl();
     auto mod = codegen.emit_module(tu_decl);
 
+    // Register conversions
+    mlir::RewritePatternSet patterns(&mctx);
+    patterns.add(macroni::kernel::rewrite_get_user)
+        .add(macroni::kernel::rewrite_offsetof)
+        .add(macroni::kernel::rewrite_container_of)
+        .add(macroni::kernel::rewrite_rcu_dereference)
+        .add(macroni::kernel::rewrite_smp_mb)
+        .add(macroni::kernel::rewrite_list_for_each)
+        .add(macroni::kernel::rewrite_rcu_read_unlock);
+
+    // Apply the conversions.
+    mlir::FrozenRewritePatternSet frozen_pats(std::move(patterns));
+    mod->walk([&frozen_pats](mlir::Operation *op) {
+        if (mlir::isa<
+            macroni::macroni::MacroExpansion,
+            vast::hl::ForOp,
+            vast::hl::CallOp>(op)) {
+            std::ignore = mlir::applyOpPatternsAndFold(op, frozen_pats);
+        }}
+    );
     // Print the result
     mod->print(llvm::outs());
 

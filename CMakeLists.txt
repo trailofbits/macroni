@@ -286,6 +286,8 @@ if (MACRONI_INSTALL)
     macroni_settings
 
     MLIRMacroni
+    MLIRKernel
+    MLIRSafety
   )
 
 
