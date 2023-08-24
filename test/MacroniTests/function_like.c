@@ -379,7 +379,7 @@
 // CHECK:         hl.do {
 // CHECK:           hl.scope {
 // CHECK:             %16 = macroni.parameter "STMT" : !hl.int {
-// CHECK:               %17 = hl.ref %14 : !hl.lvalue<!hl.int>
+// CHECK:               %17 = hl.ref %14 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:               %18 = hl.const #hl.integer<0> : !hl.int
 // CHECK:               %19 = hl.assign %18 to %17 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:               hl.value.yield %19 : !hl.int
@@ -398,7 +398,7 @@
 // CHECK:                 hl.do {
 // CHECK:                   hl.scope {
 // CHECK:                     %16 = macroni.parameter "STMT" : !hl.int {
-// CHECK:                       %17 = hl.ref %14 : !hl.lvalue<!hl.int>
+// CHECK:                       %17 = hl.ref %14 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:                       %18 = hl.const #hl.integer<0> : !hl.int
 // CHECK:                       %19 = hl.assign %18 to %17 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:                       hl.value.yield %19 : !hl.int
@@ -420,7 +420,7 @@
 // CHECK:         hl.do {
 // CHECK:           hl.scope {
 // CHECK:             %16 = macroni.parameter "STMT" : !hl.int {
-// CHECK:               %17 = hl.ref %14 : !hl.lvalue<!hl.int>
+// CHECK:               %17 = hl.ref %14 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:               %18 = hl.const #hl.integer<1> : !hl.int
 // CHECK:               %19 = hl.assign %18 to %17 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:               hl.value.yield %19 : !hl.int
@@ -437,7 +437,7 @@
 // CHECK:             hl.do {
 // CHECK:               hl.scope {
 // CHECK:                 %16 = macroni.parameter "STMT" : !hl.int {
-// CHECK:                   %17 = hl.ref %14 : !hl.lvalue<!hl.int>
+// CHECK:                   %17 = hl.ref %14 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:                   %18 = hl.const #hl.integer<1> : !hl.int
 // CHECK:                   %19 = hl.assign %18 to %17 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:                   hl.value.yield %19 : !hl.int
@@ -458,6 +458,7 @@
 // CHECK:       hl.return %15 : !hl.int
 // CHECK:     }
 // CHECK:   }
+// CHECK: }
 
 
 #define ONE 1

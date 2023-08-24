@@ -55,17 +55,17 @@
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
 // CHECK:         hl.scope {
-// CHECK:           %2 = hl.ref %0 : !hl.lvalue<!hl.int>
+// CHECK:           %2 = hl.ref %0 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:           %3 = hl.const #hl.integer<0> : !hl.int
 // CHECK:           %4 = hl.assign %3 to %2 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:           hl.for {
-// CHECK:             %5 = hl.ref %0 : !hl.lvalue<!hl.int>
+// CHECK:             %5 = hl.ref %0 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:             %6 = hl.implicit_cast %5 LValueToRValue : !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:             %7 = hl.const #hl.integer<10> : !hl.int
 // CHECK:             %8 = hl.cmp slt %6, %7 : !hl.int, !hl.int -> !hl.int
 // CHECK:             hl.cond.yield %8 : !hl.int
 // CHECK:           } incr {
-// CHECK:             %5 = hl.ref %0 : !hl.lvalue<!hl.int>
+// CHECK:             %5 = hl.ref %0 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:             %6 = hl.post.inc %5 : !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:           } do {
 // CHECK:             hl.scope {

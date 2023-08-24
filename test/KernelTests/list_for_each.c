@@ -25,9 +25,9 @@
 // CHECK:   }
 // CHECK:   hl.func internal @list_is_head (%arg0: !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>, %arg1: !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>) -> !hl.int attributes {sym_visibility = "private"} {
 // CHECK:     hl.scope {
-// CHECK:       %0 = hl.ref %arg0 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>
+// CHECK:       %0 = hl.ref %arg0 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>
 // CHECK:       %1 = hl.implicit_cast %0 LValueToRValue : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>> -> !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>
-// CHECK:       %2 = hl.ref %arg1 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>
+// CHECK:       %2 = hl.ref %arg1 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>>
 // CHECK:       %3 = hl.implicit_cast %2 LValueToRValue : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>> -> !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>
 // CHECK:       %4 = hl.cmp eq %1, %3 : !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >>, !hl.ptr<!hl.elaborated<!hl.record<"list_head">,  const >> -> !hl.int
 // CHECK:       hl.return %4 : !hl.int
@@ -39,12 +39,12 @@
 // CHECK:       %1 = hl.var "pos" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:       hl.scope {
 // CHECK:         %3 = macroni.parameter "pos" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> {
-// CHECK:           %11 = hl.ref %1 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
+// CHECK:           %11 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:           hl.value.yield %11 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:         }
 // CHECK:         %4 = hl.expr : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> {
 // CHECK:           %11 = macroni.parameter "head" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> {
-// CHECK:             %12 = hl.ref %0 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
+// CHECK:             %12 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:             hl.value.yield %12 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:           }
 // CHECK:           hl.value.yield %11 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
@@ -54,17 +54,17 @@
 // CHECK:         %7 = hl.implicit_cast %6 LValueToRValue : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> -> !hl.ptr<!hl.elaborated<!hl.record<"list_head">>>
 // CHECK:         %8 = hl.assign %7 to %3 : !hl.ptr<!hl.elaborated<!hl.record<"list_head">>>, !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> -> !hl.ptr<!hl.elaborated<!hl.record<"list_head">>>
 // CHECK:         %9 = macroni.parameter "pos" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> {
-// CHECK:           %11 = hl.ref %1 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
+// CHECK:           %11 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:           hl.value.yield %11 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:         }
 // CHECK:         %10 = macroni.parameter "head" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> {
-// CHECK:           %11 = hl.ref %0 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
+// CHECK:           %11 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:           hl.value.yield %11 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:         }
 // CHECK:         kernel.list_for_each() list_for_each(%9, %10) : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>, !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> () {
 // CHECK:           hl.scope {
 // CHECK:             %11 = hl.var "prev" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> = {
-// CHECK:               %12 = hl.ref %1 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
+// CHECK:               %12 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:               %13 = hl.implicit_cast %12 LValueToRValue : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> -> !hl.ptr<!hl.elaborated<!hl.record<"list_head">>>
 // CHECK:               %14 = hl.member %13 at "prev" : !hl.ptr<!hl.elaborated<!hl.record<"list_head">>> -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:               %15 = hl.implicit_cast %14 LValueToRValue : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> -> !hl.ptr<!hl.elaborated<!hl.record<"list_head">>>
