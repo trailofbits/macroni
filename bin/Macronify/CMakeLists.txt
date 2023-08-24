@@ -11,7 +11,7 @@ target_link_libraries(macronify
     macroni_translation_api
 
     MLIROptLib
-    MLIRHighLevel
+    VASTHighLevel
 
     MLIRIR
     MLIRParser
@@ -20,10 +20,7 @@ target_link_libraries(macronify
 
     MLIRMacroni
 
-    vast_high_level_transforms
-    vast_conversion_from_hl
-
-    FromSourceParser
+    VASTFromSourceParser
 )
 
 mlir_check_link_libraries(macronify)

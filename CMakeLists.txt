@@ -201,8 +201,6 @@ target_link_libraries(macroni_settings
 
     gap::gap
 
-    vast::util
-
     pasta
 )
 
@@ -252,26 +250,24 @@ if (MACRONI_INSTALL)
     gap-settings
     gap
 
-    vast
     vast_settings
-    vast_translation_api
-    vast_codegen
+    VASTCodeGen
+    VASTUtil
 
-    vast_conversion_all
-    vast_conversion_abi
-    vast_conversion_common
-    vast_conversion_core
-    vast_conversion_from_hl
-
-    vast_util
-
-    MLIRABI
-    MLIRCore
-    MLIRHighLevel
-    MLIRLowLevel
-    MLIRLowLevelTransforms
-    MLIRMeta
+    VASTABI
+    VASTCore
+    VASTHighLevel
+    VASTLowLevel
+    VASTMeta
+    VASTUnsupported
+    
+    VASTABIConversionPasses
+    VASTCommonConversionPasses
     VASTCoreConversionPasses
+    VASTHighLevelConversionPasses
+    VASTHighLevelTransforms
+    VASTLowLevelTransforms
+    VASTTargetLLVMIR
 
     VASTSymbolInterface
     VASTTypeQualifiersInterfaces
