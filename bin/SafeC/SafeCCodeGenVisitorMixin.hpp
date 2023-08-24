@@ -5,6 +5,7 @@
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <pasta/AST/Macro.h>
 #include <pasta/AST/Stmt.h>
+#include <vast/CodeGen/CodeGen.hpp>
 
 template <typename Derived>
 struct SafeCCodeGenVisitorMixin
@@ -60,8 +61,14 @@ struct SafeCCodeGenVisitorMixin
 };
 
 template<typename Derived>
-using SafeCVisitorConfig = vast::cg::CodeGenFallBackVisitorMixin<Derived,
-    SafeCCodeGenVisitorMixin, vast::cg::DefaultFallBackVisitorMixin>;
+using SafeCVisitorConfig = vast::cg::FallBackVisitor<Derived,
+    SafeCCodeGenVisitorMixin,
+    vast::cg::UnsupportedVisitor,
+    vast::cg::UnreachableVisitor
+>;
 
-using SafeCVisitor = vast::cg::CodeGenVisitor<SafeCVisitorConfig,
-    macroni::MacroniMetaGenerator>;
+using SafeCCodeGen = vast::cg::CodeGen<
+    macroni::MacroniCodeGenContext,
+    SafeCVisitorConfig,
+    macroni::MacroniMetaGenerator
+>;

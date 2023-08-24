@@ -3,10 +3,11 @@
 #include <macroni/Dialect/Kernel/KernelTypes.hpp>
 #include <macroni/Dialect/Macroni/MacroniDialect.hpp>
 #include <macroni/Dialect/Macroni/MacroniOps.hpp>
+#include <macroni/Translation/MacroniCodeGenContext.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <pasta/AST/AST.h>
 #include <pasta/AST/Macro.h>
-#include <vast/Translation/CodeGenVisitor.hpp>
+#include <vast/CodeGen/CodeGen.hpp>
 
 namespace macroni {
     // Given a set of visited substitutions, returns the lowest substitutions in
@@ -28,28 +29,28 @@ namespace macroni {
 
     template<typename Derived>
     struct MacroniCodeGenVisitorMixin
-        : vast::cg::CodeGenDeclVisitorMixin<Derived>
-        , vast::cg::CodeGenStmtVisitorMixin<Derived>
-        , vast::cg::CodeGenTypeVisitorWithDataLayoutMixin<Derived>
+        : vast::cg::CodeGenDeclVisitor<Derived>
+        , vast::cg::CodeGenStmtVisitor<Derived>
+        , vast::cg::CodeGenTypeVisitorWithDataLayout<Derived>
         , vast::cg::CodeGenVisitorLens<MacroniCodeGenVisitorMixin<Derived>,
         Derived>
-        , vast::cg::CodeGenBuilderMixin<MacroniCodeGenVisitorMixin<Derived>,
+        , vast::cg::CodeGenBuilder<MacroniCodeGenVisitorMixin<Derived>,
         Derived> {
 
         using LensType = vast::cg::CodeGenVisitorLens<
             MacroniCodeGenVisitorMixin<Derived>, Derived>;
-        using LensType::meta_gen;
+        using LensType::context;
         using LensType::derived;
 
-        using Builder = vast::cg::CodeGenBuilderMixin<
+        using Builder = vast::cg::CodeGenBuilder<
             MacroniCodeGenVisitorMixin<Derived>, Derived>;
         using Builder::builder;
         using Builder::make_maybe_value_yield_region;
 
-        using DeclVisitor = vast::cg::CodeGenDeclVisitorMixin<Derived>;
-        using StmtVisitor = vast::cg::CodeGenStmtVisitorMixin<Derived>;
+        using DeclVisitor = vast::cg::CodeGenDeclVisitor<Derived>;
+        using StmtVisitor = vast::cg::CodeGenStmtVisitor<Derived>;
         using TypeVisitor =
-            vast::cg::CodeGenTypeVisitorWithDataLayoutMixin<Derived>;
+            vast::cg::CodeGenTypeVisitorWithDataLayout<Derived>;
 
         std::set<pasta::MacroSubstitution> visited;
 
@@ -69,7 +70,7 @@ namespace macroni {
             // FIXME(bpp): Retrieve the pasta::AST from context() once VAST
             // allows visitors to retrieve code gen contexts inherited from
             // vast::cg::CodeGenContext
-            auto pasta_stmt = meta_gen().ast.Adopt(stmt);
+            auto pasta_stmt = context().pasta_ast.Adopt(stmt);
 
             if (clang::isa<clang::ImplicitValueInitExpr,
                 clang::ImplicitCastExpr>(stmt)) {
@@ -147,10 +148,16 @@ namespace macroni {
     };
 
     template<typename Derived>
-    using MacroniVisitorConfig = vast::cg::CodeGenFallBackVisitorMixin<Derived,
-        MacroniCodeGenVisitorMixin, vast::cg::DefaultFallBackVisitorMixin>;
+    using MacroniVisitorConfig = vast::cg::FallBackVisitor<Derived,
+        MacroniCodeGenVisitorMixin,
+        vast::cg::UnsupportedVisitor,
+        vast::cg::UnreachableVisitor
+    >;
 
-    using MacroniVisitor = vast::cg::CodeGenVisitor<MacroniVisitorConfig,
-        MacroniMetaGenerator>;
+    using MacroniCodeGen = vast::cg::CodeGen<
+        MacroniCodeGenContext,
+        MacroniVisitorConfig,
+        MacroniMetaGenerator
+    >;
 
 } // namespace macroni
