@@ -2,11 +2,11 @@
 
 #include <pasta/AST/AST.h>
 #include <pasta/AST/Macro.h>
-#include <vast/Translation/CodeGenMeta.hpp>
+#include <vast/CodeGen/CodeGenMeta.hpp>
 
 namespace macroni {
     struct MacroniMetaGenerator {
-        MacroniMetaGenerator(const pasta::AST &ast, mlir::MLIRContext *mctx)
+        MacroniMetaGenerator(clang::ASTContext *ast, mlir::MLIRContext *mctx)
             : ast(ast), mctx(mctx) {}
 
         vast::cg::DefaultMeta get(const clang::FullSourceLoc &loc) const {
@@ -21,7 +21,7 @@ namespace macroni {
         }
 
         vast::cg::DefaultMeta get(const clang::SourceLocation &loc) const {
-            clang::SourceManager &sm = ast.UnderlyingAST().getSourceManager();
+            clang::SourceManager &sm = ast->getSourceManager();
             return get(clang::FullSourceLoc(loc, sm));
         }
 
@@ -62,7 +62,7 @@ namespace macroni {
             return get(spec.getBeginLoc());
         }
 
-        const pasta::AST &ast;
+        clang::ASTContext *ast;
         mlir::MLIRContext *mctx;
     };
 } // namespace macroni

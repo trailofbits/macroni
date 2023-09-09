@@ -4,8 +4,6 @@ add_library(kernel_conversion
 
 target_link_libraries(kernel_conversion
   PRIVATE
-    MLIRLowLevel
-    MLIRHighLevel
     MLIRIR
     MLIRPass
     MLIRTransformUtils

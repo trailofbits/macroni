@@ -28,7 +28,7 @@
 // CHECK:     hl.scope {
 // CHECK:       %0 = hl.var "container_instance" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"container">>>>
 // CHECK:       %1 = macroni.parameter "ptr" : !hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>> {
-// CHECK:         %4 = hl.ref %0 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"container">>>>
+// CHECK:         %4 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"container">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"container">>>>
 // CHECK:         %5 = hl.implicit_cast %4 LValueToRValue : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"container">>>> -> !hl.ptr<!hl.elaborated<!hl.record<"container">>>
 // CHECK:         %6 = hl.member %5 at "contained_member" : !hl.ptr<!hl.elaborated<!hl.record<"container">>> -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>
 // CHECK:         %7 = hl.addressof %6 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>> -> !hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>

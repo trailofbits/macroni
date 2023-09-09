@@ -12,7 +12,7 @@ target_link_libraries(safe-c
     safety_conversion
 
     MLIROptLib
-    MLIRHighLevel
+    VASTHighLevel
 
     MLIRIR
     MLIRParser
@@ -22,10 +22,7 @@ target_link_libraries(safe-c
     MLIRMacroni
     MLIRSafety
 
-    vast_high_level_transforms
-    vast_conversion_from_hl
-
-    FromSourceParser
+    VASTFromSourceParser
 )
 
 mlir_check_link_libraries(safe-c)

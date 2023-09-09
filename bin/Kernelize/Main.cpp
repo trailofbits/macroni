@@ -9,14 +9,13 @@
 #include <macroni/Common/ParseAST.hpp>
 #include <macroni/Conversion/Kernel/KernelRewriters.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
-#include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <mlir/Pass/Pass.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
 #include <mlir/Transforms/Passes.h>
 #include <optional>
 #include <pasta/AST/AST.h>
-#include <vast/Translation/CodeGen.hpp>
+#include <vast/CodeGen/CodeGen.hpp>
 
 int main(int argc, char **argv) {
     auto maybe_ast = pasta::parse_ast(argc, argv);
@@ -24,7 +23,7 @@ int main(int argc, char **argv) {
         std::cerr << maybe_ast.TakeError() << '\n';
         return EXIT_FAILURE;
     }
-    auto ast = maybe_ast.TakeValue();
+    auto pasta_ast = maybe_ast.TakeValue();
 
     // Register the MLIR dialects we will be lowering to
     mlir::DialectRegistry registry;
@@ -34,12 +33,12 @@ int main(int argc, char **argv) {
         macroni::kernel::KernelDialect
     >();
     auto mctx = mlir::MLIRContext(registry);
-    macroni::MacroniMetaGenerator meta(ast, &mctx);
-    vast::cg::CodeGenContext cgctx(mctx, ast.UnderlyingAST());
-    vast::cg::CodeGenBase<KernelVisitor> codegen(cgctx, meta);
+    macroni::MacroniCodeGenContext cgctx(mctx, pasta_ast.UnderlyingAST(),
+                                         pasta_ast);
+    KernelCodeGen codegen(cgctx);
 
     // Generate the MLIR
-    auto tu_decl = ast.UnderlyingAST().getTranslationUnitDecl();
+    auto tu_decl = pasta_ast.UnderlyingAST().getTranslationUnitDecl();
     auto mod = codegen.emit_module(tu_decl);
 
     // Register conversions

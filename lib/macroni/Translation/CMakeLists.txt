@@ -8,8 +8,6 @@ target_link_libraries(macroni_translation_api
     clangASTMatchers
     clangBasic
 
-    MLIRMeta
-    MLIRHighLevel
     MLIRSupport
 
     macroni::settings

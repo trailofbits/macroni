@@ -5,6 +5,7 @@
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <pasta/AST/Stmt.h>
 #include <stdint.h>
+#include <vast/CodeGen/CodeGen.hpp>
 
 template <typename Derived>
 struct KernelCodeGenVisitorMixin
@@ -72,8 +73,14 @@ struct KernelCodeGenVisitorMixin
 };
 
 template<typename Derived>
-using KernelVisitorConfig = vast::cg::CodeGenFallBackVisitorMixin<Derived,
-    KernelCodeGenVisitorMixin, vast::cg::DefaultFallBackVisitorMixin>;
+using KernelVisitorConfig = vast::cg::FallBackVisitor<Derived,
+    KernelCodeGenVisitorMixin,
+    vast::cg::UnsupportedVisitor,
+    vast::cg::UnreachableVisitor
+>;
 
-using KernelVisitor = vast::cg::CodeGenVisitor<KernelVisitorConfig,
-    macroni::MacroniMetaGenerator>;
+using KernelCodeGen = vast::cg::CodeGen<
+    macroni::MacroniCodeGenContext,
+    KernelVisitorConfig,
+    macroni::MacroniMetaGenerator
+>;

@@ -4,8 +4,6 @@ add_library(safety_conversion
 
 target_link_libraries(safety_conversion
   PRIVATE
-    MLIRLowLevel
-    MLIRHighLevel
     MLIRIR
     MLIRPass
     MLIRTransformUtils
