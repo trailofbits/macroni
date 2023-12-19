@@ -14,4 +14,3 @@ target_link_libraries(macroni_translation_api
 )
 
 add_library(macroni::translation_api ALIAS macroni_translation_api)
-
