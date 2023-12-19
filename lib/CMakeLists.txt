@@ -8,9 +8,9 @@
 
 add_subdirectory(macroni)
 
-add_library( macroni_api INTERFACE )
+add_library(macroni_api INTERFACE)
 
-target_link_libraries( macroni_api
+target_link_libraries(macroni_api
     INTERFACE
         macroni_common
         macroni_translation_api
