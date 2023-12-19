@@ -1,0 +1,65 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 28,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "macroni-ninja-multiconfig",
+            "displayName": "Configure Macroni Ninja Mulit-Config",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja Multi-Config",
+            "environment": {
+                "MACRONI_C_COMPILER": "",
+                "MACRONI_CCACHE": "",
+                "MACRONI_CXX_COMPILER": "",
+                "MACRONI_MLIR_DIR": "",
+                "MACRONI_LLVM_DIR": "",
+                "MACRONI_Clang_DIR": "",
+                "MACRONI_LLD_PATH": "",
+                "MACRONI_LLVM_LIT": "",
+                "MACRONI_gap_DIR": "",
+                "MACRONI_pasta_DIR": "",
+                "MACRONI_VAST_DIR": ""
+            },
+            "cacheVariables": {
+                "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo;Release;MinSizeRel;Debug",
+                "CMAKE_C_COMPILER": "$env{MACRONI_C_COMPILER}",
+                "CMAKE_CXX_COMPILER_LAUNCHER": "$env{MACRONI_CCACHE}",
+                "CMAKE_CXX_COMPILER": "$env{MACRONI_CXX_COMPILER}",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "MLIR_DIR": "$env{MACRONI_MLIR_DIR}",
+                "LLVM_DIR": "$env{MACRONI_LLVM_DIR}",
+                "Clang_DIR": "$env{MACRONI_Clang_DIR}",
+                "LLVM_USE_LINKER": "$env{MACRONI_LLD_PATH}",
+                "LLVM_ENABLE_RTTI": true,
+                "LLVM_EXTERNAL_LIT": "$env{MACRONI_LLVM_LIT}",
+                "MACRONI_WARNINGS_AS_ERRORS": false,
+                "MACRONI_USE_VENDORED_GAP": false,
+                "MACRONI_USE_VENDORED_PASTA": false,
+                "MACRONI_USE_VENDORED_VAST": false,
+                "gap_DIR": "$env{MACRONI_gap_DIR}",
+                "pasta_DIR": "$env{MACRONI_pasta_DIR}",
+                "VAST_DIR": "$env{MACRONI_VAST_DIR}"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "macroni-ninja-multiconfig",
+            "displayName": "Build Macroni ninja release with debug info",
+            "configurePreset": "macroni-ninja-multiconfig",
+            "configuration": "RelWithDebInfo",
+            "jobs": 2
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-macroni-ninja-multiconfig",
+            "displayName": "Test Macroni Ninja Multi-Config",
+            "configurePreset": "macroni-ninja-multiconfig"
+        }
+    ]
+}
