@@ -5,7 +5,7 @@ add_mlir_dialect_library(MLIRMacroni
     MacroniOps.cpp
 
     ADDITIONAL_HEADER_DIRS
-        ${PROJECT_SOURCE_DIR}/include/macroni
+        ${PROJECT_SOURCE_DIR}/include
 
     DEPENDS
         MLIRMacroniIncGen
@@ -20,6 +20,6 @@ add_mlir_dialect_library(MLIRMacroni
         MLIRControlFlowInterfaces
         MLIRDataLayoutInterfaces
         MLIRInferTypeOpInterface
-)
 
-target_link_libraries(MLIRMacroni PRIVATE macroni)
+        macroni_settings
+)
