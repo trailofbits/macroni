@@ -1,6 +1,3 @@
-# See
-# https://github.com/trailofbits/vast/blob/64cbb58644e62686f7107b531e4d7de2f902bdb7/CMakeLists.txt
-
 #
 # Copyright (c) 2023-present, Trail of Bits, Inc.
 # All rights reserved.
@@ -11,10 +8,22 @@
 
 cmake_minimum_required(VERSION 3.25)
 
-# Fix behavior of CMAKE_CXX_STANDARD when targeting macOS.
 if (POLICY CMP0025)
   cmake_policy(SET CMP0025 NEW)
 endif ()
+
+if(POLICY CMP0068)
+  cmake_policy(SET CMP0068 NEW)
+  set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
+endif()
+
+if(POLICY CMP0075)
+  cmake_policy(SET CMP0075 NEW)
+endif()
+
+if(POLICY CMP0077)
+  cmake_policy(SET CMP0077 NEW)
+endif()
 
 if (POLICY CMP0116)
   cmake_policy(SET CMP0116 NEW)
@@ -22,7 +31,7 @@ endif ()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-project(Macroni
+project(macroni
     LANGUAGES C CXX
     VERSION 0.0.0
     DESCRIPTION "Intermediate representation of macros for program analysis"
@@ -33,8 +42,8 @@ set(BUG_REPORT_URL "https://github.com/trailofbits/macroni/issues" CACHE STRING 
 
 # include(prevent_in_source_builds)
 
-# check if macroni is being used directly or via add_subdirectory,
-# but allow overriding
+# Check if macroni is being used directly or via add_subdirectory, but allow
+# overriding
 if(NOT DEFINED MACRONI_MASTER_PROJECT)
     if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         set(MACRONI_MASTER_PROJECT ON)
@@ -49,19 +58,17 @@ include(project_utils)
 #
 # Setup package version
 #
-# setup_package_version_variables(macroni)
+setup_package_version_variables(macroni)
 
 set(MACRONI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MACRONI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(MACRONI_INCLUDE_DIR ${MACRONI_BINARY_DIR}/include)
 
-# Configure Macroni Version.inc file.
+# Configure macroni Version.inc file.
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/macroni/Version.inc.in
   ${CMAKE_CURRENT_BINARY_DIR}/include/macroni/Version.inc
 )
-
-# Configure Macroni version info header file.
 
 #
 # Clang
@@ -83,12 +90,12 @@ if (CCACHE_PROGRAM)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
-# FindAndSelectClangCompiler()
+FindAndSelectClangCompiler()
 
 #
 # LLVM & MLIR & Clang
 #
-find_package(LLVM 16 REQUIRED CONFIG)
+find_package(LLVM 17 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 #
@@ -102,7 +109,6 @@ message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 #
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/bin)
 set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/lib)
-set(MLIR_BINARY_DIR ${CMAKE_BINARY_DIR})
 
 list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
@@ -112,18 +118,7 @@ include(AddLLVM)
 include(AddMLIR)
 include(HandleLLVMOptions)
 
-# TODO(Heno): clean up & modernize
-include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${MLIR_INCLUDE_DIRS})
-
-include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(${PROJECT_BINARY_DIR}/include)
-
-include_directories(${PROJECT_SOURCE_DIR}/external/pasta/include)
-include_directories(${PROJECT_BINARY_DIR}/external/pasta/include)
-
-include_directories(${PROJECT_SOURCE_DIR}/external/vast/include)
-include_directories(${PROJECT_BINARY_DIR}/external/vast/include)
+separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
@@ -133,22 +128,98 @@ if (LLVM_LINK_LLVM_DYLIB)
     set(LLVM_LIBS LLVM)
 else()
     llvm_map_components_to_libnames(LLVM_LIBS
-      ${LLVM_TARGETS_TO_BUILD} support target option
+      ${LLVM_TARGETS_TO_BUILD} target option
     )
 endif()
 
-# TODO(cmake): With newer cmake there should be a better way to do this.
-function(mk_clang_libs out)
-    if (CLANG_LINK_CLANG_DYLIB)
-        set(${out} clang-cpp PARENT_SCOPE)
-    else()
-        set(${out} ${ARGN} PARENT_SCOPE)
-    endif()
-endfunction()
+if (MLIR_LINK_MLIR_DYLIB)
+    set(MLIR_LIBS MLIR)
+else()
+    get_property(MLIR_DIALECT_LIBS GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+    get_property(MLIR_CONVERSION_LIBS GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+    get_property(MLIR_EXTENSION_LIBS GLOBAL PROPERTY MLIR_EXTENSION_LIBS)
+    get_property(MLIR_TRANSLATION_LIBS GLOBAL PROPERTY MLIR_TRANSLATION_LIBS)
+
+    set(MLIR_LIBS
+      MLIRAnalysis
+      MLIRDialect
+      MLIRExecutionEngine
+      MLIRIR
+      MLIRParser
+      MLIRPass
+      MLIRSupport
+      MLIRTransforms
+      MLIRTransformUtils
+
+      ${MLIR_DIALECT_LIBS}
+      ${MLIR_CONVERSION_LIBS}
+      ${MLIR_EXTENSION_LIBS}
+      ${MLIR_TRANSLATION_LIBS}
+    )
+endif()
+
+if (CLANG_LINK_CLANG_DYLIB)
+    set(CLANG_LIBS clang-cpp)
+else()
+    set(CLANG_LIBS
+        clangAST
+        clangASTMatchers
+        clangBasic
+        clangCodeGen
+        clangDriver
+        clangFrontend
+        clangSerialization
+        clangTooling
+    )
+endif()
 
 #
-# Macroni build settings
+# macroni build settings
 #
+
+set(MACRONI_MAIN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(MACRONI_MAIN_INCLUDE_DIR ${MACRONI_MAIN_SRC_DIR}/include)
+
+set(MACRONI_LIBRARY_DIR ${CMAKE_BINARY_DIR}/lib)
+set(MACRONI_TOOLS_DIR ${CMAKE_BINARY_DIR}/bin)
+
+# They are used as destination of target generators.
+set(MACRONI_RUNTIME_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
+set(MACRONI_LIBRARY_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${MACRONI_LIBDIR_SUFFIX})
+if(WIN32 OR CYGWIN)
+  # DLL platform -- put DLLs into bin.
+  set(MACRONI_SHLIB_OUTPUT_INTDIR ${MACRONI_RUNTIME_OUTPUT_INTDIR})
+else()
+  set(MACRONI_SHLIB_OUTPUT_INTDIR ${MACRONI_LIBRARY_OUTPUT_INTDIR})
+endif()
+
+set(MACRONI_TOOLS_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH
+  "Path for binary subdirectory (defaults to '${CMAKE_INSTALL_BINDIR}')"
+)
+
+set(MACRONI_TABLEGEN_EXE "${MLIR_TABLEGEN_EXE}" CACHE INTERNAL "")
+set(MACRONI_TABLEGEN_TARGET "${MLIR_TABLEGEN_TARGET}" CACHE INTERNAL "")
+set(MACRONI_PDLL_TABLEGEN_EXE "${MLIR_PDLL_TABLEGEN_EXE}" CACHE INTERNAL "")
+set(MACRONI_PDLL_TABLEGEN_TARGET "${MLIR_PDLL_TABLEGEN_TARGET}" CACHE INTERNAL "")
+
+add_custom_target(macroni-generic-headers)
+set_target_properties(macroni-generic-headers PROPERTIES FOLDER "Misc")
+add_custom_target(macroni-headers)
+set_target_properties(macroni-headers PROPERTIES FOLDER "Misc")
+add_dependencies(macroni-headers macroni-generic-headers)
+add_custom_target(macroni-tools)
+set_target_properties(macroni-tools PROPERTIES FOLDER "Misc")
+add_custom_target(macroni-doc)
+
+define_property(GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
+
+if(CMAKE_GENERATOR MATCHES "Ninja" AND
+    NOT "${NINJA_VERSION}" VERSION_LESS "1.9.0" AND
+    CMAKE_HOST_APPLE AND CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER "15.6.0")
+  set(MACRONI_TOUCH_STATIC_LIBRARIES ON)
+endif()
+
+# include(Addmacroni)
 
 add_library(macroni_settings INTERFACE)
 
@@ -156,13 +227,22 @@ include(cmake/compiler_warnings.cmake)
 set_project_warnings(macroni_settings)
 
 target_include_directories(macroni_settings INTERFACE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${MACRONI_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${MACRONI_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-if (NOT LLVM_ENABLE_RTTI)
-  message( FATAL_ERROR
-    "Macroni does not support build without RTTI, yet. Please build LLVM with LLVM_ENABLE_RTTI."
+# enable exception on failure
+option(MACRONI_ENABLE_EXCEPTIONS "Enable exception throw on macroni failure" OFF)
+if (MACRONI_ENABLE_EXCEPTIONS)
+  target_compile_definitions(macroni_settings
+    INTERFACE
+      -DMACRONI_ENABLE_EXCEPTIONS
+  )
+
+  target_compile_options(macroni_settings
+    INTERFACE
+      -fexceptions
   )
 endif()
 
@@ -189,55 +269,69 @@ add_library(macroni::settings ALIAS macroni_settings)
 #
 add_subdirectory(external)
 
-get_property(DIALECT_LIBS GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-get_property(CONVERSION_LIBS GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+if (NOT MACRONI_USE_VENDORED_GAP)
+  find_package(gap CONFIG REQUIRED)
+endif()
 
+if (NOT MACRONI_USE_VENDORED_PASTA)
+  find_package(pasta CONFIG REQUIRED)
+endif()
 
+if (NOT MACRONI_USE_VENDORED_VAST)
+  # TODO(bpp): Allow using vendored VAST without using vendored gap
+  if (MACRONI_USE_VENDORED_GAP)
+    message(FATAL_ERROR "Using non-vendored VAST requires using non-vendored gap")
+  endif()
+  find_package(VAST CONFIG REQUIRED)
+endif()
 
 target_link_libraries(macroni_settings
   INTERFACE
-    ${DIALECT_LIBS}
-    ${CONVERSION_LIBS}
-
     gap::gap
-
-    pasta
+    pasta::pasta
+    VAST::vast_settings
 )
 
+get_target_property(GAP_CORE_INCLUDE_DIR
+  gap::gap-core INTERFACE_INCLUDE_DIRECTORIES)
+
+get_target_property(GAP_SETTINGS_INCLUDE_DIR
+gap::gap-settings INTERFACE_INCLUDE_DIRECTORIES)
+
+get_target_property(VAST_SETTINGS_INCLUDE_DIR
+  VAST::vast_settings INTERFACE_INCLUDE_DIRECTORIES)
+
+get_target_property(PASTA_CXX_SETTINGS_INCLUDE_DIR
+  pasta::pasta_cxx_settings INTERFACE_INCLUDE_DIRECTORIES)
+
+include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${MLIR_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_BINARY_DIR}/include)
+include_directories(${GAP_CORE_INCLUDE_DIR})
+include_directories(${GAP_SETTINGS_INCLUDE_DIR})
+include_directories(${PASTA_CXX_SETTINGS_INCLUDE_DIR})
+include_directories(${VAST_SETTINGS_INCLUDE_DIR})
+
 #
-# Macroni libraries
+# macroni libraries
 #
 add_subdirectory(include/macroni)
 add_subdirectory(lib)
 
 #
-# Macroni executables
+# macroni executables
 #
 add_subdirectory(bin)
 
-add_library(macroni INTERFACE)
-
-target_link_libraries(macroni
-  INTERFACE
-    macroni::settings
-)
-
-target_include_directories(macroni
-  INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-
-# test options
-option(MACRONI_ENABLE_TESTING "Enable Test Builds" ON)
-
-if (MACRONI_ENABLE_TESTING)
-  enable_testing()
-  add_subdirectory(test)
-endif()
+#
+# macroni tests
+#
+enable_testing()
+add_subdirectory(test)
 
 #
-# install settings
+# Install settings
 #
 
 option(MACRONI_INSTALL "Generate the install target." ${MACRONI_MASTER_PROJECT})
@@ -245,49 +339,9 @@ option(MACRONI_INSTALL "Generate the install target." ${MACRONI_MASTER_PROJECT})
 if (MACRONI_INSTALL)
   set(MACRONI_CMAKE_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
-  set(MACRONI_INSTALL_TARGETS
-    gap-core
-    gap-settings
-    gap
+  get_property(MACRONI_INSTALL_TARGETS GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
 
-    vast_settings
-    VASTCodeGen
-    VASTUtil
-
-    VASTABI
-    VASTCore
-    VASTHighLevel
-    VASTLowLevel
-    VASTMeta
-    VASTUnsupported
-    
-    VASTABIConversionPasses
-    VASTCommonConversionPasses
-    VASTCoreConversionPasses
-    VASTHighLevelConversionPasses
-    VASTHighLevelTransforms
-    VASTLowLevelTransforms
-    VASTTargetLLVMIR
-
-    VASTSymbolInterface
-    VASTTypeQualifiersInterfaces
-
-    pasta_cxx_settings
-    pasta_thirdparty_llvm
-    pasta_util
-    pasta_compiler
-    pasta
-
-    macroni
-    macroni_settings
-
-    MLIRMacroni
-    MLIRKernel
-    MLIRSafety
-  )
-
-
-  install(DIRECTORY ${CMAKE_BINARY_DIR}/include/macroni
+  install(DIRECTORY ${MACRONI_INCLUDE_DIR}/macroni
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT macroni-headers
     FILES_MATCHING
@@ -298,7 +352,7 @@ if (MACRONI_INSTALL)
     PATTERN "CMakeFiles" EXCLUDE
   )
 
-  install(DIRECTORY include/macroni
+  install(DIRECTORY ${MACRONI_SOURCE_DIR}/include/macroni
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT macroni-headers
     FILES_MATCHING
@@ -307,20 +361,13 @@ if (MACRONI_INSTALL)
     PATTERN "CMakeFiles" EXCLUDE
   )
 
-  set(MACRONI_EXPORT_NAME MacroniTargets)
+  install(TARGETS macroni_settings EXPORT macroniTargets)
 
-  install(TARGETS ${MACRONI_INSTALL_TARGETS}
-    EXPORT ${MACRONI_EXPORT_NAME}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      NAMELINK_SKIP
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  )
+  set(MACRONI_EXPORT_NAME macroniTargets)
 
-  install(EXPORT ${MACRONI_EXPORT_NAME}
+  install(EXPORT macroniTargets
     FILE ${MACRONI_EXPORT_NAME}.cmake
-    NAMESPACE Macroni::
+    NAMESPACE macroni::
     DESTINATION ${MACRONI_CMAKE_INSTALL_DIR}
   )
 
@@ -330,7 +377,7 @@ if (MACRONI_INSTALL)
 
   set(CPACK_PACKAGE_VENDOR "Trail of Bits")
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
-    "Macroni: a VAST dialect extension with macros"
+    "macroni: A C/C++ frontend for lowering macros down to MLIR"
   )
   set(CPACK_PACKAGE_VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR})
   set(CPACK_PACKAGE_VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR})
