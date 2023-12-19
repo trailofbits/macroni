@@ -1,7 +1,7 @@
 // Copyright (c) 2023-present, Trail of Bits, Inc.
 
-#include "macroni/Dialect/Macroni/MacroniDialect.hpp"
-#include "macroni/Dialect/Macroni/MacroniOps.hpp"
+#include <macroni/Dialect/Macroni/MacroniDialect.hpp>
+#include <macroni/Dialect/Macroni/MacroniOps.hpp>
 
 #include <mlir/IR/TypeSupport.h>
 #include <mlir/IR/Builders.h>
