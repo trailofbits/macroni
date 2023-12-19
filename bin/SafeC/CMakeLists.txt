@@ -6,23 +6,12 @@ add_executable(safe-c
 llvm_update_compile_flags(safe-c)
 
 target_link_libraries(safe-c
-    macroni
-    macroni_common
-    macroni_translation_api
-    safety_conversion
-
-    MLIROptLib
-    VASTHighLevel
-
-    MLIRIR
-    MLIRParser
-    MLIRPass
-    MLIRSupport
-
-    MLIRMacroni
-    MLIRSafety
-
-    VASTFromSourceParser
+    PRIVATE
+        macroni_api
+        MLIRMacroni
+        MLIRSafety
+        safety_conversion
+        VAST::VASTCodeGen
 )
 
 mlir_check_link_libraries(safe-c)

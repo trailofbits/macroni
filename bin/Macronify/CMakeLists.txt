@@ -6,21 +6,10 @@ add_executable(macronify
 llvm_update_compile_flags(macronify)
 
 target_link_libraries(macronify
-    macroni
-    macroni_common
-    macroni_translation_api
-
-    MLIROptLib
-    VASTHighLevel
-
-    MLIRIR
-    MLIRParser
-    MLIRPass
-    MLIRSupport
-
-    MLIRMacroni
-
-    VASTFromSourceParser
+    PRIVATE
+        macroni_api
+        MLIRMacroni
+        VAST::VASTCodeGen
 )
 
 mlir_check_link_libraries(macronify)
