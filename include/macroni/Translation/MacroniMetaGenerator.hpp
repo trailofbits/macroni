@@ -5,14 +5,15 @@
 #include <vast/CodeGen/CodeGenMeta.hpp>
 
 namespace macroni {
-    struct MacroniMetaGenerator {
-        MacroniMetaGenerator(clang::ASTContext *ast, mlir::MLIRContext *mctx)
-            : ast(ast), mctx(mctx) {}
+    struct MacroniMetaGenerator final : public vast::cg::meta_generator {
 
-        vast::cg::DefaultMeta get(const clang::FullSourceLoc &loc) const {
-            if (!loc.isValid()) {
-                return { mlir::FileLineColLoc::get(mctx, "<invalid>", 0, 0) };
-            }
+    public:
+        MacroniMetaGenerator(clang::ASTContext *ast, mlir::MLIRContext *mctx)
+            : ast(ast),
+            mctx(mctx),
+            unknown_location(mlir::UnknownLoc::get(mctx)) {}
+
+        mlir::Location location(const clang::FullSourceLoc &loc) const {
             auto file_entry = loc.getFileEntry();
             auto file = file_entry ? file_entry->getName() : "unknown";
             auto line = loc.getLineNumber();
@@ -20,49 +21,42 @@ namespace macroni {
             return { mlir::FileLineColLoc::get(mctx, file, line, col) };
         }
 
-        vast::cg::DefaultMeta get(const clang::SourceLocation &loc) const {
-            clang::SourceManager &sm = ast->getSourceManager();
-            return get(clang::FullSourceLoc(loc, sm));
+        mlir::Location location(const clang::SourceLocation &loc) const {
+            return location(clang::FullSourceLoc(loc, ast->getSourceManager()));
         }
 
-        vast::cg::DefaultMeta get(const clang::Decl *decl) const {
-            return get(decl->getLocation());
+        mlir::Location location(const clang::Decl *decl) const final {
+            return location(decl->getLocation());
         }
 
-        vast::cg::DefaultMeta get(const clang::Stmt *stmt) const {
-            // TODO: use SourceRange
-            return get(stmt->getBeginLoc());
+        mlir::Location location(const clang::Stmt *stmt) const final {
+            return location(stmt->getBeginLoc());
         }
 
-        vast::cg::DefaultMeta get(const clang::Expr *expr) const {
-            // TODO: use SourceRange
-            return get(expr->getExprLoc());
+        mlir::Location location(const clang::Expr *expr) const final {
+            return location(expr->getExprLoc());
         }
 
-        vast::cg::DefaultMeta get(const clang::TypeLoc &loc) const {
-            // TODO: use SourceRange
-            return get(loc.getBeginLoc());
+        mlir::Location location(const clang::Type *type) const {
+            return unknown_location;
         }
 
-        vast::cg::DefaultMeta get(const clang::Type *type) const {
-            return get(clang::TypeLoc(type, nullptr));
+        mlir::Location location(const clang::Attr *type) const {
+            return unknown_location;
         }
 
-        vast::cg::DefaultMeta get(clang::QualType type) const {
-            return get(clang::TypeLoc(type, nullptr));
+        mlir::Location location(const clang::QualType type) const {
+            return unknown_location;
         }
 
-        vast::cg::DefaultMeta get(pasta::MacroSubstitution &sub) const {
+        mlir::Location location(pasta::MacroSubstitution &sub) const {
             // TODO(bpp): Define this to something that makes sense. Right now
             // this just returns an invalid source location.
-            return get(clang::SourceLocation());
-        }
-
-        vast::cg::DefaultMeta get(const clang::CXXBaseSpecifier &spec) const {
-            return get(spec.getBeginLoc());
+            return unknown_location;
         }
 
         clang::ASTContext *ast;
         mlir::MLIRContext *mctx;
+        const mlir::Location unknown_location;
     };
 } // namespace macroni
