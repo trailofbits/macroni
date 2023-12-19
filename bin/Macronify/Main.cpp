@@ -8,6 +8,7 @@
 #include <macroni/Common/ParseAST.hpp>
 #include <macroni/Translation/MacroniCodeGenContext.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
+#include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <mlir/Pass/Pass.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
@@ -15,6 +16,11 @@
 #include <optional>
 #include <pasta/AST/AST.h>
 #include <vast/CodeGen/CodeGen.hpp>
+#include <vast/CodeGen/CodeGenDriver.hpp>
+#include <vast/Frontend/Consumer.hpp>
+#include <vast/Frontend/Driver.hpp>
+#include <vast/CodeGen/Passes.hpp>
+#include <vast/Dialect/HighLevel/Passes.hpp>
 
 int main(int argc, char **argv) {
     auto maybe_ast = pasta::parse_ast(argc, argv);
@@ -30,17 +36,16 @@ int main(int argc, char **argv) {
         vast::hl::HighLevelDialect,
         macroni::macroni::MacroniDialect
     >();
+    auto &actx = pasta_ast.UnderlyingAST();
     auto mctx = mlir::MLIRContext(registry);
-    macroni::MacroniCodeGenContext cgctx(mctx, pasta_ast.UnderlyingAST(),
-                                         pasta_ast);
-    macroni::MacroniCodeGen codegen(cgctx);
+    auto cgctx = macroni::MacroniCodeGenContext(mctx, actx, pasta_ast);
+    auto meta = macroni::MacroniMetaGenerator(&actx, &mctx);
+    auto codegen_instance = macroni::MacroniCodeGenInstance(cgctx, meta);
 
-    // Generate the MLIR
-    auto tu_decl = pasta_ast.UnderlyingAST().getTranslationUnitDecl();
-    auto mod = codegen.emit_module(tu_decl);
-
-    // Print the result
-    mod->print(llvm::outs());
+    codegen_instance.emit_data_layout();
+    codegen_instance.Visit(actx.getTranslationUnitDecl());
+    codegen_instance.verify_module();
+    cgctx.mod->print(llvm::outs());
 
     return EXIT_SUCCESS;
 }
