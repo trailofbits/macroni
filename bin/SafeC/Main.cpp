@@ -9,6 +9,7 @@
 #include <macroni/Common/ParseAST.hpp>
 #include <macroni/Conversion/Safety/SafetyRewriters.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
+#include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <mlir/Pass/Pass.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
@@ -32,14 +33,16 @@ int main(int argc, char **argv) {
         macroni::macroni::MacroniDialect,
         macroni::safety::SafetyDialect
     >();
+    auto &actx = pasta_ast.UnderlyingAST();
     auto mctx = mlir::MLIRContext(registry);
-    macroni::MacroniCodeGenContext cgctx(mctx, pasta_ast.UnderlyingAST(),
-                                         pasta_ast);
-    SafeCCodeGen codegen(cgctx);
+    auto cgctx = macroni::MacroniCodeGenContext(mctx, actx, pasta_ast);
+    auto meta = macroni::MacroniMetaGenerator(&actx, &mctx);
+    auto codegen_instance = SafeCCodeGenInstance(cgctx, meta);
 
     // Generate the MLIR
-    auto tu_decl = pasta_ast.UnderlyingAST().getTranslationUnitDecl();
-    auto mod = codegen.emit_module(tu_decl);
+    codegen_instance.emit_data_layout();
+    codegen_instance.Visit(actx.getTranslationUnitDecl());
+    codegen_instance.verify_module();
 
     // Register conversions
     mlir::RewritePatternSet patterns(&mctx);
@@ -47,13 +50,13 @@ int main(int argc, char **argv) {
 
     // Apply the conversions.
     mlir::FrozenRewritePatternSet frozen_pats(std::move(patterns));
-    mod->walk([&frozen_pats](mlir::Operation *op) {
+    cgctx.mod->walk([&frozen_pats](mlir::Operation *op) {
         if (mlir::isa<vast::hl::IfOp>(op)) {
             std::ignore = mlir::applyOpPatternsAndFold(op, frozen_pats);
         }}
     );
     // Print the result
-    mod->print(llvm::outs());
+    cgctx.mod->print(llvm::outs());
 
     return EXIT_SUCCESS;
 }

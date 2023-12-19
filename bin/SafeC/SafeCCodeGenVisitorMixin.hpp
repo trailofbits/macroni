@@ -1,11 +1,15 @@
 #pragma once
 
 #include <macroni/Dialect/Safety/SafetyDialect.hpp>
+#include <macroni/Translation/MacroniCodeGenContext.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
 #include <pasta/AST/Macro.h>
 #include <pasta/AST/Stmt.h>
 #include <vast/CodeGen/CodeGen.hpp>
+#include <vast/CodeGen/FallBackVisitor.hpp>
+#include <vast/CodeGen/UnreachableVisitor.hpp>
+#include <vast/CodeGen/UnsupportedVisitor.hpp>
 
 template <typename Derived>
 struct SafeCCodeGenVisitorMixin
@@ -13,8 +17,8 @@ struct SafeCCodeGenVisitorMixin
 
     using parent_t = macroni::MacroniCodeGenVisitorMixin<Derived>;
 
-    using parent_t::builder;
-    using parent_t::StmtVisitor::LensType::mcontext;
+    using parent_t::mlir_builder;
+    using parent_t::stmt_visitor::lens::mcontext;
 
     using parent_t::Visit;
 
@@ -55,20 +59,17 @@ struct SafeCCodeGenVisitorMixin
         if (std::any_of(aligned_subs.begin(), aligned_subs.end(),
                         is_unsafe_exp)) {
             op->setAttr(macroni::safety::SafetyDialect::unsafe(),
-                        builder().getBoolAttr(true));
+                        mlir_builder().getBoolAttr(true));
         }
     }
 };
 
 template<typename Derived>
-using SafeCVisitorConfig = vast::cg::FallBackVisitor<Derived,
+using SafeCVisitorConfig = vast::cg::fallback_visitor<
+    Derived,
     SafeCCodeGenVisitorMixin,
-    vast::cg::UnsupportedVisitor,
-    vast::cg::UnreachableVisitor
+    vast::cg::unsup_visitor,
+    vast::cg::unreach_visitor
 >;
 
-using SafeCCodeGen = vast::cg::CodeGen<
-    macroni::MacroniCodeGenContext,
-    SafeCVisitorConfig,
-    macroni::MacroniMetaGenerator
->;
+using SafeCCodeGenInstance = vast::cg::codegen_instance<SafeCVisitorConfig>;
