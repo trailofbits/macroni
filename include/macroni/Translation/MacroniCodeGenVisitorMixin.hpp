@@ -1,13 +1,17 @@
 #pragma once
 
-#include <macroni/Dialect/Kernel/KernelTypes.hpp>
+#include <llvm/ADT/StringRef.h>
 #include <macroni/Dialect/Macroni/MacroniDialect.hpp>
 #include <macroni/Dialect/Macroni/MacroniOps.hpp>
 #include <macroni/Translation/MacroniCodeGenContext.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
+#include <optional>
 #include <pasta/AST/AST.h>
 #include <pasta/AST/Macro.h>
+#include <set>
+#include <vast/CodeGen/Builder.hpp>
 #include <vast/CodeGen/CodeGen.hpp>
+#include <vector>
 
 namespace macroni {
     // Given a set of visited substitutions, returns the lowest substitutions in
@@ -29,53 +33,61 @@ namespace macroni {
 
     template<typename Derived>
     struct MacroniCodeGenVisitorMixin
-        : vast::cg::CodeGenDeclVisitor<Derived>
-        , vast::cg::CodeGenStmtVisitor<Derived>
-        , vast::cg::CodeGenTypeVisitorWithDataLayout<Derived>
-        , vast::cg::CodeGenVisitorLens<MacroniCodeGenVisitorMixin<Derived>,
-        Derived>
-        , vast::cg::CodeGenBuilder<MacroniCodeGenVisitorMixin<Derived>,
-        Derived> {
-
-        using LensType = vast::cg::CodeGenVisitorLens<
-            MacroniCodeGenVisitorMixin<Derived>, Derived>;
-        using LensType::context;
-        using LensType::derived;
-
-        using Builder = vast::cg::CodeGenBuilder<
-            MacroniCodeGenVisitorMixin<Derived>, Derived>;
-        using Builder::builder;
-        using Builder::make_maybe_value_yield_region;
-
-        using DeclVisitor = vast::cg::CodeGenDeclVisitor<Derived>;
-        using StmtVisitor = vast::cg::CodeGenStmtVisitor<Derived>;
-        using TypeVisitor =
-            vast::cg::CodeGenTypeVisitorWithDataLayout<Derived>;
+        : vast::cg::default_decl_visitor<Derived>
+        , vast::cg::default_stmt_visitor<Derived>
+        , vast::cg::type_visitor_with_dl<Derived>
+        , vast::cg::default_attr_visitor<Derived>
+        , vast::cg::visitor_lens<Derived, MacroniCodeGenVisitorMixin> {
 
         std::set<pasta::MacroSubstitution> visited;
 
-        mlir::Type Visit(const clang::Type *type) {
-            return TypeVisitor::Visit(type);
-        }
+        using decl_visitor = vast::cg::default_decl_visitor<Derived>;
+        using stmt_visitor = vast::cg::default_stmt_visitor<Derived>;
+        using type_visitor_with_dl = vast::cg::type_visitor_with_dl<Derived>;
+        using attr_visitor = vast::cg::default_attr_visitor<Derived>;
+        using lens = vast::cg::visitor_lens<Derived, MacroniCodeGenVisitorMixin>;
 
-        mlir::Type Visit(clang::QualType type) {
-            return TypeVisitor::Visit(type);
-        }
+        using decl_visitor::Visit;
+        using type_visitor_with_dl::Visit;
+        using attr_visitor::Visit;
+        using lens::context;
+        using lens::derived;
+        using lens::insertion_guard;
+        using lens::mcontext;
+        using lens::meta_location;
+        using lens::mlir_builder;
+        using lens::set_insertion_point_to_end;
 
-        mlir::Operation *Visit(const clang::Decl *decl) {
-            return DeclVisitor::Visit(decl);
+        // VAST used to define this function as part of their API, but removed
+        // it in favor of `make_stmt_expr_region()`. We redefine it here as a
+        // templated function to handle macro substitutions, since macro
+        // substitutions may or may not expand to an expression.
+        template<typename StmtType>
+        std::pair< std::unique_ptr< mlir::Region >, mlir::Type >
+            make_maybe_value_yield_region(const StmtType *stmt) {
+            auto guard = insertion_guard();
+            auto reg = derived().make_stmt_region(stmt);
+
+            auto &block = reg->back();
+            auto type = mlir::Type();
+            set_insertion_point_to_end(&block);
+            if (block.back().getNumResults() > 0) {
+                type = block.back().getResult(0).getType();
+                mlir_builder().template create< vast::hl::ValueYieldOp >(
+                    meta_location(stmt), block.back().getResult(0));
+            }
+            return { std::move(reg), type };
         }
 
         mlir::Operation *Visit(const clang::Stmt *stmt) {
-            // FIXME(bpp): Retrieve the pasta::AST from context() once VAST
-            // allows visitors to retrieve code gen contexts inherited from
-            // vast::cg::CodeGenContext
-            auto pasta_stmt = context().pasta_ast.Adopt(stmt);
+            MacroniCodeGenContext &codegen_context =
+                static_cast<MacroniCodeGenContext &>(context());
+            auto pasta_stmt = codegen_context.pasta_ast.Adopt(stmt);
 
             if (clang::isa<clang::ImplicitValueInitExpr,
                 clang::ImplicitCastExpr>(stmt)) {
                 // Don't visit implicit expressions
-                auto op = StmtVisitor::Visit(stmt);
+                auto op = stmt_visitor::Visit(stmt);
                 derived().UnalignedStmtVisited(pasta_stmt, op);
                 return op;
             }
@@ -84,14 +96,14 @@ namespace macroni {
             auto sub = lowest_unvisited_substitution(pasta_stmt, visited);
             if (!sub) {
                 // If no substitution covers this statement, visit it normally.
-                auto op = StmtVisitor::Visit(stmt);
+                auto op = stmt_visitor::Visit(stmt);
                 derived().UnalignedStmtVisited(pasta_stmt, op);
                 return op;
             }
 
             // Get the substitution's location, name, parameter names, and
             // whether it is function-like
-            auto loc = StmtVisitor::meta_location(*sub);
+            auto loc = meta_location(stmt);
             auto name_tok = sub->NameOrOperator();
             auto macro_name = (name_tok
                                ? name_tok->Data()
@@ -99,7 +111,7 @@ namespace macroni {
             auto function_like = is_function_like(*sub);
             auto parameter_names = get_parameter_names(*sub);
 
-            // We call `make_maybe_value_yield_region` here because a macro may
+            // We call `make_stmt_expr_region` here because a macro may
             // not expand to an expression
             auto [region, return_type] = make_maybe_value_yield_region(stmt);
 
@@ -107,17 +119,17 @@ namespace macroni {
             // appropriate operation
             auto macroni_op = [&]() -> mlir::Operation *{
                 if (sub->Kind() == pasta::MacroKind::kExpansion) {
-                    return StmtVisitor::template make<macroni::MacroExpansion>(
+                    return stmt_visitor::template make<macroni::MacroExpansion>(
                         loc,
-                        builder().getStringAttr(llvm::Twine(macro_name)),
-                        builder().getStrArrayAttr(llvm::ArrayRef(parameter_names)),
-                        builder().getBoolAttr(function_like),
+                        mlir_builder().getStringAttr(llvm::Twine(macro_name)),
+                        mlir_builder().getStrArrayAttr(llvm::ArrayRef(parameter_names)),
+                        mlir_builder().getBoolAttr(function_like),
                         return_type,
                         std::move(region));
                 }
-                return StmtVisitor::template make<macroni::MacroParameter>(
+                return stmt_visitor::template make<macroni::MacroParameter>(
                     loc,
-                    builder().getStringAttr(llvm::Twine(macro_name)),
+                    mlir_builder().getStringAttr(llvm::Twine(macro_name)),
                     return_type,
                     std::move(region));
                 };
@@ -148,16 +160,14 @@ namespace macroni {
     };
 
     template<typename Derived>
-    using MacroniVisitorConfig = vast::cg::FallBackVisitor<Derived,
+    using MacroniVisitorConfig = vast::cg::fallback_visitor<
+        Derived,
         MacroniCodeGenVisitorMixin,
-        vast::cg::UnsupportedVisitor,
-        vast::cg::UnreachableVisitor
+        vast::cg::unsup_visitor,
+        vast::cg::unreach_visitor
     >;
 
-    using MacroniCodeGen = vast::cg::CodeGen<
-        MacroniCodeGenContext,
-        MacroniVisitorConfig,
-        MacroniMetaGenerator
-    >;
+    using MacroniCodeGenInstance =
+        vast::cg::codegen_instance<MacroniVisitorConfig>;
 
 } // namespace macroni
