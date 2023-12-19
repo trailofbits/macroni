@@ -12,7 +12,5 @@ target_link_libraries(safety_conversion
     MLIRTargetLLVMIRExport
     MLIRLLVMToLLVMIRTranslation
     MLIRToLLVMIRTranslationRegistration
-
-    macroni::settings
 )
 add_library(macroni::safety_conversion ALIAS safety_conversion)
