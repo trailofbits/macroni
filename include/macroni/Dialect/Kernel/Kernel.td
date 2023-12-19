@@ -30,8 +30,6 @@ def Kernel_Dialect : Dialect {
     }];
 
     let useDefaultTypePrinterParser = 1;
-
-    let useFoldAPI = kEmitFoldAdaptorFolder;
 }
 
 class Kernel_Op<string mnemonic, list<Trait> traits = []>

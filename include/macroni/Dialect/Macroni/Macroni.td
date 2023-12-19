@@ -23,8 +23,6 @@ def Macroni_Dialect : Dialect {
         dialect provides a representation of macros that is amenable to
         analysis and optimization.
     }];
-
-    let useFoldAPI = kEmitFoldAdaptorFolder;
 }
 
 class Macroni_Op<string mnemonic, list<Trait> traits = []>
