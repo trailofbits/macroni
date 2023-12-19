@@ -8,5 +8,5 @@
 #include <pasta/Util/Init.h>
 
 namespace pasta {
-    Result<AST, std::string> parse_ast(int argc, char **argv);
+Result<AST, std::string> parse_ast(int argc, char **argv);
 } // namespace pasta

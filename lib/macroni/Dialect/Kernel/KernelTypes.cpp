@@ -6,13 +6,13 @@
 #include <mlir/IR/OpImplementation.h>
 
 namespace macroni::kernel {
-    void KernelDialect::registerTypes() {
-        addTypes<
-            #define GET_TYPEDEF_LIST
-            #include "macroni/Dialect/Kernel/KernelTypes.cpp.inc"
-        >();
-    }
+void KernelDialect::registerTypes() {
+  addTypes<
+#define GET_TYPEDEF_LIST
+#include "macroni/Dialect/Kernel/KernelTypes.cpp.inc"
+      >();
+}
 } // namespace macroni::kernel
 
-#define  GET_TYPEDEF_CLASSES
+#define GET_TYPEDEF_CLASSES
 #include "macroni/Dialect/Kernel/KernelTypes.cpp.inc"

@@ -6,8 +6,8 @@
 #include <mlir/IR/BuiltinTypes.h>
 #include <mlir/IR/Dialect.h>
 #include <mlir/IR/OperationSupport.h>
-#include <mlir/Interfaces/SideEffectInterfaces.h>
 #include <mlir/Interfaces/ControlFlowInterfaces.h>
+#include <mlir/Interfaces/SideEffectInterfaces.h>
 #include <mlir/Support/TypeID.h>
 
 // Pull in the dialect definition.
