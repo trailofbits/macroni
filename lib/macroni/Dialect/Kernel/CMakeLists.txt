@@ -6,7 +6,7 @@ add_mlir_dialect_library(MLIRKernel
     KernelTypes.cpp
 
     ADDITIONAL_HEADER_DIRS
-        ${PROJECT_SOURCE_DIR}/include/macroni
+        ${PROJECT_SOURCE_DIR}/include
 
     DEPENDS
         MLIRKernelIncGen
@@ -22,5 +22,3 @@ add_mlir_dialect_library(MLIRKernel
         MLIRDataLayoutInterfaces
         MLIRInferTypeOpInterface
 )
-
-target_link_libraries(MLIRKernel PRIVATE macroni)
