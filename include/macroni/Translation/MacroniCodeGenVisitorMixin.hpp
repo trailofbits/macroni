@@ -1,6 +1,5 @@
 #pragma once
 
-#include <llvm/ADT/StringRef.h>
 #include <macroni/Dialect/Macroni/MacroniDialect.hpp>
 #include <macroni/Dialect/Macroni/MacroniOps.hpp>
 #include <macroni/Translation/MacroniCodeGenContext.hpp>
@@ -9,8 +8,10 @@
 #include <pasta/AST/AST.h>
 #include <pasta/AST/Macro.h>
 #include <set>
-#include <vast/CodeGen/Builder.hpp>
 #include <vast/CodeGen/CodeGen.hpp>
+#include <vast/CodeGen/FallBackVisitor.hpp>
+#include <vast/CodeGen/UnreachableVisitor.hpp>
+#include <vast/CodeGen/UnsupportedVisitor.hpp>
 #include <vector>
 
 namespace macroni {
@@ -22,9 +23,10 @@ namespace macroni {
         std::set<pasta::MacroSubstitution> &visited);
 
     // Given a substitution, returns whether that substitution is an expansion
-    // of a function-like macro. Returns the given default value if the
-    // substitution lacks the necessary information to determine this.
-    bool is_function_like(pasta::MacroSubstitution &sub, bool default_ = false);
+    // of a function-like macro. Conservatively returns false if the
+    // substitution lacks the necessary information to determine whether it is
+    // function-like or not.
+    bool is_sub_function_like(pasta::MacroSubstitution &sub);
 
     // Given a substitution, returns the names of the names of the
     // substitution's macro parameters, if any.
@@ -80,7 +82,7 @@ namespace macroni {
         }
 
         mlir::Operation *Visit(const clang::Stmt *stmt) {
-            MacroniCodeGenContext &codegen_context =
+            auto &codegen_context =
                 static_cast<MacroniCodeGenContext &>(context());
             auto pasta_stmt = codegen_context.pasta_ast.Adopt(stmt);
 
@@ -108,7 +110,7 @@ namespace macroni {
             auto macro_name = (name_tok
                                ? name_tok->Data()
                                : "<a nameless macro>");
-            auto function_like = is_function_like(*sub);
+            auto function_like = is_sub_function_like(*sub);
             auto parameter_names = get_parameter_names(*sub);
 
             // We call `make_stmt_expr_region` here because a macro may
