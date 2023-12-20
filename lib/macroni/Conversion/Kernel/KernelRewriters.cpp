@@ -1,29 +1,38 @@
 #include <macroni/Conversion/Kernel/KernelRewriters.hpp>
 
 namespace macroni::kernel {
+
+bool has_name(macroni::MacroParameter mp, std::string name) {
+  return mp.getParameterName() == name;
+}
+
+bool has_name(macroni::MacroExpansion exp, std::string name) {
+  return exp.getMacroName() == name;
+}
+
+bool has_results_and_n_parameters(macroni::MacroExpansion exp, size_t n) {
+  return exp.getNumResults() > 0 && exp.getParameterNames().size() == n;
+}
+
 bool is_get_user(macroni::MacroExpansion exp) {
-  return exp.getNumResults() > 0 && exp.getParameterNames().size() == 2 &&
-         exp.getMacroName() == "get_user";
+  return has_results_and_n_parameters(exp, 2) && has_name(exp, "get_user");
 }
 
 bool is_offsetof(macroni::MacroExpansion exp) {
-  return exp.getNumResults() > 0 && exp.getParameterNames().size() == 2 &&
-         exp.getMacroName() == "offsetof";
+  return has_results_and_n_parameters(exp, 2) && has_name(exp, "offsetof");
 }
 
 bool is_container_of(macroni::MacroExpansion exp) {
-  return exp.getNumResults() > 0 && exp.getParameterNames().size() == 3 &&
-         exp.getMacroName() == "container_of";
+  return has_results_and_n_parameters(exp, 3) && has_name(exp, "container_of");
 }
 
 bool is_rcu_dereference(macroni::MacroExpansion exp) {
-  return exp.getNumResults() > 0 && exp.getParameterNames().size() == 1 &&
-         exp.getMacroName() == "rcu_dereference";
+  return has_results_and_n_parameters(exp, 1) &&
+         has_name(exp, "rcu_dereference");
 }
 
 bool is_smp_mb(macroni::MacroExpansion exp) {
-  return exp.getNumResults() > 0 && exp.getParameterNames().size() == 0 &&
-         exp.getMacroName() == "smp_mb";
+  return has_results_and_n_parameters(exp, 0) && has_name(exp, "smp_mb");
 }
 
 mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
@@ -35,10 +44,9 @@ mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
   mlir::Operation *ptr = nullptr;
   exp.getExpansion().walk([&](mlir::Operation *op) {
     if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      auto name = mp.getParameterName();
-      if (!x && name == "x") {
+      if (!x && has_name(mp, "x")) {
         x = op;
-      } else if (!ptr && name == "ptr") {
+      } else if (!ptr && has_name(mp, "ptr")) {
         ptr = op;
       }
     }
@@ -70,19 +78,17 @@ mlir::LogicalResult rewrite_offsetof(macroni::MacroExpansion exp,
   std::optional<mlir::TypeAttr> type;
   std::optional<mlir::StringAttr> member;
   exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto member_op = mlir::dyn_cast<vast::hl::RecordMemberOp>(op)) {
-      auto record = member_op.getRecord();
-      auto record_ty = record.getType();
-      if (auto pty = mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
-        auto element_ty = pty.getElementType();
-        auto ty_attr = mlir::TypeAttr::get(element_ty);
-        type = ty_attr;
-      } else {
-        auto ty_attr = mlir::TypeAttr::get(record_ty);
-        type = ty_attr;
-      }
-      member = member_op.getNameAttr();
+    auto member_op = mlir::dyn_cast<vast::hl::RecordMemberOp>(op);
+    if (!member_op) {
+      return;
     }
+    auto record_ty = member_op.getRecord().getType();
+    if (auto pty = mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
+      type = mlir::TypeAttr::get(pty.getElementType());
+    } else {
+      type = mlir::TypeAttr::get(record_ty);
+    }
+    member = member_op.getNameAttr();
   });
   if (!(type && member)) {
     return mlir::failure();
@@ -101,24 +107,22 @@ mlir::LogicalResult rewrite_container_of(macroni::MacroExpansion exp,
   std::optional<mlir::TypeAttr> type;
   std::optional<mlir::StringAttr> member;
   exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      auto param_name = mp.getParameterName();
-      if ("ptr" == param_name) {
-        ptr = op;
-      }
-    } else if (auto member_op = mlir::dyn_cast<vast::hl::RecordMemberOp>(op)) {
-      auto record = member_op.getRecord();
-      auto record_ty = record.getType();
-      if (auto pty = mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
-        auto elem_ty = pty.getElementType();
-        auto ty_attr = mlir::TypeAttr::get(elem_ty);
-        type = ty_attr;
-      } else {
-        auto ty_attr = mlir::TypeAttr::get(record_ty);
-        type = ty_attr;
-      }
-      member = member_op.getNameAttr();
+    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
+        mp && has_name(mp, "ptr")) {
+      ptr = op;
+      return;
     }
+    auto member_op = mlir::dyn_cast<vast::hl::RecordMemberOp>(op);
+    if (!member_op) {
+      return;
+    }
+    auto record_ty = member_op.getRecord().getType();
+    if (auto pty = mlir::dyn_cast<vast::hl::PointerType>(record_ty)) {
+      type = mlir::TypeAttr::get(pty.getElementType());
+    } else {
+      type = mlir::TypeAttr::get(record_ty);
+    }
+    member = member_op.getNameAttr();
   });
   if (!(ptr && type && member && ptr->getNumResults() == 1)) {
     return mlir::failure();
@@ -137,11 +141,9 @@ mlir::LogicalResult rewrite_rcu_dereference(macroni::MacroExpansion exp,
   }
   mlir::Operation *p = nullptr;
   exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto param = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      auto param_name = param.getParameterName();
-      if (param_name == "p") {
-        p = op;
-      }
+    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
+        mp && has_name(mp, "p")) {
+      p = op;
     }
   });
   if (!(p && p->getNumResults() == 1)) {
@@ -169,12 +171,14 @@ mlir::LogicalResult rewrite_list_for_each(vast::hl::ForOp for_op,
   mlir::Operation *pos = nullptr;
   mlir::Operation *head = nullptr;
   for_op.getCondRegion().walk([&](mlir::Operation *op) {
-    if (auto param_op = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      if (param_op.getParameterName() == "pos") {
-        pos = op;
-      } else if (param_op.getParameterName() == "head") {
-        head = op;
-      }
+    auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
+    if (!mp) {
+      return;
+    }
+    if (has_name(mp, "pos")) {
+      pos = op;
+    } else if (has_name(mp, "head")) {
+      head = op;
     }
   });
   if (!(pos && head)) {
@@ -205,8 +209,8 @@ mlir::LogicalResult rewrite_rcu_read_unlock(vast::hl::CallOp call_op,
   auto unlock_level = get_lock_level(*unlock_op);
   mlir::Operation *lock_op = nullptr;
   for (auto op = unlock_op; op; op = op->getPrevNode()) {
-    if (auto call_op = mlir::dyn_cast<vast::hl::CallOp>(op)) {
-      name = call_op.getCalleeAttr().getValue();
+    if (auto other_call_op = mlir::dyn_cast<vast::hl::CallOp>(op)) {
+      name = other_call_op.getCalleeAttr().getValue();
       if ("rcu_read_lock" == name) {
         auto lock_level = get_lock_level(*op);
         if (unlock_level == lock_level) {
