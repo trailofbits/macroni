@@ -1,7 +1,5 @@
 #pragma once
 
-#define GET_TYPEDEF_CLASSES 1
-
 #include <macroni/Dialect/Kernel/KernelDialect.hpp>
 #include <macroni/Dialect/Kernel/KernelTypes.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
@@ -33,8 +31,7 @@ struct KernelCodeGenVisitorMixin
       return ty;
     }
     auto attr = attributed_type->getAttr();
-    using ASA = clang::AddressSpaceAttr;
-    auto addr_space = clang::dyn_cast_or_null<ASA>(attr);
+    auto addr_space = clang::dyn_cast_or_null<clang::AddressSpaceAttr>(attr);
     if (!addr_space) {
       return ty;
     }
@@ -43,10 +40,8 @@ struct KernelCodeGenVisitorMixin
     // of the last enumerator in Clang's LangAS enum. So to get the original
     // value, we just subtract this enumerator's value from the value attached
     // to the AddressSpaceAttr.
-    using clang::LangAS;
-    using std::underlying_type_t;
-    auto FirstAddrSpace = LangAS::FirstTargetAddressSpace;
-    int first = static_cast<underlying_type_t<LangAS>>(FirstAddrSpace);
+    using raw_t = std::underlying_type_t<clang::LangAS>;
+    int first = static_cast<raw_t>(clang::LangAS::FirstTargetAddressSpace);
     int space = addr_space->getAddressSpace() - first;
     return ::macroni::kernel::AddressSpaceType::get(&mcontext(), ty, space);
   }
@@ -61,18 +56,27 @@ struct KernelCodeGenVisitorMixin
     op->setAttr("lock_level", mlir_builder().getI64IntegerAttr(lock_level));
   }
 
+  void lock_op(mlir::Operation *op) {
+    set_lock_level(op);
+    lock_level++;
+  }
+
+  void unlock_op(mlir::Operation *op) {
+    lock_level--;
+    set_lock_level(op);
+  }
+
   void VisitCallExpr(pasta::CallExpr &call_expr, mlir::Operation *op) {
     auto call_op = mlir::dyn_cast<vast::hl::CallOp>(op);
     if (!call_op) {
       return;
     }
+
     auto name = call_op.getCalleeAttr().getValue();
     if (name == macroni::kernel::KernelDialect::rcu_read_lock()) {
-      set_lock_level(op);
-      lock_level++;
+      lock_op(op);
     } else if (name == macroni::kernel::KernelDialect::rcu_read_unlock()) {
-      lock_level--;
-      set_lock_level(op);
+      unlock_op(op);
     }
   }
 };
