@@ -6,9 +6,9 @@
 
 #include "KernelCodeGenVisitorMixin.hpp"
 #include <iostream>
+#include <macroni/Common/GenerateMacroniModule.hpp>
 #include <macroni/Common/ParseAST.hpp>
 #include <macroni/Conversion/Kernel/KernelRewriters.hpp>
-#include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
 #include <mlir/Pass/Pass.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
@@ -29,16 +29,10 @@ int main(int argc, char **argv) {
   mlir::DialectRegistry registry;
   registry.insert<vast::hl::HighLevelDialect, macroni::macroni::MacroniDialect,
                   macroni::kernel::KernelDialect>();
-  auto &actx = pasta_ast.UnderlyingAST();
   auto mctx = mlir::MLIRContext(registry);
-  auto cgctx = macroni::MacroniCodeGenContext(mctx, actx, pasta_ast);
-  auto meta = macroni::MacroniMetaGenerator(&actx, &mctx);
-  auto codegen_instance = KernelCodeGen(cgctx, meta);
 
   // Generate the MLIR
-  codegen_instance.emit_data_layout();
-  codegen_instance.Visit(actx.getTranslationUnitDecl());
-  codegen_instance.verify_module();
+  auto mod = macroni::generate_macroni_module<KernelCodeGen>(pasta_ast, mctx);
 
   // Register conversions
   auto patterns = mlir::RewritePatternSet(&mctx);
@@ -50,16 +44,17 @@ int main(int argc, char **argv) {
       .add(macroni::kernel::rewrite_list_for_each)
       .add(macroni::kernel::rewrite_rcu_read_unlock);
 
-  // Apply the conversions.
+  // Apply the conversions
   auto frozen_pats = mlir::FrozenRewritePatternSet(std::move(patterns));
-  cgctx.mod->walk([&frozen_pats](mlir::Operation *op) {
+  mod->walk([&frozen_pats](mlir::Operation *op) {
     if (mlir::isa<macroni::macroni::MacroExpansion, vast::hl::ForOp,
                   vast::hl::CallOp>(op)) {
       std::ignore = mlir::applyOpPatternsAndFold(op, frozen_pats);
     }
   });
+
   // Print the result
-  cgctx.mod->print(llvm::outs());
+  mod->print(llvm::outs());
 
   return EXIT_SUCCESS;
 }
