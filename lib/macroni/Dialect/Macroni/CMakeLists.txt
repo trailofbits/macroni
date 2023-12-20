@@ -20,6 +20,4 @@ add_mlir_dialect_library(MLIRMacroni
         MLIRControlFlowInterfaces
         MLIRDataLayoutInterfaces
         MLIRInferTypeOpInterface
-
-        macroni_settings
 )
