@@ -18,10 +18,10 @@
 // CHECK:     hl.field "reg_save_area" : !hl.ptr<!hl.void>
 // CHECK:   }
 // CHECK:   hl.typedef "__builtin_va_list" : !hl.array<1, !hl.record<"__va_list_tag">>
-// CHECK:   hl.func external @main () -> !hl.int {
-// CHECK:     hl.scope {
+// CHECK:   hl.func @main () -> !hl.int {
+// CHECK:     core.scope {
 // CHECK:       %0 = hl.var "p" : !hl.lvalue<!hl.ptr<!hl.int>> = {
-// CHECK:         %4 = hl.const #hl.integer<12648430> : !hl.int
+// CHECK:         %4 = hl.const #core.integer<12648430> : !hl.int
 // CHECK:         %5 = hl.cstyle_cast %4 IntegralToPointer : !hl.int -> !hl.ptr<!hl.int>
 // CHECK:         hl.value.yield %5 : !hl.ptr<!hl.int>
 // CHECK:       }
@@ -52,7 +52,7 @@
 // CHECK:         %5 = hl.implicit_cast %4 LValueToRValue : !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:         hl.value.yield %5 : !hl.int
 // CHECK:       }
-// CHECK:       %3 = hl.const #hl.integer<0> : !hl.int
+// CHECK:       %3 = hl.const #core.integer<0> : !hl.int
 // CHECK:       hl.return %3 : !hl.int
 // CHECK:     }
 // CHECK:   }

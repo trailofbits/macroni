@@ -18,20 +18,21 @@
 // CHECK:     hl.field "reg_save_area" : !hl.ptr<!hl.void>
 // CHECK:   }
 // CHECK:   hl.typedef "__builtin_va_list" : !hl.array<1, !hl.record<"__va_list_tag">>
-// CHECK:   hl.func external @barrier () -> !hl.int {
-// CHECK:     hl.scope {
-// CHECK:       %0 = hl.const #hl.integer<0> : !hl.int
+// CHECK:   hl.func @barrier () -> !hl.int {
+// CHECK:     core.scope {
+// CHECK:       %0 = hl.const #core.integer<0> : !hl.int
 // CHECK:       hl.return %0 : !hl.int
 // CHECK:     }
 // CHECK:   }
-// CHECK:   hl.func external @main () -> !hl.int {
-// CHECK:     hl.scope {
+// CHECK:   hl.func @main () -> !hl.int {
+// CHECK:     core.scope {
 // CHECK:       %0 = kernel.smp_mb smp_mb() : () -> !hl.int
-// CHECK:       %1 = hl.const #hl.integer<0> : !hl.int
+// CHECK:       %1 = hl.const #core.integer<0> : !hl.int
 // CHECK:       hl.return %1 : !hl.int
 // CHECK:     }
 // CHECK:   }
 // CHECK: }
+
 
 int barrier(void) { return 0; }
 #define smp_mb() barrier()

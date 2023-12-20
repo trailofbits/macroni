@@ -20,18 +20,18 @@
 // CHECK:   hl.typedef "__builtin_va_list" : !hl.array<1, !hl.record<"__va_list_tag">>
 // CHECK:   %0 = hl.var "a" : !hl.lvalue<!hl.int> = {
 // CHECK:     %14 = macroni.expansion "ONE" : !hl.int {
-// CHECK:       %15 = hl.const #hl.integer<1> : !hl.int
+// CHECK:       %15 = hl.const #core.integer<1> : !hl.int
 // CHECK:       hl.value.yield %15 : !hl.int
 // CHECK:     }
 // CHECK:     hl.value.yield %14 : !hl.int
 // CHECK:   }
 // CHECK:   %1 = hl.var "b" : !hl.lvalue<!hl.int> = {
 // CHECK:     %14 = macroni.expansion "ONE" : !hl.int {
-// CHECK:       %17 = hl.const #hl.integer<1> : !hl.int
+// CHECK:       %17 = hl.const #core.integer<1> : !hl.int
 // CHECK:       hl.value.yield %17 : !hl.int
 // CHECK:     }
 // CHECK:     %15 = macroni.expansion "ONE" : !hl.int {
-// CHECK:       %17 = hl.const #hl.integer<1> : !hl.int
+// CHECK:       %17 = hl.const #core.integer<1> : !hl.int
 // CHECK:       hl.value.yield %17 : !hl.int
 // CHECK:     }
 // CHECK:     %16 = hl.add %14, %15 : (!hl.int, !hl.int) -> !hl.int
@@ -40,11 +40,11 @@
 // CHECK:   %2 = hl.var "c" : !hl.lvalue<!hl.int> = {
 // CHECK:     %14 = macroni.expansion "ADD(X, Y)" : !hl.int {
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
-// CHECK:         %18 = hl.const #hl.integer<1> : !hl.int
+// CHECK:         %18 = hl.const #core.integer<1> : !hl.int
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
-// CHECK:         %18 = hl.const #hl.integer<1> : !hl.int
+// CHECK:         %18 = hl.const #core.integer<1> : !hl.int
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %17 = hl.add %15, %16 : (!hl.int, !hl.int) -> !hl.int
@@ -55,12 +55,12 @@
 // CHECK:   %3 = hl.var "d" : !hl.lvalue<!hl.int> = {
 // CHECK:     %14 = macroni.expansion "ADD(X, Y)" : !hl.int {
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
-// CHECK:         %18 = hl.const #hl.integer<1> : !hl.int
+// CHECK:         %18 = hl.const #core.integer<1> : !hl.int
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
 // CHECK:         %18 = macroni.expansion "ONE" : !hl.int {
-// CHECK:           %19 = hl.const #hl.integer<1> : !hl.int
+// CHECK:           %19 = hl.const #core.integer<1> : !hl.int
 // CHECK:           hl.value.yield %19 : !hl.int
 // CHECK:         }
 // CHECK:         hl.value.yield %18 : !hl.int
@@ -74,13 +74,13 @@
 // CHECK:     %14 = macroni.expansion "ADD(X, Y)" : !hl.int {
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
 // CHECK:         %18 = macroni.expansion "ONE" : !hl.int {
-// CHECK:           %19 = hl.const #hl.integer<1> : !hl.int
+// CHECK:           %19 = hl.const #core.integer<1> : !hl.int
 // CHECK:           hl.value.yield %19 : !hl.int
 // CHECK:         }
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
-// CHECK:         %18 = hl.const #hl.integer<1> : !hl.int
+// CHECK:         %18 = hl.const #core.integer<1> : !hl.int
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %17 = hl.add %15, %16 : (!hl.int, !hl.int) -> !hl.int
@@ -92,14 +92,14 @@
 // CHECK:     %14 = macroni.expansion "ADD(X, Y)" : !hl.int {
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
 // CHECK:         %18 = macroni.expansion "ONE" : !hl.int {
-// CHECK:           %19 = hl.const #hl.integer<1> : !hl.int
+// CHECK:           %19 = hl.const #core.integer<1> : !hl.int
 // CHECK:           hl.value.yield %19 : !hl.int
 // CHECK:         }
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
 // CHECK:         %18 = macroni.expansion "ONE" : !hl.int {
-// CHECK:           %19 = hl.const #hl.integer<1> : !hl.int
+// CHECK:           %19 = hl.const #core.integer<1> : !hl.int
 // CHECK:           hl.value.yield %19 : !hl.int
 // CHECK:         }
 // CHECK:         hl.value.yield %18 : !hl.int
@@ -114,11 +114,11 @@
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<1> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<1> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<2> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<2> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %21 = hl.mul %19, %20 : (!hl.int, !hl.int) -> !hl.int
@@ -127,7 +127,7 @@
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
-// CHECK:         %18 = hl.const #hl.integer<3> : !hl.int
+// CHECK:         %18 = hl.const #core.integer<3> : !hl.int
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %17 = hl.add %15, %16 : (!hl.int, !hl.int) -> !hl.int
@@ -138,17 +138,17 @@
 // CHECK:   %7 = hl.var "h" : !hl.lvalue<!hl.int> = {
 // CHECK:     %14 = macroni.expansion "ADD(X, Y)" : !hl.int {
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
-// CHECK:         %18 = hl.const #hl.integer<1> : !hl.int
+// CHECK:         %18 = hl.const #core.integer<1> : !hl.int
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<2> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<2> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<3> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<3> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %21 = hl.mul %19, %20 : (!hl.int, !hl.int) -> !hl.int
@@ -165,7 +165,7 @@
 // CHECK:     %14 = macroni.expansion "ADD(X, Y)" : !hl.int {
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
 // CHECK:         %18 = macroni.expansion "ONE" : !hl.int {
-// CHECK:           %19 = hl.const #hl.integer<1> : !hl.int
+// CHECK:           %19 = hl.const #core.integer<1> : !hl.int
 // CHECK:           hl.value.yield %19 : !hl.int
 // CHECK:         }
 // CHECK:         hl.value.yield %18 : !hl.int
@@ -173,11 +173,11 @@
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<2> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<2> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<3> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<3> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %21 = hl.mul %19, %20 : (!hl.int, !hl.int) -> !hl.int
@@ -194,7 +194,7 @@
 // CHECK:     %14 = macroni.expansion "ADD(X, Y)" : !hl.int {
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
 // CHECK:         %18 = macroni.expansion "ONE" : !hl.int {
-// CHECK:           %19 = hl.const #hl.integer<1> : !hl.int
+// CHECK:           %19 = hl.const #core.integer<1> : !hl.int
 // CHECK:           hl.value.yield %19 : !hl.int
 // CHECK:         }
 // CHECK:         hl.value.yield %18 : !hl.int
@@ -203,14 +203,14 @@
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
 // CHECK:             %22 = macroni.expansion "ONE" : !hl.int {
-// CHECK:               %23 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %23 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %23 : !hl.int
 // CHECK:             }
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
 // CHECK:             %22 = macroni.expansion "ONE" : !hl.int {
-// CHECK:               %23 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %23 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %23 : !hl.int
 // CHECK:             }
 // CHECK:             hl.value.yield %22 : !hl.int
@@ -230,11 +230,11 @@
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<1> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<1> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<2> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<2> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %21 = hl.mul %19, %20 : (!hl.int, !hl.int) -> !hl.int
@@ -243,7 +243,7 @@
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
-// CHECK:         %18 = hl.const #hl.integer<3> : !hl.int
+// CHECK:         %18 = hl.const #core.integer<3> : !hl.int
 // CHECK:         hl.value.yield %18 : !hl.int
 // CHECK:       }
 // CHECK:       %17 = hl.add %15, %16 : (!hl.int, !hl.int) -> !hl.int
@@ -256,11 +256,11 @@
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<1> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<1> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<2> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<2> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %21 = hl.mul %19, %20 : (!hl.int, !hl.int) -> !hl.int
@@ -270,7 +270,7 @@
 // CHECK:       }
 // CHECK:       %16 = macroni.parameter "Y" : !hl.int {
 // CHECK:         %18 = macroni.expansion "ONE" : !hl.int {
-// CHECK:           %19 = hl.const #hl.integer<1> : !hl.int
+// CHECK:           %19 = hl.const #core.integer<1> : !hl.int
 // CHECK:           hl.value.yield %19 : !hl.int
 // CHECK:         }
 // CHECK:         hl.value.yield %18 : !hl.int
@@ -285,11 +285,11 @@
 // CHECK:       %15 = macroni.parameter "X" : !hl.int {
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<1> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<1> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
-// CHECK:             %22 = hl.const #hl.integer<2> : !hl.int
+// CHECK:             %22 = hl.const #core.integer<2> : !hl.int
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %21 = hl.mul %19, %20 : (!hl.int, !hl.int) -> !hl.int
@@ -301,14 +301,14 @@
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
 // CHECK:             %22 = macroni.expansion "ONE" : !hl.int {
-// CHECK:               %23 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %23 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %23 : !hl.int
 // CHECK:             }
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
 // CHECK:             %22 = macroni.expansion "ONE" : !hl.int {
-// CHECK:               %23 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %23 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %23 : !hl.int
 // CHECK:             }
 // CHECK:             hl.value.yield %22 : !hl.int
@@ -329,14 +329,14 @@
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
 // CHECK:             %22 = macroni.expansion "ONE" : !hl.int {
-// CHECK:               %23 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %23 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %23 : !hl.int
 // CHECK:             }
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
 // CHECK:             %22 = macroni.expansion "ONE" : !hl.int {
-// CHECK:               %23 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %23 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %23 : !hl.int
 // CHECK:             }
 // CHECK:             hl.value.yield %22 : !hl.int
@@ -350,14 +350,14 @@
 // CHECK:         %18 = macroni.expansion "MUL(A, B)" : !hl.int {
 // CHECK:           %19 = macroni.parameter "A" : !hl.int {
 // CHECK:             %22 = macroni.expansion "ONE" : !hl.int {
-// CHECK:               %23 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %23 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %23 : !hl.int
 // CHECK:             }
 // CHECK:             hl.value.yield %22 : !hl.int
 // CHECK:           }
 // CHECK:           %20 = macroni.parameter "B" : !hl.int {
 // CHECK:             %22 = macroni.expansion "ONE" : !hl.int {
-// CHECK:               %23 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %23 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %23 : !hl.int
 // CHECK:             }
 // CHECK:             hl.value.yield %22 : !hl.int
@@ -372,89 +372,89 @@
 // CHECK:     }
 // CHECK:     hl.value.yield %14 : !hl.int
 // CHECK:   }
-// CHECK:   hl.func external @main (%arg0: !hl.lvalue<!hl.int>, %arg1: !hl.lvalue<!hl.decayed<!hl.ptr<!hl.ptr<!hl.char< const >>>>>) -> !hl.int {
-// CHECK:     hl.scope {
+// CHECK:   hl.func @main (%arg0: !hl.lvalue<!hl.int>, %arg1: !hl.lvalue<!hl.decayed<!hl.ptr<!hl.ptr<!hl.char< const >>>>>) -> !hl.int {
+// CHECK:     core.scope {
 // CHECK:       %14 = hl.var "x" : !hl.lvalue<!hl.int>
 // CHECK:       macroni.expansion "DO_NO_TRAILING_SEMI(STMT)" :  {
 // CHECK:         hl.do {
-// CHECK:           hl.scope {
+// CHECK:           core.scope {
 // CHECK:             %16 = macroni.parameter "STMT" : !hl.int {
 // CHECK:               %17 = hl.ref %14 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
-// CHECK:               %18 = hl.const #hl.integer<0> : !hl.int
+// CHECK:               %18 = hl.const #core.integer<0> : !hl.int
 // CHECK:               %19 = hl.assign %18 to %17 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:               hl.value.yield %19 : !hl.int
 // CHECK:             }
 // CHECK:           }
 // CHECK:         } while {
-// CHECK:           %16 = hl.const #hl.integer<0> : !hl.int
+// CHECK:           %16 = hl.const #core.integer<0> : !hl.int
 // CHECK:           hl.cond.yield %16 : !hl.int
 // CHECK:         }
 // CHECK:       }
 // CHECK:       macroni.expansion "DO_NO_TRAILING_SEMI(STMT)" :  {
 // CHECK:         hl.do {
-// CHECK:           hl.scope {
+// CHECK:           core.scope {
 // CHECK:             macroni.parameter "STMT" :  {
 // CHECK:               macroni.expansion "DO_NO_TRAILING_SEMI(STMT)" :  {
 // CHECK:                 hl.do {
-// CHECK:                   hl.scope {
+// CHECK:                   core.scope {
 // CHECK:                     %16 = macroni.parameter "STMT" : !hl.int {
 // CHECK:                       %17 = hl.ref %14 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
-// CHECK:                       %18 = hl.const #hl.integer<0> : !hl.int
+// CHECK:                       %18 = hl.const #core.integer<0> : !hl.int
 // CHECK:                       %19 = hl.assign %18 to %17 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:                       hl.value.yield %19 : !hl.int
 // CHECK:                     }
 // CHECK:                   }
 // CHECK:                 } while {
-// CHECK:                   %16 = hl.const #hl.integer<0> : !hl.int
+// CHECK:                   %16 = hl.const #core.integer<0> : !hl.int
 // CHECK:                   hl.cond.yield %16 : !hl.int
 // CHECK:                 }
 // CHECK:               }
 // CHECK:             }
 // CHECK:           }
 // CHECK:         } while {
-// CHECK:           %16 = hl.const #hl.integer<0> : !hl.int
+// CHECK:           %16 = hl.const #core.integer<0> : !hl.int
 // CHECK:           hl.cond.yield %16 : !hl.int
 // CHECK:         }
 // CHECK:       }
 // CHECK:       macroni.expansion "DO_TRAILING_SEMI(STMT)" :  {
 // CHECK:         hl.do {
-// CHECK:           hl.scope {
+// CHECK:           core.scope {
 // CHECK:             %16 = macroni.parameter "STMT" : !hl.int {
 // CHECK:               %17 = hl.ref %14 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
-// CHECK:               %18 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %18 = hl.const #core.integer<1> : !hl.int
 // CHECK:               %19 = hl.assign %18 to %17 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:               hl.value.yield %19 : !hl.int
 // CHECK:             }
 // CHECK:           }
 // CHECK:         } while {
-// CHECK:           %16 = hl.const #hl.integer<0> : !hl.int
+// CHECK:           %16 = hl.const #core.integer<0> : !hl.int
 // CHECK:           hl.cond.yield %16 : !hl.int
 // CHECK:         }
 // CHECK:       }
 // CHECK:       macroni.expansion "DO_TRAILING_SEMI(STMT)" :  {
 // CHECK:         hl.do {
-// CHECK:           hl.scope {
+// CHECK:           core.scope {
 // CHECK:             hl.do {
-// CHECK:               hl.scope {
+// CHECK:               core.scope {
 // CHECK:                 %16 = macroni.parameter "STMT" : !hl.int {
 // CHECK:                   %17 = hl.ref %14 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
-// CHECK:                   %18 = hl.const #hl.integer<1> : !hl.int
+// CHECK:                   %18 = hl.const #core.integer<1> : !hl.int
 // CHECK:                   %19 = hl.assign %18 to %17 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:                   hl.value.yield %19 : !hl.int
 // CHECK:                 }
 // CHECK:               }
 // CHECK:             } while {
-// CHECK:               %16 = hl.const #hl.integer<0> : !hl.int
+// CHECK:               %16 = hl.const #core.integer<0> : !hl.int
 // CHECK:               hl.cond.yield %16 : !hl.int
 // CHECK:             }
 // CHECK:             hl.skip
 // CHECK:           }
 // CHECK:         } while {
-// CHECK:           %16 = hl.const #hl.integer<0> : !hl.int
+// CHECK:           %16 = hl.const #core.integer<0> : !hl.int
 // CHECK:           hl.cond.yield %16 : !hl.int
 // CHECK:         }
 // CHECK:       }
-// CHECK:       %15 = hl.const #hl.integer<0> : !hl.int
+// CHECK:       %15 = hl.const #core.integer<0> : !hl.int
 // CHECK:       hl.return %15 : !hl.int
 // CHECK:     }
 // CHECK:   }
