@@ -28,14 +28,13 @@ lowest_unvisited_substitution(pasta::Stmt &stmt,
   return std::nullopt;
 }
 
-bool is_function_like(pasta::MacroSubstitution &sub,
-                      bool default_ /* = false */) {
+bool is_sub_function_like(pasta::MacroSubstitution &sub) {
   if (auto exp = pasta::MacroExpansion::From(sub)) {
     if (auto def = exp->Definition()) {
       return def->IsFunctionLike();
     }
   }
-  return default_;
+  return false;
 }
 
 std::vector<llvm::StringRef>
