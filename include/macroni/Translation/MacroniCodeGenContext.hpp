@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mlir/IR/MLIRContext.h>
 #include <pasta/AST/AST.h>
 #include <vast/CodeGen/CodeGenContext.hpp>
 
