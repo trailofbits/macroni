@@ -52,17 +52,17 @@ tools = [
     ToolSubst(
         "kernelize",
         os.path.join(config.macroni_obj_root, 'bin',
-                     'Kernelize', 'RelWithDebInfo', 'kernelize')),
+                     'Kernelize', 'Debug', 'kernelize')),
 
     ToolSubst(
         "macronify",
         os.path.join(config.macroni_obj_root, 'bin',
-                     'Macronify', 'RelWithDebInfo', 'macronify')),
+                     'Macronify', 'Debug', 'macronify')),
 
     ToolSubst(
         "safe-c",
         os.path.join(config.macroni_obj_root, 'bin',
-                     'SafeC', 'RelWithDebInfo', 'safe-c')),
+                     'SafeC', 'Debug', 'safe-c')),
 
     ToolSubst(
         "FileCheck",

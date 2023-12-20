@@ -18,75 +18,80 @@
 // CHECK:     hl.field "reg_save_area" : !hl.ptr<!hl.void>
 // CHECK:   }
 // CHECK:   hl.typedef "__builtin_va_list" : !hl.array<1, !hl.record<"__va_list_tag">>
-// CHECK:   hl.func external @rcu_read_lock () {
-// CHECK:     hl.scope {
-// CHECK:       hl.return
+// CHECK:   hl.func @rcu_read_lock () -> !hl.void {
+// CHECK:     core.scope {
+// CHECK:       %0 = hl.const #void_value
+// CHECK:       core.implicit.return %0 : !hl.void
 // CHECK:     }
 // CHECK:   }
-// CHECK:   hl.func external @rcu_read_unlock () {
-// CHECK:     hl.scope {
-// CHECK:       hl.return
+// CHECK:   hl.func @rcu_read_unlock () -> !hl.void {
+// CHECK:     core.scope {
+// CHECK:       %0 = hl.const #void_value
+// CHECK:       core.implicit.return %0 : !hl.void
 // CHECK:     }
 // CHECK:   }
-// CHECK:   hl.func external @lock () {
-// CHECK:     hl.scope {
-// CHECK:       hl.call @rcu_read_lock() {lock_level = 0 : i64} : () -> ()
-// CHECK:       hl.return
+// CHECK:   hl.func @lock () -> !hl.void {
+// CHECK:     core.scope {
+// CHECK:       %0 = hl.call @rcu_read_lock() {lock_level = 0 : i64} : () -> !hl.void
+// CHECK:       %1 = hl.const #void_value
+// CHECK:       core.implicit.return %1 : !hl.void
 // CHECK:     }
 // CHECK:   }
-// CHECK:   hl.func external @unlock () {
-// CHECK:     hl.scope {
-// CHECK:       hl.call @rcu_read_unlock() {lock_level = 0 : i64} : () -> ()
-// CHECK:       hl.return
+// CHECK:   hl.func @unlock () -> !hl.void {
+// CHECK:     core.scope {
+// CHECK:       %0 = hl.call @rcu_read_unlock() {lock_level = 0 : i64} : () -> !hl.void
+// CHECK:       %1 = hl.const #void_value
+// CHECK:       core.implicit.return %1 : !hl.void
 // CHECK:     }
 // CHECK:   }
-// CHECK:   hl.func external @foo () {
-// CHECK:     hl.scope {
-// CHECK:       hl.return
+// CHECK:   hl.func @foo () -> !hl.void {
+// CHECK:     core.scope {
+// CHECK:       %0 = hl.const #void_value
+// CHECK:       core.implicit.return %0 : !hl.void
 // CHECK:     }
 // CHECK:   }
-// CHECK:   hl.func external @main () -> !hl.int {
-// CHECK:     hl.scope {
+// CHECK:   hl.func @main () -> !hl.int {
+// CHECK:     core.scope {
 // CHECK:       %0 = hl.var "i" : !hl.lvalue<!hl.int>
 // CHECK:       kernel.rcu.critical_section {
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
-// CHECK:         hl.call @foo() : () -> ()
+// CHECK:         %2 = hl.call @foo() : () -> !hl.void
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
-// CHECK:         hl.scope {
+// CHECK:         core.scope {
 // CHECK:           %2 = hl.ref %0 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
-// CHECK:           %3 = hl.const #hl.integer<0> : !hl.int
+// CHECK:           %3 = hl.const #core.integer<0> : !hl.int
 // CHECK:           %4 = hl.assign %3 to %2 : !hl.int, !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:           hl.for {
 // CHECK:             %5 = hl.ref %0 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:             %6 = hl.implicit_cast %5 LValueToRValue : !hl.lvalue<!hl.int> -> !hl.int
-// CHECK:             %7 = hl.const #hl.integer<10> : !hl.int
+// CHECK:             %7 = hl.const #core.integer<10> : !hl.int
 // CHECK:             %8 = hl.cmp slt %6, %7 : !hl.int, !hl.int -> !hl.int
 // CHECK:             hl.cond.yield %8 : !hl.int
 // CHECK:           } incr {
 // CHECK:             %5 = hl.ref %0 : (!hl.lvalue<!hl.int>) -> !hl.lvalue<!hl.int>
 // CHECK:             %6 = hl.post.inc %5 : !hl.lvalue<!hl.int> -> !hl.int
 // CHECK:           } do {
-// CHECK:             hl.scope {
-// CHECK:               hl.call @foo() : () -> ()
+// CHECK:             core.scope {
+// CHECK:               %5 = hl.call @foo() : () -> !hl.void
 // CHECK:             }
 // CHECK:           }
 // CHECK:         }
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
-// CHECK:         hl.scope {
+// CHECK:         core.scope {
 // CHECK:           kernel.rcu.critical_section {
 // CHECK:           }
 // CHECK:         }
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
 // CHECK:         hl.do {
-// CHECK:           hl.scope {
+// CHECK:           core.scope {
 // CHECK:             %2 = hl.var "x" : !hl.lvalue<!hl.int>
 // CHECK:           }
 // CHECK:         } while {
-// CHECK:           %2 = hl.const #hl.integer<0> : !hl.int
+// CHECK:           %2 = hl.const #core.integer<0> : !hl.int
 // CHECK:           hl.cond.yield %2 : !hl.int
 // CHECK:         }
 // CHECK:       }
@@ -100,50 +105,50 @@
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
 // CHECK:         hl.do {
-// CHECK:           hl.scope {
+// CHECK:           core.scope {
 // CHECK:             kernel.rcu.critical_section {
 // CHECK:               %2 = hl.var "x" : !hl.lvalue<!hl.int>
 // CHECK:             }
 // CHECK:           }
 // CHECK:         } while {
-// CHECK:           %2 = hl.const #hl.integer<0> : !hl.int
+// CHECK:           %2 = hl.const #core.integer<0> : !hl.int
 // CHECK:           hl.cond.yield %2 : !hl.int
 // CHECK:         }
 // CHECK:       }
 // CHECK:       hl.do {
-// CHECK:         hl.scope {
+// CHECK:         core.scope {
 // CHECK:           kernel.rcu.critical_section {
 // CHECK:             %2 = hl.var "x" : !hl.lvalue<!hl.int> = {
-// CHECK:               %4 = hl.const #hl.integer<1> : !hl.int
+// CHECK:               %4 = hl.const #core.integer<1> : !hl.int
 // CHECK:               hl.value.yield %4 : !hl.int
 // CHECK:             }
 // CHECK:             kernel.rcu.critical_section {
 // CHECK:             }
 // CHECK:             %3 = hl.var "y" : !hl.lvalue<!hl.int> = {
-// CHECK:               %4 = hl.const #hl.integer<2> : !hl.int
+// CHECK:               %4 = hl.const #core.integer<2> : !hl.int
 // CHECK:               hl.value.yield %4 : !hl.int
 // CHECK:             }
 // CHECK:           }
 // CHECK:         }
 // CHECK:       } while {
-// CHECK:         %2 = hl.const #hl.integer<0> : !hl.int
+// CHECK:         %2 = hl.const #core.integer<0> : !hl.int
 // CHECK:         hl.cond.yield %2 : !hl.int
 // CHECK:       }
 // CHECK:       kernel.rcu.critical_section {
 // CHECK:         hl.if {
-// CHECK:           %2 = hl.const #hl.integer<1> : !hl.int
+// CHECK:           %2 = hl.const #core.integer<1> : !hl.int
 // CHECK:           hl.cond.yield %2 : !hl.int
 // CHECK:         } then {
-// CHECK:           hl.scope {
-// CHECK:             hl.call @rcu_read_unlock() {lock_level = 0 : i64} : () -> ()
+// CHECK:           core.scope {
+// CHECK:             %2 = hl.call @rcu_read_unlock() {lock_level = 0 : i64} : () -> !hl.void
 // CHECK:           }
 // CHECK:         } else {
-// CHECK:           hl.scope {
-// CHECK:             hl.call @rcu_read_lock() {lock_level = 0 : i64} : () -> ()
+// CHECK:           core.scope {
+// CHECK:             %2 = hl.call @rcu_read_lock() {lock_level = 0 : i64} : () -> !hl.void
 // CHECK:           }
 // CHECK:         }
 // CHECK:       }
-// CHECK:       %1 = hl.const #hl.integer<0> : !hl.int
+// CHECK:       %1 = hl.const #core.integer<0> : !hl.int
 // CHECK:       hl.return %1 : !hl.int
 // CHECK:     }
 // CHECK:   }

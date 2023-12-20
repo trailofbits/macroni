@@ -24,10 +24,10 @@
 // CHECK:     hl.field "line" : !hl.int
 // CHECK:     hl.field "col" : !hl.int
 // CHECK:   }
-// CHECK:   hl.func external @main () -> !hl.int {
-// CHECK:     hl.scope {
+// CHECK:   hl.func @main () -> !hl.int {
+// CHECK:     core.scope {
 // CHECK:       %0 = kernel.offsetof offsetof(!hl.elaborated<!hl.record<"location">>, "line") : () -> !hl.elaborated<!hl.typedef<"size_t">>
-// CHECK:       %1 = hl.const #hl.integer<0> : !hl.int
+// CHECK:       %1 = hl.const #core.integer<0> : !hl.int
 // CHECK:       hl.return %1 : !hl.int
 // CHECK:     }
 // CHECK:   }

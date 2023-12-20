@@ -24,8 +24,8 @@
 // CHECK:   hl.struct "container" : {
 // CHECK:     hl.field "contained_member" : !hl.ptr<!hl.elaborated<!hl.record<"contained">>>
 // CHECK:   }
-// CHECK:   hl.func external @main () -> !hl.int {
-// CHECK:     hl.scope {
+// CHECK:   hl.func @main () -> !hl.int {
+// CHECK:     core.scope {
 // CHECK:       %0 = hl.var "container_instance" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"container">>>>
 // CHECK:       %1 = macroni.parameter "ptr" : !hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>> {
 // CHECK:         %4 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"container">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"container">>>>
@@ -35,11 +35,12 @@
 // CHECK:         hl.value.yield %7 : !hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>
 // CHECK:       }
 // CHECK:       %2 = kernel.container_of container_of(%1, !hl.elaborated<!hl.record<"container">>, "contained_member") : (!hl.ptr<!hl.ptr<!hl.elaborated<!hl.record<"contained">>>>) -> !hl.ptr<!hl.elaborated<!hl.record<"container">>>
-// CHECK:       %3 = hl.const #hl.integer<0> : !hl.int
+// CHECK:       %3 = hl.const #core.integer<0> : !hl.int
 // CHECK:       hl.return %3 : !hl.int
 // CHECK:     }
 // CHECK:   }
 // CHECK: }
+
 
 typedef unsigned long size_t;
 

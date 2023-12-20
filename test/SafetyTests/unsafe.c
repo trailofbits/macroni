@@ -18,12 +18,12 @@
 // CHECK:     hl.field "reg_save_area" : !hl.ptr<!hl.void>
 // CHECK:   }
 // CHECK:   hl.typedef "__builtin_va_list" : !hl.array<1, !hl.record<"__va_list_tag">>
-// CHECK:   hl.func external @main () -> !hl.int {
-// CHECK:     hl.scope {
+// CHECK:   hl.func @main () -> !hl.int {
+// CHECK:     core.scope {
 // CHECK:       "safety.unsafe"() ({
 // CHECK:         hl.skip
 // CHECK:       }) : () -> ()
-// CHECK:       %0 = hl.const #hl.integer<0> : !hl.int
+// CHECK:       %0 = hl.const #core.integer<0> : !hl.int
 // CHECK:       hl.return %0 : !hl.int
 // CHECK:     }
 // CHECK:   }
