@@ -2,7 +2,6 @@
 #define MACRONI_DIALECT_KERNEL_IR_KERNELTYPES
 
 include "mlir/Interfaces/DataLayoutInterfaces.td"
-include "mlir/IR/SubElementInterfaces.td"
 include "mlir/IR/BuiltinTypeInterfaces.td"
 
 //

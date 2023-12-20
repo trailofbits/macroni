@@ -9,6 +9,5 @@
 #include <mlir/Interfaces/InferTypeOpInterface.h>
 #include <mlir/Support/TypeID.h>
 
-
 #define GET_OP_CLASSES
 #include "macroni/Dialect/Kernel/Kernel.h.inc"

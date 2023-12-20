@@ -6,23 +6,12 @@ add_executable(kernelize
 llvm_update_compile_flags(kernelize)
 
 target_link_libraries(kernelize
-    macroni
-    macroni_common
-    macroni_translation_api
-    kernel_conversion
-
-    MLIROptLib
-    VASTHighLevel
-
-    MLIRIR
-    MLIRParser
-    MLIRPass
-    MLIRSupport
-
-    MLIRKernel
-    MLIRMacroni
-
-    VASTFromSourceParser
+    PRIVATE
+        macroni_api
+        MLIRMacroni
+        MLIRKernel
+        kernel_conversion
+        VAST::VASTCodeGen
 )
 
 mlir_check_link_libraries(kernelize)

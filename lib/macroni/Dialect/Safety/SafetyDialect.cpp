@@ -3,26 +3,24 @@
 #include "macroni/Dialect/Safety/SafetyDialect.hpp"
 #include "macroni/Dialect/Safety/SafetyOps.hpp"
 
-#include <mlir/IR/TypeSupport.h>
 #include <mlir/IR/Builders.h>
 #include <mlir/IR/DialectImplementation.h>
+#include <mlir/IR/TypeSupport.h>
 
 #include <llvm/ADT/TypeSwitch.h>
 #include <llvm/Support/ErrorHandling.h>
 #include <llvm/Support/SMLoc.h>
 
-namespace macroni::safety
-{
-    void SafetyDialect::initialize()
-    {
-        addOperations<
-            #define GET_OP_LIST
-            #include "macroni/Dialect/Safety/Safety.cpp.inc"
-        >();
-    }
+namespace macroni::safety {
+void SafetyDialect::initialize() {
+  addOperations<
+#define GET_OP_LIST
+#include "macroni/Dialect/Safety/Safety.cpp.inc"
+      >();
+}
 
-    using DialectParser = mlir::AsmParser;
-    using DialectPrinter = mlir::AsmPrinter;
+using DialectParser = mlir::AsmParser;
+using DialectPrinter = mlir::AsmPrinter;
 
 } // namespace macroni::safety
 

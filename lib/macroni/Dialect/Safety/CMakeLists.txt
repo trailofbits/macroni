@@ -5,7 +5,7 @@ add_mlir_dialect_library(MLIRSafety
     SafetyOps.cpp
 
     ADDITIONAL_HEADER_DIRS
-        ${PROJECT_SOURCE_DIR}/include/macroni
+        ${PROJECT_SOURCE_DIR}/include
 
     DEPENDS
         MLIRSafetyIncGen
@@ -21,5 +21,3 @@ add_mlir_dialect_library(MLIRSafety
         MLIRDataLayoutInterfaces
         MLIRInferTypeOpInterface
 )
-
-target_link_libraries(MLIRSafety PRIVATE macroni)

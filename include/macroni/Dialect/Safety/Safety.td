@@ -24,8 +24,6 @@ def Safety_Dialect : Dialect {
     let extraClassDeclaration = [{
         static llvm::StringRef unsafe() { return "unsafe"; }
     }];
-
-    let useFoldAPI = kEmitFoldAdaptorFolder;
 }
 
 class Safety_Op<string mnemonic, list<Trait> traits = []>
