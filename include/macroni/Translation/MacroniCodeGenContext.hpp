@@ -1,6 +1,11 @@
 #pragma once
 
+#include <vast/Util/Warnings.hpp>
+
+VAST_RELAX_WARNINGS
 #include <mlir/IR/MLIRContext.h>
+VAST_UNRELAX_WARNINGS
+
 #include <pasta/AST/AST.h>
 #include <vast/CodeGen/CodeGenContext.hpp>
 
