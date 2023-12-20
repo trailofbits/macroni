@@ -219,8 +219,6 @@ if(CMAKE_GENERATOR MATCHES "Ninja" AND
   set(MACRONI_TOUCH_STATIC_LIBRARIES ON)
 endif()
 
-# include(Addmacroni)
-
 add_library(macroni_settings INTERFACE)
 
 include(cmake/compiler_warnings.cmake)
