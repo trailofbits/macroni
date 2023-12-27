@@ -47,10 +47,11 @@ public:
     return unknown_location;
   }
 
-  mlir::Location location(pasta::MacroSubstitution &sub) const {
-    // TODO(bpp): Define this to something that makes sense. Right now this just
-    // returns an invalid source location.
-    return unknown_location;
+  mlir::Location location(pasta::MacroSubstitution sub) const {
+    return mlir::FileLineColLoc::get(
+        mlir::StringAttr::get(mctx, llvm::Twine("<macroni-input>")),
+        sub.BeginToken()->FileLocation()->Line(),
+        sub.BeginToken()->FileLocation()->Column());
   }
 
   clang::ASTContext *ast;
