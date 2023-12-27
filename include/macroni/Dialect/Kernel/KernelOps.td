@@ -119,10 +119,126 @@ def RCUDereference :
   let description = [{
     rcu_dereference() - fetch RCU-protected pointer for dereferencing
     @p: The pointer to read, prior to dereferencing
-    This is a simple wrapper around rcu_dereference_check().
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
   }];
   let assemblyFormat = [{
     `rcu_dereference` `(` $p `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
+def RCUDereferenceBH :
+  Kernel_Op< "rcu_dereference_bh", [] >
+  , Arguments<(ins AnyType:$p)>
+  , Results<(outs AnyType:$result)> {
+  let summary = "An expansion of the Linux kernel macro, rcu_dereference_bh()";
+  let description = [{
+    rcu_dereference_bh() - fetch an RCU-bh-protected pointer for dereferencing
+    @p: The pointer to read, prior to dereferencing
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_dereference_bh` `(` $p `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
+def RCUDereferenceSched :
+  Kernel_Op< "rcu_dereference_sched", [] >
+  , Arguments<(ins AnyType:$p)>
+  , Results<(outs AnyType:$result)> {
+  let summary = "An expansion of the Linux kernel macro, rcu_dereference_sched()";
+  let description = [{
+    rcu_dereference_sched() - fetch RCU-sched-protected pointer for dereferencing
+    @p: The pointer to read, prior to dereferencing
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_dereference_sched` `(` $p `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
+def RCUDereferenceCheck :
+  Kernel_Op< "rcu_dereference_check", [] >
+  , Arguments<(ins
+    AnyType:$p,
+    AnyType:$c)>
+  , Results<(outs AnyType:$result)> {
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_dereference_check()
+  }];
+  let description = [{
+    rcu_dereference_check() - rcu_dereference with debug checking
+    @p: The pointer to read, prior to dereferencing
+    @c: The conditions under which the dereference will take place
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_dereference_check` `(` $p `,` $c `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
+def RCUDereferenceBHCheck :
+  Kernel_Op< "rcu_dereference_bh_check", [] >
+  , Arguments<(ins
+    AnyType:$p,
+    AnyType:$c)>
+  , Results<(outs AnyType:$result)> {
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_dereference_bh_check()
+  }];
+  let description = [{
+    rcu_dereference_bh_check() - rcu_dereference_bh with debug checking
+    @p: The pointer to read, prior to dereferencing
+    @c: The conditions under which the dereference will take place
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_dereference_bh_check` `(` $p `,` $c `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
+def RCUDereferenceSchedCheck :
+  Kernel_Op< "rcu_dereference_sched_check", [] >
+  , Arguments<(ins
+    AnyType:$p,
+    AnyType:$c)>
+  , Results<(outs AnyType:$result)> {
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_dereference_sched_check()
+  }];
+  let description = [{
+    rcu_dereference_sched_check() - rcu_dereference_sched with debug checking
+    @p: The pointer to read, prior to dereferencing
+    @c: The conditions under which the dereference will take place
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_dereference_sched_check` `(` $p `,` $c `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
+def RCUDereferenceProtected :
+  Kernel_Op< "rcu_dereference_protected", [] >
+  , Arguments<(ins
+    AnyType:$p,
+    AnyType:$c)>
+  , Results<(outs AnyType:$result)> {
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_dereference_protected()
+  }];
+  let description = [{
+    rcu_dereference_protected() - fetch RCU pointer when updates prevented
+    @p: The pointer to read, prior to dereferencing
+    @c: The conditions under which the dereference will take place
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_dereference_protected` `(` $p `,` $c `)` attr-dict
     `:` functional-type( operands, results )
   }];
 }
