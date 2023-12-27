@@ -7,6 +7,7 @@
 #include <optional>
 #include <pasta/AST/AST.h>
 #include <pasta/AST/Macro.h>
+#include <pasta/Util/File.h>
 #include <set>
 #include <vast/CodeGen/CodeGen.hpp>
 #include <vast/CodeGen/FallBackVisitor.hpp>
@@ -49,6 +50,7 @@ struct MacroniCodeGenVisitorMixin
 
   using attr_visitor::Visit;
   using decl_visitor::Visit;
+  using lens::acontext;
   using lens::context;
   using lens::derived;
   using lens::insertion_guard;
@@ -101,8 +103,24 @@ struct MacroniCodeGenVisitorMixin
     }
 
     // Get the substitution's location, name, parameter names, and whether it is
-    // function-like
-    auto loc = meta_location(stmt);
+    // function-like.
+    //
+    // TODO(bpp): Call meta_location instead of directly setting the location
+    // here like this. We can't right now because codegen uses OOP inheritance
+    // for the metagen and the base class doesn't have a location method for
+    // macro substitutions.
+
+    auto begin_token = sub->BeginToken();
+    auto file_location =
+        begin_token ? begin_token->FileLocation() : std::nullopt;
+    auto file =
+        file_location ? pasta::File::Containing(file_location) : std::nullopt;
+    auto filepath = file ? file->Path().string() : "<unknown>";
+
+    auto loc = mlir::FileLineColLoc::get(
+        mlir::StringAttr::get(&mcontext(), llvm::Twine(filepath)),
+        file_location ? file_location->Line() : 0,
+        file_location ? file_location->Column() : 0);
     auto name_tok = sub->NameOrOperator();
     auto macro_name = (name_tok ? name_tok->Data() : "<a nameless macro>");
     auto function_like = is_sub_function_like(*sub);
