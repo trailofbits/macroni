@@ -67,7 +67,7 @@ struct KernelCodeGenVisitorMixin
   }
 
   void VisitCallExpr(pasta::CallExpr &call_expr, mlir::Operation *op) {
-    auto call_op = mlir::dyn_cast<vast::hl::CallOp>(op);
+    auto call_op = mlir::dyn_cast_or_null<vast::hl::CallOp>(op);
     if (!call_op) {
       return;
     }
