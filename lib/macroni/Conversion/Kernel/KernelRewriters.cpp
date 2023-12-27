@@ -28,7 +28,17 @@ bool is_container_of(macroni::MacroExpansion exp) {
 
 bool is_rcu_dereference(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 1) &&
-         has_name(exp, "rcu_dereference");
+         (has_name(exp, "rcu_dereference") ||
+          has_name(exp, "rcu_dereference_bh") ||
+          has_name(exp, "rcu_dereference_sched"));
+}
+
+bool is_rcu_dereference_check(macroni::MacroExpansion exp) {
+  return has_results_and_n_parameters(exp, 2) &&
+         (has_name(exp, "rcu_dereference_check") ||
+          has_name(exp, "rcu_dereference_bh_check") ||
+          has_name(exp, "rcu_dereference_sched_check") ||
+          has_name(exp, "rcu_dereference_protected"));
 }
 
 bool is_smp_mb(macroni::MacroExpansion exp) {
@@ -151,8 +161,59 @@ mlir::LogicalResult rewrite_rcu_dereference(macroni::MacroExpansion exp,
   }
 
   auto p_clone = rewriter.clone(*p);
-  rewriter.replaceOpWithNewOp<RCUDereference>(exp, exp.getType(0),
-                                              p_clone->getResult(0));
+  if (has_name(exp, "rcu_dereference")) {
+    rewriter.replaceOpWithNewOp<RCUDereference>(exp, exp.getType(0),
+                                                p_clone->getResult(0));
+  } else if (has_name(exp, "rcu_dereference_bh")) {
+    rewriter.replaceOpWithNewOp<RCUDereferenceBH>(exp, exp.getType(0),
+                                                  p_clone->getResult(0));
+  } else if (has_name(exp, "rcu_dereference_sched")) {
+    rewriter.replaceOpWithNewOp<RCUDereferenceSched>(exp, exp.getType(0),
+                                                     p_clone->getResult(0));
+  } else {
+    assert(!"Unexpected rcu_dereference() type in rewrite_rcu_dereference()");
+  }
+  return mlir::success();
+}
+
+mlir::LogicalResult
+rewrite_rcu_dereference_check(macroni::MacroExpansion exp,
+                              mlir::PatternRewriter &rewriter) {
+  if (!is_rcu_dereference_check(exp)) {
+    return mlir::failure();
+  }
+  mlir::Operation *p = nullptr;
+  mlir::Operation *c = nullptr;
+  exp.getExpansion().walk([&](mlir::Operation *op) {
+    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
+      if (has_name(mp, "p")) {
+        p = op;
+      } else if (has_name(mp, "c")) {
+        c = op;
+      }
+    }
+  });
+  if (!((p && p->getNumResults() == 1) && (c && c->getNumResults() == 1))) {
+    return mlir::failure();
+  }
+
+  auto p_clone = rewriter.clone(*p);
+  auto c_clone = rewriter.clone(*c);
+  if (has_name(exp, "rcu_dereference_check")) {
+    rewriter.replaceOpWithNewOp<RCUDereferenceCheck>(
+        exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
+  } else if (has_name(exp, "rcu_dereference_bh_check")) {
+    rewriter.replaceOpWithNewOp<RCUDereferenceBHCheck>(
+        exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
+  } else if (has_name(exp, "rcu_dereference_sched_check")) {
+    rewriter.replaceOpWithNewOp<RCUDereferenceSchedCheck>(
+        exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
+  } else if (has_name(exp, "rcu_dereference_protected")) {
+    rewriter.replaceOpWithNewOp<RCUDereferenceProtected>(
+        exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
+  } else {
+    assert(!"Unexpected rcu_dereference() type in rewrite_rcu_dereference()");
+  }
   return mlir::success();
 }
 
@@ -233,6 +294,32 @@ mlir::LogicalResult rewrite_rcu_read_unlock(vast::hl::CallOp call_op,
     op = temp;
   }
   rewriter.eraseOp(unlock_op);
+  return mlir::success();
+}
+
+mlir::LogicalResult rewrite_label_stmt(vast::hl::LabelStmt label_stmt,
+                                       mlir::PatternRewriter &rewriter) {
+  // In the Linux Kernel, a common idiom is to call `rcu_read_unlock()` right
+  // after declaring a label. This idiom prevents our `CallOp` pattern rewriter
+  // from detecting such unlocks as the end of a critical section. To fix this,
+  // we look for labels which are immediately followed by a call to
+  // `rcu_read_unlock()`, and move the call before the label.
+
+  auto ops = label_stmt.getOps();
+  if (ops.empty()) {
+    return mlir::failure();
+  }
+
+  auto call_op = mlir::dyn_cast<vast::hl::CallOp>(*ops.begin());
+  if (!call_op || call_op.getCalleeAttr().getValue() != "rcu_read_unlock") {
+    return mlir::failure();
+  }
+
+  // TODO(bpp): Keep track of which calls to `rcu_read_unlock()` were originally
+  // nested under labels.
+  rewriter.setInsertionPoint(label_stmt);
+  rewriter.clone(*call_op.getOperation());
+  rewriter.eraseOp(call_op);
   return mlir::success();
 }
 
