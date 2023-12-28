@@ -43,6 +43,7 @@ int main(int argc, char **argv) {
       .add(macroni::kernel::rewrite_container_of)
       .add(macroni::kernel::rewrite_rcu_dereference)
       .add(macroni::kernel::rewrite_rcu_dereference_check)
+      .add(macroni::kernel::rewrite_rcu_access_pointer)
       .add(macroni::kernel::rewrite_smp_mb)
       .add(macroni::kernel::rewrite_list_for_each)
       .add(macroni::kernel::rewrite_label_stmt)
@@ -66,6 +67,7 @@ int main(int argc, char **argv) {
     return;
   });
 
+  // Check for invocations of RCU macros outside of RCU critical sections
   mod->walk<mlir::WalkOrder::PreOrder>([](mlir::Operation *op) {
     if (mlir::isa<macroni::kernel::RCUCriticalSection>(op)) {
       // NOTE(bpp): Skip checking for invocations of RCU macros inside RCU
@@ -81,23 +83,8 @@ int main(int argc, char **argv) {
                   macroni::kernel::RCUDereferenceCheck,
                   macroni::kernel::RCUDereferenceBHCheck,
                   macroni::kernel::RCUDereferenceSchedCheck,
-                  macroni::kernel::RCUDereferenceProtected>(op)) {
-      auto name = "<error>";
-      if (mlir::isa<macroni::kernel::RCUDereference>(op)) {
-        name = "rcu_dereference";
-      } else if (mlir::isa<macroni::kernel::RCUDereferenceBH>(op)) {
-        name = "rcu_dereference_bh";
-      } else if (mlir::isa<macroni::kernel::RCUDereferenceSched>(op)) {
-        name = "rcu_dereference_sched";
-      } else if (mlir::isa<macroni::kernel::RCUDereferenceCheck>(op)) {
-        name = "rcu_dereference_check";
-      } else if (mlir::isa<macroni::kernel::RCUDereferenceBHCheck>(op)) {
-        name = "rcu_dereference_bh_check";
-      } else if (mlir::isa<macroni::kernel::RCUDereferenceSchedCheck>(op)) {
-        name = "rcu_dereference_sched_check";
-      } else if (mlir::isa<macroni::kernel::RCUDereferenceProtected>(op)) {
-        name = "rcu_dereference_protected";
-      }
+                  macroni::kernel::RCUDereferenceProtected,
+                  macroni::kernel::RCUAccessPointer>(op)) {
       std::string s;
       auto os = llvm::raw_string_ostream(s);
       op->getLoc()->print(os);
@@ -105,11 +92,32 @@ int main(int argc, char **argv) {
       s.erase(s.find('"'), 1);
       s.erase(s.find('"'), 1);
       s.erase(s.rfind(')'), 1);
-      os << ": warning: Invocation of " << name
+      auto op_name = op->getName().getStringRef();
+      auto start =
+          macroni::kernel::KernelDialect::getDialectNamespace().size() + 1;
+      // Skip dialect namespace prefix when printing op name
+      os << ": warning: Invocation of "
+         << op_name.slice(start, std::string::npos)
          << "() outside of RCU critical section\n";
       op->emitWarning() << s;
     }
     return mlir::WalkResult::advance();
+  });
+
+  // Check for invocations of RCU macros inside of RCU critical sections.
+  mod->walk([](macroni::kernel::RCUCriticalSection cs) {
+    cs.walk([](macroni::kernel::RCUAccessPointer op) {
+      std::string s;
+      auto os = llvm::raw_string_ostream(s);
+      op->getLoc()->print(os);
+      s.erase(s.find("loc("), 4);
+      s.erase(s.find('"'), 1);
+      s.erase(s.find('"'), 1);
+      s.erase(s.rfind(')'), 1);
+      os << ": suggestion: Use rcu_dereference_protected() instead of "
+            "rcu_access_pointer()\n";
+      op->emitWarning() << s;
+    });
   });
 
   engine.eraseHandler(diagnostic_handler);
