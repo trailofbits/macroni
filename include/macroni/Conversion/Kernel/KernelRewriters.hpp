@@ -30,6 +30,13 @@ mlir::LogicalResult rewrite_smp_mb(macroni::MacroExpansion exp,
 mlir::LogicalResult rewrite_rcu_access_pointer(macroni::MacroExpansion exp,
                                                mlir::PatternRewriter &rewriter);
 
+mlir::LogicalResult rewrite_rcu_assign_pointer(macroni::MacroExpansion exp,
+                                               mlir::PatternRewriter &rewriter);
+
+mlir::LogicalResult
+rewrite_rcu_replace_pointer(macroni::MacroExpansion exp,
+                            mlir::PatternRewriter &rewriter);
+
 mlir::LogicalResult rewrite_list_for_each(vast::hl::ForOp for_op,
                                           mlir::PatternRewriter &rewriter);
 

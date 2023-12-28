@@ -46,6 +46,16 @@ bool is_rcu_access_pointer(macroni::MacroExpansion exp) {
          has_name(exp, "rcu_access_pointer");
 }
 
+bool is_rcu_assign_pointer(macroni::MacroExpansion exp) {
+  return has_results_and_n_parameters(exp, 2) &&
+         has_name(exp, "rcu_assign_pointer");
+}
+
+bool is_rcu_replace_pointer(macroni::MacroExpansion exp) {
+  return has_results_and_n_parameters(exp, 3) &&
+         has_name(exp, "rcu_replace_pointer");
+}
+
 bool is_smp_mb(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 0) && has_name(exp, "smp_mb");
 }
@@ -242,6 +252,68 @@ rewrite_rcu_access_pointer(macroni::MacroExpansion exp,
   auto p_clone = rewriter.clone(*p);
   rewriter.replaceOpWithNewOp<RCUAccessPointer>(exp, exp.getType(0),
                                                 p_clone->getResult(0));
+  return mlir::success();
+}
+
+mlir::LogicalResult
+rewrite_rcu_assign_pointer(macroni::MacroExpansion exp,
+                           mlir::PatternRewriter &rewriter) {
+  if (!is_rcu_assign_pointer(exp)) {
+    return mlir::failure();
+  }
+  mlir::Operation *p = nullptr;
+  mlir::Operation *v = nullptr;
+  exp.getExpansion().walk([&](mlir::Operation *op) {
+    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
+      if (has_name(mp, "p")) {
+        p = op;
+      } else if (has_name(mp, "v")) {
+        v = op;
+      }
+    }
+  });
+  if (!((p && p->getNumResults() == 1) && (v && v->getNumResults() == 1))) {
+    return mlir::failure();
+  }
+
+  auto p_clone = rewriter.clone(*p);
+  auto c_clone = rewriter.clone(*p);
+  rewriter.replaceOpWithNewOp<RCUAssignPointer>(
+      exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
+  return mlir::success();
+}
+
+mlir::LogicalResult
+rewrite_rcu_replace_pointer(macroni::MacroExpansion exp,
+                            mlir::PatternRewriter &rewriter) {
+  if (!is_rcu_replace_pointer(exp)) {
+    return mlir::failure();
+  }
+  mlir::Operation *rcu_ptr = nullptr;
+  mlir::Operation *ptr = nullptr;
+  mlir::Operation *c = nullptr;
+  exp.getExpansion().walk([&](mlir::Operation *op) {
+    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
+      if (has_name(mp, "rcu_ptr")) {
+        rcu_ptr = op;
+      } else if (has_name(mp, "ptr")) {
+        ptr = op;
+      } else if (has_name(mp, "c")) {
+        c = op;
+      }
+    }
+  });
+  if (!((rcu_ptr && rcu_ptr->getNumResults() == 1) &&
+        (ptr && ptr->getNumResults() == 1) && (c && c->getNumResults() == 1))) {
+    return mlir::failure();
+  }
+
+  auto rcu_ptr_clone = rewriter.clone(*rcu_ptr);
+  auto ptr_clone = rewriter.clone(*ptr);
+  auto c_clone = rewriter.clone(*c);
+  rewriter.replaceOpWithNewOp<RCUReplacePointer>(
+      exp, exp.getType(0), rcu_ptr_clone->getResult(0), ptr_clone->getResult(0),
+      c_clone->getResult(0));
   return mlir::success();
 }
 
