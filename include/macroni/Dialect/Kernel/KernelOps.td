@@ -243,6 +243,24 @@ def RCUDereferenceProtected :
   }];
 }
 
+def RCUAccessPointer :
+  Kernel_Op< "rcu_access_pointer", [] >
+  , Arguments<(ins AnyType:$p)>
+  , Results<(outs AnyType:$result)> {
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_access_pointer()
+  }];
+  let description = [{
+    rcu_access_pointer() - fetch RCU pointer with no dereferencing 
+    @p: The pointer to read
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_access_pointer` `(` $p `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
 def SMPMB :
   Kernel_Op< "smp_mb", [] >
   , Results<(outs AnyType:$result)> {
