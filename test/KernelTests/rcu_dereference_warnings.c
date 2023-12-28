@@ -7,7 +7,9 @@
 // CHECK: warning: Invocation of rcu_dereference_bh_check() outside of RCU critical section
 // CHECK: warning: Invocation of rcu_dereference_sched_check() outside of RCU critical section
 // CHECK: warning: Invocation of rcu_dereference_protected() outside of RCU critical section
+// CHECK: warning: Invocation of rcu_access_pointer() outside of RCU critical section
 // CHECK: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK: suggestion: Use rcu_dereference_protected() instead of rcu_access_pointer()
 
 #define rcu_dereference(p) (*p)
 #define rcu_dereference_bh(p) (*p)
@@ -16,6 +18,7 @@
 #define rcu_dereference_bh_check(p, c) (c && *p)
 #define rcu_dereference_sched_check(p, c) (c && *p)
 #define rcu_dereference_protected(p, c) (c && *p)
+#define rcu_access_pointer(p) (*p)
 
 #define deref(p) (rcu_dereference(p))
 
@@ -32,6 +35,7 @@ int main(void) {
         rcu_dereference_bh_check(p, 1);
         rcu_dereference_sched_check(p, 1);
         rcu_dereference_protected(p, 1);
+        rcu_access_pointer(p);
         deref(p);
 
         rcu_read_lock();
@@ -43,6 +47,8 @@ int main(void) {
         rcu_dereference_sched_check(p, 1);
         rcu_dereference_protected(p, 1);
         deref(p);
+        rcu_access_pointer(p);
         rcu_read_unlock();
+
         return 0;
 }
