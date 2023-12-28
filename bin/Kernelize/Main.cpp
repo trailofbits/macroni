@@ -44,6 +44,8 @@ int main(int argc, char **argv) {
       .add(macroni::kernel::rewrite_rcu_dereference)
       .add(macroni::kernel::rewrite_rcu_dereference_check)
       .add(macroni::kernel::rewrite_rcu_access_pointer)
+      .add(macroni::kernel::rewrite_rcu_assign_pointer)
+      .add(macroni::kernel::rewrite_rcu_replace_pointer)
       .add(macroni::kernel::rewrite_smp_mb)
       .add(macroni::kernel::rewrite_list_for_each)
       .add(macroni::kernel::rewrite_label_stmt)
@@ -84,7 +86,9 @@ int main(int argc, char **argv) {
                   macroni::kernel::RCUDereferenceBHCheck,
                   macroni::kernel::RCUDereferenceSchedCheck,
                   macroni::kernel::RCUDereferenceProtected,
-                  macroni::kernel::RCUAccessPointer>(op)) {
+                  macroni::kernel::RCUAccessPointer,
+                  macroni::kernel::RCUAssignPointer,
+                  macroni::kernel::RCUReplacePointer>(op)) {
       std::string s;
       auto os = llvm::raw_string_ostream(s);
       op->getLoc()->print(os);
