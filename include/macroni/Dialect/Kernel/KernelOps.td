@@ -261,6 +261,50 @@ def RCUAccessPointer :
   }];
 }
 
+def RCUAssignPointer :
+  Kernel_Op< "rcu_assign_pointer", [] >
+  , Arguments<(ins
+    AnyType:$p
+    , AnyType:$v)>
+  , Results<(outs AnyType:$result)> {
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_assign_pointer()
+  }];
+  let description = [{
+    rcu_assign_pointer() - assign to RCU-protected pointer
+    @p: The pointer to read
+    @v: The value to statically initialize with.
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_assign_pointer` `(` $p `,` $v `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
+def RCUReplacePointer :
+  Kernel_Op< "rcu_replace_pointer", [] >
+  , Arguments<(ins
+    AnyType:$rcu_ptr
+    , AnyType:$ptr
+    , AnyType:$c)>
+  , Results<(outs AnyType:$result)> {
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_replace_pointer()
+  }];
+  let description = [{
+    rcu_replace_pointer() - replace an RCU pointer, returning its old value
+    @rcu_ptr: RCU pointer, whose old value is returned
+    @ptr: regular pointer
+    @c: the lockdep conditions under which the dereference will take place
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
+  let assemblyFormat = [{
+    `rcu_replace_pointer` `(` $rcu_ptr `,` $ptr `,` $c `)` attr-dict
+    `:` functional-type( operands, results )
+  }];
+}
+
 def SMPMB :
   Kernel_Op< "smp_mb", [] >
   , Results<(outs AnyType:$result)> {
