@@ -41,6 +41,11 @@ bool is_rcu_dereference_check(macroni::MacroExpansion exp) {
           has_name(exp, "rcu_dereference_protected"));
 }
 
+bool is_rcu_access_pointer(macroni::MacroExpansion exp) {
+  return has_results_and_n_parameters(exp, 1) &&
+         has_name(exp, "rcu_access_pointer");
+}
+
 bool is_smp_mb(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 0) && has_name(exp, "smp_mb");
 }
@@ -214,6 +219,29 @@ rewrite_rcu_dereference_check(macroni::MacroExpansion exp,
   } else {
     assert(!"Unexpected rcu_dereference() type in rewrite_rcu_dereference()");
   }
+  return mlir::success();
+}
+
+mlir::LogicalResult
+rewrite_rcu_access_pointer(macroni::MacroExpansion exp,
+                           mlir::PatternRewriter &rewriter) {
+  if (!is_rcu_access_pointer(exp)) {
+    return mlir::failure();
+  }
+  mlir::Operation *p = nullptr;
+  exp.getExpansion().walk([&](mlir::Operation *op) {
+    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
+        mp && has_name(mp, "p")) {
+      p = op;
+    }
+  });
+  if (!(p && p->getNumResults() == 1)) {
+    return mlir::failure();
+  }
+
+  auto p_clone = rewriter.clone(*p);
+  rewriter.replaceOpWithNewOp<RCUAccessPointer>(exp, exp.getType(0),
+                                                p_clone->getResult(0));
   return mlir::success();
 }
 
