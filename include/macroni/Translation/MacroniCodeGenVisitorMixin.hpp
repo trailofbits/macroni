@@ -34,7 +34,7 @@ std::vector<llvm::StringRef> get_parameter_names(pasta::MacroSubstitution &sub);
 
 template <typename Derived>
 struct MacroniCodeGenVisitorMixin
-    : vast::cg::default_decl_visitor<Derived>,
+    : vast::cg::decl_visitor_with_attrs<Derived>,
       vast::cg::default_stmt_visitor<Derived>,
       vast::cg::type_visitor_with_dl<Derived>,
       vast::cg::default_attr_visitor<Derived>,
@@ -42,9 +42,9 @@ struct MacroniCodeGenVisitorMixin
 
   std::set<pasta::MacroSubstitution> visited;
 
-  using decl_visitor = vast::cg::default_decl_visitor<Derived>;
+  using decl_visitor = vast::cg::decl_visitor_with_attrs<Derived>;
   using stmt_visitor = vast::cg::default_stmt_visitor<Derived>;
-  using type_visitor_with_dl = vast::cg::type_visitor_with_dl<Derived>;
+  using type_visitor = vast::cg::type_visitor_with_dl<Derived>;
   using attr_visitor = vast::cg::default_attr_visitor<Derived>;
   using lens = vast::cg::visitor_lens<Derived, MacroniCodeGenVisitorMixin>;
 
@@ -58,7 +58,7 @@ struct MacroniCodeGenVisitorMixin
   using lens::meta_location;
   using lens::mlir_builder;
   using lens::set_insertion_point_to_end;
-  using type_visitor_with_dl::Visit;
+  using type_visitor::Visit;
 
   // VAST used to define this function as part of their API, but removed it in
   // favor of `make_stmt_expr_region()`. We redefine it here as a templated
@@ -105,22 +105,12 @@ struct MacroniCodeGenVisitorMixin
     // Get the substitution's location, name, parameter names, and whether it is
     // function-like.
     //
-    // TODO(bpp): Call meta_location instead of directly setting the location
-    // here like this. We can't right now because codegen uses OOP inheritance
-    // for the metagen and the base class doesn't have a location method for
-    // macro substitutions.
-
-    auto begin_token = sub->BeginToken();
-    auto file_location =
-        begin_token ? begin_token->FileLocation() : std::nullopt;
-    auto file =
-        file_location ? pasta::File::Containing(file_location) : std::nullopt;
-    auto filepath = file ? file->Path().string() : "<unknown>";
-
-    auto loc = mlir::FileLineColLoc::get(
-        mlir::StringAttr::get(&mcontext(), llvm::Twine(filepath)),
-        file_location ? file_location->Line() : 0,
-        file_location ? file_location->Column() : 0);
+    // NOTE(bpp): We have to use a dynamic_cast here because
+    // vast::cg::codegen_instance expects a vast::cg::meta_generator as its meta
+    // generator, but we use static inheritance to pass it our own meta
+    // generator, so simply calling location() directly won't work.
+    auto loc =
+        dynamic_cast<MacroniMetaGenerator &>(derived().meta).location(*sub);
     auto name_tok = sub->NameOrOperator();
     auto macro_name = (name_tok ? name_tok->Data() : "<a nameless macro>");
     auto function_like = is_sub_function_like(*sub);
@@ -150,16 +140,19 @@ struct MacroniCodeGenVisitorMixin
   }
 
   // Hook called whenever Macroni finishes visiting a Stmt that does not align
-  // with a macro substitution. \param pasta_stmt The `pasta::Stmt` that does
-  // not align with a macro substitution. \param op The `mlir::Operation`
-  // obtained from visiting the `Stmt`.
+  // with a macro substitution.
+  // \param pasta_stmt  The `pasta::Stmt` that does not align with a macro
+  // substitution.
+  // \param op          The `mlir::Operation` obtained from visiting the `Stmt`.
   void UnalignedStmtVisited(pasta::Stmt &pasta_stmt, mlir::Operation *op) {}
 
   // Hook called whenever Macroni finishes visiting a Stmt that align with a
-  // macro substitution. \param pasta_stmt The `pasta::Stmt` that aligns with a
-  // macro substitution. \param sub The `pasta::MacroSubstitution` that
-  // `pasta_stmt` aligns with. \param op The `mlir::Operation` obtained from
-  // visiting the `Stmt`.
+  // macro substitution.
+  // \param pasta_stmt    The `pasta::Stmt` that aligns with a macro
+  // substitution.
+  // \param sub           The `pasta::MacroSubstitution` that `pasta_stmt`
+  // aligns with.
+  // \param op The `mlir::Operation` obtained from visiting the `Stmt`.
   void AlignedStmtVisited(pasta::Stmt &pasta_stmt,
                           pasta::MacroSubstitution &sub, mlir::Operation *op) {}
 };
