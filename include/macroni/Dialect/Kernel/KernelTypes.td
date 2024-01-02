@@ -4,6 +4,8 @@
 include "mlir/Interfaces/DataLayoutInterfaces.td"
 include "mlir/IR/BuiltinTypeInterfaces.td"
 
+include "macroni/Dialect/Kernel/KernelAttributes.td"
+
 //
 // Generic kernel type
 //

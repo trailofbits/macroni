@@ -1,5 +1,7 @@
 #include <llvm/ADT/TypeSwitch.h>
+#include <macroni/Dialect/Kernel/KernelAttributes.hpp>
 #include <macroni/Dialect/Kernel/KernelDialect.hpp>
+#include <macroni/Dialect/Kernel/KernelInterfaces.hpp>
 #include <macroni/Dialect/Kernel/KernelOps.hpp>
 #include <macroni/Dialect/Kernel/KernelTypes.hpp>
 #include <mlir/IR/DialectImplementation.h>

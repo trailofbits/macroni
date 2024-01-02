@@ -13,5 +13,8 @@ VAST_RELAX_WARNINGS
 #include <mlir/Support/TypeID.h>
 VAST_UNRELAX_WARNINGS
 
+#include <macroni/Dialect/Kernel/KernelAttributes.hpp>
+#include <macroni/Dialect/Kernel/KernelTypes.hpp>
+
 #define GET_OP_CLASSES
 #include "macroni/Dialect/Kernel/Kernel.h.inc"

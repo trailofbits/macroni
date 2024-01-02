@@ -15,5 +15,8 @@ VAST_RELAX_WARNINGS
 #include <mlir/Interfaces/DataLayoutInterfaces.h>
 VAST_UNRELAX_WARNINGS
 
+#include <macroni/Dialect/Kernel/KernelAttributes.hpp>
+#include <macroni/Dialect/Kernel/KernelInterfaces.hpp>
+
 #define GET_TYPEDEF_CLASSES
 #include "macroni/Dialect/Kernel/KernelTypes.h.inc"
