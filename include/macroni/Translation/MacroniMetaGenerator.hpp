@@ -48,10 +48,13 @@ public:
   }
 
   mlir::Location location(pasta::MacroSubstitution sub) const {
+    auto begin_token = sub.BeginToken();
+    auto file_loc = begin_token ? begin_token->FileLocation() : std::nullopt;
+    auto file = file_loc ? pasta::File::Containing(file_loc) : std::nullopt;
+    auto filepath = file ? file->Path().string() : "<unknown>";
     return mlir::FileLineColLoc::get(
-        mlir::StringAttr::get(mctx, llvm::Twine("<macroni-input>")),
-        sub.BeginToken()->FileLocation()->Line(),
-        sub.BeginToken()->FileLocation()->Column());
+        mlir::StringAttr::get(mctx, llvm::Twine(filepath)),
+        file_loc ? file_loc->Line() : 0, file_loc ? file_loc->Column() : 0);
   }
 
   clang::ASTContext *ast;
