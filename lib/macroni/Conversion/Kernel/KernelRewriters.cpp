@@ -2,12 +2,8 @@
 
 namespace macroni::kernel {
 
-bool has_name(macroni::MacroParameter mp, std::string name) {
-  return mp.getParameterName() == name;
-}
-
-bool has_name(macroni::MacroExpansion exp, std::string name) {
-  return exp.getMacroName() == name;
+template <class T> bool has_name(macroni::MacroExpansion exp) {
+  return exp.getMacroName() == T::getOperationName().split('.').second;
 }
 
 bool has_results_and_n_parameters(macroni::MacroExpansion exp, size_t n) {
@@ -15,49 +11,59 @@ bool has_results_and_n_parameters(macroni::MacroExpansion exp, size_t n) {
 }
 
 bool is_get_user(macroni::MacroExpansion exp) {
-  return has_results_and_n_parameters(exp, 2) && has_name(exp, "get_user");
+  return has_results_and_n_parameters(exp, 2) && has_name<GetUser>(exp);
 }
 
 bool is_offsetof(macroni::MacroExpansion exp) {
-  return has_results_and_n_parameters(exp, 2) && has_name(exp, "offsetof");
+  return has_results_and_n_parameters(exp, 2) && has_name<OffsetOf>(exp);
 }
 
 bool is_container_of(macroni::MacroExpansion exp) {
-  return has_results_and_n_parameters(exp, 3) && has_name(exp, "container_of");
+  return has_results_and_n_parameters(exp, 3) && has_name<ContainerOf>(exp);
 }
 
 bool is_rcu_dereference(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 1) &&
-         (has_name(exp, "rcu_dereference") ||
-          has_name(exp, "rcu_dereference_bh") ||
-          has_name(exp, "rcu_dereference_sched"));
+         (has_name<RCUDereference>(exp) || has_name<RCUDereferenceBH>(exp) ||
+          has_name<RCUDereferenceSched>(exp));
 }
 
 bool is_rcu_dereference_check(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 2) &&
-         (has_name(exp, "rcu_dereference_check") ||
-          has_name(exp, "rcu_dereference_bh_check") ||
-          has_name(exp, "rcu_dereference_sched_check") ||
-          has_name(exp, "rcu_dereference_protected"));
+         (has_name<RCUDereferenceCheck>(exp) ||
+          has_name<RCUDereferenceBHCheck>(exp) ||
+          has_name<RCUDereferenceSchedCheck>(exp) ||
+          has_name<RCUDereferenceProtected>(exp));
 }
 
 bool is_rcu_access_pointer(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 1) &&
-         has_name(exp, "rcu_access_pointer");
+         has_name<RCUAccessPointer>(exp);
 }
 
 bool is_rcu_assign_pointer(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 2) &&
-         has_name(exp, "rcu_assign_pointer");
+         has_name<RCUAssignPointer>(exp);
 }
 
 bool is_rcu_replace_pointer(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 3) &&
-         has_name(exp, "rcu_replace_pointer");
+         has_name<RCUReplacePointer>(exp);
 }
 
 bool is_smp_mb(macroni::MacroExpansion exp) {
-  return has_results_and_n_parameters(exp, 0) && has_name(exp, "smp_mb");
+  return has_results_and_n_parameters(exp, 0) && has_name<SMPMB>(exp);
+}
+
+std::function<void(macroni::MacroParameter)> bind_ops_to_named_macro_params(
+    std::vector<std::tuple<mlir::Operation *&, std::string>> ops_names) {
+  return [&](macroni::MacroParameter mp) {
+    for (auto &[op, name] : ops_names) {
+      if (!op && mp.getParameterName() == name) {
+        op = mp.getOperation();
+      }
+    }
+  };
 }
 
 mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
@@ -67,15 +73,8 @@ mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
   }
   mlir::Operation *x = nullptr;
   mlir::Operation *ptr = nullptr;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      if (!x && has_name(mp, "x")) {
-        x = op;
-      } else if (!ptr && has_name(mp, "ptr")) {
-        ptr = op;
-      }
-    }
-  });
+  exp.getExpansion().walk(
+      bind_ops_to_named_macro_params({{x, "x"}, {ptr, "ptr"}}));
   if (!(x && ptr && x->getNumResults() == 1 && ptr->getNumResults() == 1)) {
     return mlir::failure();
   }
@@ -133,7 +132,7 @@ mlir::LogicalResult rewrite_container_of(macroni::MacroExpansion exp,
   std::optional<mlir::StringAttr> member;
   exp.getExpansion().walk([&](mlir::Operation *op) {
     if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
-        mp && has_name(mp, "ptr")) {
+        mp && mp.getParameterName() == "ptr") {
       ptr = op;
       return;
     }
@@ -165,24 +164,19 @@ mlir::LogicalResult rewrite_rcu_dereference(macroni::MacroExpansion exp,
     return mlir::failure();
   }
   mlir::Operation *p = nullptr;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
-        mp && has_name(mp, "p")) {
-      p = op;
-    }
-  });
+  exp.getExpansion().walk(bind_ops_to_named_macro_params({{p, "p"}}));
   if (!(p && p->getNumResults() == 1)) {
     return mlir::failure();
   }
 
   auto p_clone = rewriter.clone(*p);
-  if (has_name(exp, "rcu_dereference")) {
+  if (has_name<RCUDereference>(exp)) {
     rewriter.replaceOpWithNewOp<RCUDereference>(exp, exp.getType(0),
                                                 p_clone->getResult(0));
-  } else if (has_name(exp, "rcu_dereference_bh")) {
+  } else if (has_name<RCUDereferenceBH>(exp)) {
     rewriter.replaceOpWithNewOp<RCUDereferenceBH>(exp, exp.getType(0),
                                                   p_clone->getResult(0));
-  } else if (has_name(exp, "rcu_dereference_sched")) {
+  } else if (has_name<RCUDereferenceSched>(exp)) {
     rewriter.replaceOpWithNewOp<RCUDereferenceSched>(exp, exp.getType(0),
                                                      p_clone->getResult(0));
   } else {
@@ -199,31 +193,23 @@ rewrite_rcu_dereference_check(macroni::MacroExpansion exp,
   }
   mlir::Operation *p = nullptr;
   mlir::Operation *c = nullptr;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      if (has_name(mp, "p")) {
-        p = op;
-      } else if (has_name(mp, "c")) {
-        c = op;
-      }
-    }
-  });
+  exp.getExpansion().walk(bind_ops_to_named_macro_params({{p, "p"}, {c, "c"}}));
   if (!((p && p->getNumResults() == 1) && (c && c->getNumResults() == 1))) {
     return mlir::failure();
   }
 
   auto p_clone = rewriter.clone(*p);
   auto c_clone = rewriter.clone(*c);
-  if (has_name(exp, "rcu_dereference_check")) {
+  if (has_name<RCUDereferenceCheck>(exp)) {
     rewriter.replaceOpWithNewOp<RCUDereferenceCheck>(
         exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
-  } else if (has_name(exp, "rcu_dereference_bh_check")) {
+  } else if (has_name<RCUDereferenceBHCheck>(exp)) {
     rewriter.replaceOpWithNewOp<RCUDereferenceBHCheck>(
         exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
-  } else if (has_name(exp, "rcu_dereference_sched_check")) {
+  } else if (has_name<RCUDereferenceSchedCheck>(exp)) {
     rewriter.replaceOpWithNewOp<RCUDereferenceSchedCheck>(
         exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
-  } else if (has_name(exp, "rcu_dereference_protected")) {
+  } else if (has_name<RCUDereferenceProtected>(exp)) {
     rewriter.replaceOpWithNewOp<RCUDereferenceProtected>(
         exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
   } else {
@@ -239,12 +225,7 @@ rewrite_rcu_access_pointer(macroni::MacroExpansion exp,
     return mlir::failure();
   }
   mlir::Operation *p = nullptr;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
-        mp && has_name(mp, "p")) {
-      p = op;
-    }
-  });
+  exp.getExpansion().walk(bind_ops_to_named_macro_params({{p, "p"}}));
   if (!(p && p->getNumResults() == 1)) {
     return mlir::failure();
   }
@@ -263,15 +244,7 @@ rewrite_rcu_assign_pointer(macroni::MacroExpansion exp,
   }
   mlir::Operation *p = nullptr;
   mlir::Operation *v = nullptr;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      if (has_name(mp, "p")) {
-        p = op;
-      } else if (has_name(mp, "v")) {
-        v = op;
-      }
-    }
-  });
+  exp.getExpansion().walk(bind_ops_to_named_macro_params({{p, "p"}, {v, "v"}}));
   if (!((p && p->getNumResults() == 1) && (v && v->getNumResults() == 1))) {
     return mlir::failure();
   }
@@ -292,17 +265,8 @@ rewrite_rcu_replace_pointer(macroni::MacroExpansion exp,
   mlir::Operation *rcu_ptr = nullptr;
   mlir::Operation *ptr = nullptr;
   mlir::Operation *c = nullptr;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      if (has_name(mp, "rcu_ptr")) {
-        rcu_ptr = op;
-      } else if (has_name(mp, "ptr")) {
-        ptr = op;
-      } else if (has_name(mp, "c")) {
-        c = op;
-      }
-    }
-  });
+  exp.getExpansion().walk(bind_ops_to_named_macro_params(
+      {{rcu_ptr, "rcu_ptr"}, {ptr, "ptr"}, {c, "c"}}));
   if (!((rcu_ptr && rcu_ptr->getNumResults() == 1) &&
         (ptr && ptr->getNumResults() == 1) && (c && c->getNumResults() == 1))) {
     return mlir::failure();
@@ -331,17 +295,8 @@ mlir::LogicalResult rewrite_list_for_each(vast::hl::ForOp for_op,
                                           mlir::PatternRewriter &rewriter) {
   mlir::Operation *pos = nullptr;
   mlir::Operation *head = nullptr;
-  for_op.getCondRegion().walk([&](mlir::Operation *op) {
-    auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
-    if (!mp) {
-      return;
-    }
-    if (has_name(mp, "pos")) {
-      pos = op;
-    } else if (has_name(mp, "head")) {
-      head = op;
-    }
-  });
+  for_op.getCondRegion().walk(
+      bind_ops_to_named_macro_params({{pos, "pos"}, {head, "head"}}));
   if (!(pos && head)) {
     return mlir::failure();
   }
