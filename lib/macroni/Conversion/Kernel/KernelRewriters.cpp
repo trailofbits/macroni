@@ -55,15 +55,36 @@ bool is_smp_mb(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 0) && has_name<SMPMB>(exp);
 }
 
-std::function<void(macroni::MacroParameter)> bind_ops_to_named_macro_params(
-    std::vector<std::tuple<mlir::Operation *&, std::string>> ops_names) {
-  return [&](macroni::MacroParameter mp) {
-    for (auto &[op, name] : ops_names) {
-      if (!op && mp.getParameterName() == name) {
-        op = mp.getOperation();
-      }
+template <typename... Names>
+void fetch_macro_params_helper(macroni::MacroParameter &mp,
+                               mlir::Operation *&op, Names &&...names);
+
+template <typename First, typename... Rest>
+void fetch_macro_params_helper(macroni::MacroParameter &mp,
+                               mlir::Operation *&op, First first,
+                               Rest &&...rest) {
+  if (mp.getParameterName() == first) {
+    op = mp;
+    return;
+  }
+  fetch_macro_params_helper(mp, op, rest...);
+}
+
+template <>
+void fetch_macro_params_helper(macroni::MacroParameter &mp,
+                               mlir::Operation *&op) {}
+
+template <typename... Args>
+std::array<mlir::Operation *, sizeof...(Args)>
+fetch_macro_parameters(mlir::Operation *op, Args &&...args) {
+  auto results = std::array<mlir::Operation *, sizeof...(Args)>();
+  auto walker = [&](macroni::MacroParameter mp) {
+    for (auto &&result : results) {
+      fetch_macro_params_helper(mp, result, args...);
     }
   };
+  op->walk(walker);
+  return results;
 }
 
 mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
@@ -71,10 +92,7 @@ mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
   if (!is_get_user(exp)) {
     return mlir::failure();
   }
-  mlir::Operation *x = nullptr;
-  mlir::Operation *ptr = nullptr;
-  exp.getExpansion().walk(
-      bind_ops_to_named_macro_params({{x, "x"}, {ptr, "ptr"}}));
+  auto [x, ptr] = fetch_macro_parameters(exp, "x", "ptr");
   if (!(x && ptr && x->getNumResults() == 1 && ptr->getNumResults() == 1)) {
     return mlir::failure();
   }
@@ -101,7 +119,7 @@ mlir::LogicalResult rewrite_offsetof(macroni::MacroExpansion exp,
   }
   std::optional<mlir::TypeAttr> type;
   std::optional<mlir::StringAttr> member;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
+  auto walker = [&](mlir::Operation *op) {
     auto member_op = mlir::dyn_cast<vast::hl::RecordMemberOp>(op);
     if (!member_op) {
       return;
@@ -113,7 +131,8 @@ mlir::LogicalResult rewrite_offsetof(macroni::MacroExpansion exp,
       type = mlir::TypeAttr::get(record_ty);
     }
     member = member_op.getNameAttr();
-  });
+  };
+  exp.getExpansion().walk(walker);
   if (!(type && member)) {
     return mlir::failure();
   }
@@ -130,7 +149,7 @@ mlir::LogicalResult rewrite_container_of(macroni::MacroExpansion exp,
   mlir::Operation *ptr = nullptr;
   std::optional<mlir::TypeAttr> type;
   std::optional<mlir::StringAttr> member;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
+  auto walker = [&](mlir::Operation *op) {
     if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
         mp && mp.getParameterName() == "ptr") {
       ptr = op;
@@ -147,7 +166,8 @@ mlir::LogicalResult rewrite_container_of(macroni::MacroExpansion exp,
       type = mlir::TypeAttr::get(record_ty);
     }
     member = member_op.getNameAttr();
-  });
+  };
+  exp.getExpansion().walk(walker);
   if (!(ptr && type && member && ptr->getNumResults() == 1)) {
     return mlir::failure();
   }
@@ -163,8 +183,7 @@ mlir::LogicalResult rewrite_rcu_dereference(macroni::MacroExpansion exp,
   if (!is_rcu_dereference(exp)) {
     return mlir::failure();
   }
-  mlir::Operation *p = nullptr;
-  exp.getExpansion().walk(bind_ops_to_named_macro_params({{p, "p"}}));
+  auto [p] = fetch_macro_parameters(exp, "p");
   if (!(p && p->getNumResults() == 1)) {
     return mlir::failure();
   }
@@ -191,9 +210,7 @@ rewrite_rcu_dereference_check(macroni::MacroExpansion exp,
   if (!is_rcu_dereference_check(exp)) {
     return mlir::failure();
   }
-  mlir::Operation *p = nullptr;
-  mlir::Operation *c = nullptr;
-  exp.getExpansion().walk(bind_ops_to_named_macro_params({{p, "p"}, {c, "c"}}));
+  auto [p, c] = fetch_macro_parameters(exp, "p", "c");
   if (!((p && p->getNumResults() == 1) && (c && c->getNumResults() == 1))) {
     return mlir::failure();
   }
@@ -224,8 +241,7 @@ rewrite_rcu_access_pointer(macroni::MacroExpansion exp,
   if (!is_rcu_access_pointer(exp)) {
     return mlir::failure();
   }
-  mlir::Operation *p = nullptr;
-  exp.getExpansion().walk(bind_ops_to_named_macro_params({{p, "p"}}));
+  auto [p] = fetch_macro_parameters(exp, "p");
   if (!(p && p->getNumResults() == 1)) {
     return mlir::failure();
   }
@@ -242,9 +258,7 @@ rewrite_rcu_assign_pointer(macroni::MacroExpansion exp,
   if (!is_rcu_assign_pointer(exp)) {
     return mlir::failure();
   }
-  mlir::Operation *p = nullptr;
-  mlir::Operation *v = nullptr;
-  exp.getExpansion().walk(bind_ops_to_named_macro_params({{p, "p"}, {v, "v"}}));
+  auto [p, v] = fetch_macro_parameters(exp, "p", "v");
   if (!((p && p->getNumResults() == 1) && (v && v->getNumResults() == 1))) {
     return mlir::failure();
   }
@@ -262,11 +276,7 @@ rewrite_rcu_replace_pointer(macroni::MacroExpansion exp,
   if (!is_rcu_replace_pointer(exp)) {
     return mlir::failure();
   }
-  mlir::Operation *rcu_ptr = nullptr;
-  mlir::Operation *ptr = nullptr;
-  mlir::Operation *c = nullptr;
-  exp.getExpansion().walk(bind_ops_to_named_macro_params(
-      {{rcu_ptr, "rcu_ptr"}, {ptr, "ptr"}, {c, "c"}}));
+  auto [rcu_ptr, ptr, c] = fetch_macro_parameters(exp, "rcu_ptr", "ptr", "c");
   if (!((rcu_ptr && rcu_ptr->getNumResults() == 1) &&
         (ptr && ptr->getNumResults() == 1) && (c && c->getNumResults() == 1))) {
     return mlir::failure();
@@ -293,10 +303,7 @@ mlir::LogicalResult rewrite_smp_mb(macroni::MacroExpansion exp,
 
 mlir::LogicalResult rewrite_list_for_each(vast::hl::ForOp for_op,
                                           mlir::PatternRewriter &rewriter) {
-  mlir::Operation *pos = nullptr;
-  mlir::Operation *head = nullptr;
-  for_op.getCondRegion().walk(
-      bind_ops_to_named_macro_params({{pos, "pos"}, {head, "head"}}));
+  auto [pos, head] = fetch_macro_parameters(for_op, "pos", "head");
   if (!(pos && head)) {
     return mlir::failure();
   }
