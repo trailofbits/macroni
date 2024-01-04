@@ -103,8 +103,8 @@ void check_critical_section_section_for_rcu_invocations(
     macroni::kernel::RCUCriticalSection cs) {
   cs.walk([](macroni::kernel::RCUAccessPointer op) {
     op->emitWarning() << format_location(op)
-                      << ": suggestion: Use rcu_dereference_protected() "
-                         "instead of rcu_access_pointer()\n";
+                      << ": info: Use rcu_dereference_protected() instead of "
+                         "rcu_access_pointer()\n";
   });
 }
 
