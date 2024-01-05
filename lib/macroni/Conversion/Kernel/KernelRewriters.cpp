@@ -87,6 +87,18 @@ fetch_macro_parameters(mlir::Operation *op, Args &&...args) {
   return results;
 }
 
+template <typename T, typename... ReplacementArgs>
+bool replace_if_name_matches(mlir::PatternRewriter &rewriter,
+                             macroni::MacroExpansion &exp,
+                             ReplacementArgs &&...replacement_args) {
+  if (!has_name<T>(exp)) {
+    return false;
+  }
+  rewriter.replaceOpWithNewOp<T>(
+      exp, exp.getType(0), std::forward<ReplacementArgs>(replacement_args)...);
+  return true;
+}
+
 mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
                                      mlir::PatternRewriter &rewriter) {
   if (!is_get_user(exp)) {
@@ -189,19 +201,13 @@ mlir::LogicalResult rewrite_rcu_dereference(macroni::MacroExpansion exp,
   }
 
   auto p_clone = rewriter.clone(*p);
-  if (has_name<RCUDereference>(exp)) {
-    rewriter.replaceOpWithNewOp<RCUDereference>(exp, exp.getType(0),
-                                                p_clone->getResult(0));
-  } else if (has_name<RCUDereferenceBH>(exp)) {
-    rewriter.replaceOpWithNewOp<RCUDereferenceBH>(exp, exp.getType(0),
-                                                  p_clone->getResult(0));
-  } else if (has_name<RCUDereferenceSched>(exp)) {
-    rewriter.replaceOpWithNewOp<RCUDereferenceSched>(exp, exp.getType(0),
-                                                     p_clone->getResult(0));
-  } else {
-    assert(!"Unexpected rcu_dereference() type in rewrite_rcu_dereference()");
-  }
-  return mlir::success();
+  auto p_clone_result = p_clone->getResult(0);
+  return mlir::success(
+      replace_if_name_matches<RCUDereference>(rewriter, exp, p_clone_result) ||
+      replace_if_name_matches<RCUDereferenceBH>(rewriter, exp,
+                                                p_clone_result) ||
+      replace_if_name_matches<RCUDereferenceSched>(rewriter, exp,
+                                                   p_clone_result));
 }
 
 mlir::LogicalResult
@@ -217,22 +223,16 @@ rewrite_rcu_dereference_check(macroni::MacroExpansion exp,
 
   auto p_clone = rewriter.clone(*p);
   auto c_clone = rewriter.clone(*c);
-  if (has_name<RCUDereferenceCheck>(exp)) {
-    rewriter.replaceOpWithNewOp<RCUDereferenceCheck>(
-        exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
-  } else if (has_name<RCUDereferenceBHCheck>(exp)) {
-    rewriter.replaceOpWithNewOp<RCUDereferenceBHCheck>(
-        exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
-  } else if (has_name<RCUDereferenceSchedCheck>(exp)) {
-    rewriter.replaceOpWithNewOp<RCUDereferenceSchedCheck>(
-        exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
-  } else if (has_name<RCUDereferenceProtected>(exp)) {
-    rewriter.replaceOpWithNewOp<RCUDereferenceProtected>(
-        exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
-  } else {
-    assert(!"Unexpected rcu_dereference() type in rewrite_rcu_dereference()");
-  }
-  return mlir::success();
+  auto p_clone_result = p_clone->getResult(0);
+  auto c_clone_result = c_clone->getResult(0);
+  return mlir::success(replace_if_name_matches<RCUDereferenceCheck>(
+                           rewriter, exp, p_clone_result, c_clone_result) ||
+                       replace_if_name_matches<RCUDereferenceBHCheck>(
+                           rewriter, exp, p_clone_result, c_clone_result) ||
+                       replace_if_name_matches<RCUDereferenceSchedCheck>(
+                           rewriter, exp, p_clone_result, c_clone_result) ||
+                       replace_if_name_matches<RCUDereferenceProtected>(
+                           rewriter, exp, p_clone_result, c_clone_result));
 }
 
 mlir::LogicalResult
