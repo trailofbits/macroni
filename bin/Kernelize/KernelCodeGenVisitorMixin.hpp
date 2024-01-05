@@ -36,9 +36,9 @@ struct KernelCodeGenVisitorMixin
         anno && is_context_attr(anno)) {
       const auto *context_arg_1 = *anno->args_begin();
       const auto *context_arg_2 = clang::dyn_cast_or_null<clang::ConstantExpr>(
-          *(anno->args_begin() + 1));
+          *std::next(anno->args_begin(), 1));
       const auto *context_arg_3 = clang::dyn_cast_or_null<clang::ConstantExpr>(
-          *(anno->args_begin() + 2));
+          *std::next(anno->args_begin(), 2));
       if (!(context_arg_1 && context_arg_2 && context_arg_3)) {
         return parent_t::attr_visitor::Visit(attr);
       }
