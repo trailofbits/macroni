@@ -109,8 +109,8 @@ struct MacroniCodeGenVisitorMixin
     // vast::cg::codegen_instance expects a vast::cg::meta_generator as its meta
     // generator, but we use static inheritance to pass it our own meta
     // generator, so simply calling location() directly won't work.
-    auto loc =
-        dynamic_cast<MacroniMetaGenerator &>(derived().meta).location(*sub);
+    auto meta = dynamic_cast<MacroniMetaGenerator *>(&derived().meta);
+    auto loc = meta ? meta->location(*sub) : mlir::UnknownLoc();
     auto name_tok = sub->NameOrOperator();
     auto macro_name = (name_tok ? name_tok->Data() : "<a nameless macro>");
     auto function_like = is_sub_function_like(*sub);
