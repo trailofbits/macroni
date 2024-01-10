@@ -19,7 +19,6 @@
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
 #include <mlir/Transforms/Passes.h>
-#include <optional>
 #include <pasta/AST/AST.h>
 #include <string>
 #include <vast/CodeGen/CodeGen.hpp>
