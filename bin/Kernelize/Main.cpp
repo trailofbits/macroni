@@ -5,6 +5,9 @@
 // LICENSE file found in the root directory of this source tree.
 
 #include "KernelCodeGenVisitorMixin.hpp"
+#include "macroni/Dialect/Kernel/KernelDialect.hpp"
+#include "mlir/IR/Visitors.h"
+#include <functional>
 #include <iostream>
 #include <macroni/Common/GenerateMacroniModule.hpp>
 #include <macroni/Common/ParseAST.hpp>
@@ -18,6 +21,7 @@
 #include <mlir/Transforms/Passes.h>
 #include <optional>
 #include <pasta/AST/AST.h>
+#include <string>
 #include <vast/CodeGen/CodeGen.hpp>
 
 // Format an operation's location as a string for diagnostics
@@ -60,14 +64,11 @@ void check_unannotated_function_for_rcu_invocations(vast::hl::FuncOp &func) {
   });
 }
 
-// Check for invocations for RCU macros before first invocation of
-// rcu_read_lock()
-void check_acquires_function_for_rcu_invocations(vast::hl::FuncOp &func) {
-  // Walk pre-order and emit warnings until we encounter an invocation of
-  // rcu_read_lock()
-  func.walk<mlir::WalkOrder::PreOrder>([](mlir::Operation *op) {
+std::function<mlir::WalkResult(mlir::Operation *)>
+create_walker_until_call_with_name_found(llvm::StringRef name) {
+  return [&](mlir::Operation *op) {
     if (auto call = mlir::dyn_cast<vast::hl::CallOp>(op);
-        call && "rcu_read_lock" == call.getCalleeAttr().getValue()) {
+        call && name == call.getCalleeAttr().getValue()) {
       return mlir::WalkResult::interrupt();
     }
     if (auto rcu_op =
@@ -75,7 +76,16 @@ void check_acquires_function_for_rcu_invocations(vast::hl::FuncOp &func) {
       emit_warning_for_rcu_macro_outside_of_critical_section(rcu_op);
     }
     return mlir::WalkResult::advance();
-  });
+  };
+}
+
+// Check for invocations for RCU macros before first invocation of
+// rcu_read_lock()
+void check_acquires_function_for_rcu_invocations(vast::hl::FuncOp &func) {
+  // Walk pre-order and emit warnings until we encounter an invocation of
+  // rcu_read_lock()
+  func.walk<mlir::WalkOrder::PreOrder>(create_walker_until_call_with_name_found(
+      macroni::kernel::KernelDialect::rcu_read_lock()));
 }
 
 // Check for invocations for RCU macros after last invocation of
@@ -84,17 +94,8 @@ void check_releases_function_for_rcu_invocations(vast::hl::FuncOp &func) {
   // Walk post-order in reverse and emit warnings until we encounter an
   // invocation of rcu_read_unlock()
   func.walk<mlir::WalkOrder::PostOrder, mlir::ReverseIterator>(
-      [](mlir::Operation *op) {
-        if (auto call = mlir::dyn_cast<vast::hl::CallOp>(op);
-            call && "rcu_read_unlock" == call.getCalleeAttr().getValue()) {
-          return mlir::WalkResult::interrupt();
-        }
-        if (auto rcu_op =
-                mlir::dyn_cast<macroni::kernel::RCU_Macro_Interface>(op)) {
-          emit_warning_for_rcu_macro_outside_of_critical_section(rcu_op);
-        }
-        return mlir::WalkResult::advance();
-      });
+      create_walker_until_call_with_name_found(
+          macroni::kernel::KernelDialect::rcu_read_unlock()));
 }
 
 // Check for invocations of certain RCU macros inside of RCU critical
