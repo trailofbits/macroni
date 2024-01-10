@@ -79,7 +79,7 @@ std::array<mlir::Operation *, sizeof...(Args)>
 fetch_macro_parameters(mlir::Operation *op, Args &&...args) {
   auto results = std::array<mlir::Operation *, sizeof...(Args)>();
   auto walker = [&](macroni::MacroParameter mp) {
-    for (auto result : results) {
+    for (auto &result : results) {
       fetch_macro_params_helper(mp, result, args...);
     }
   };
