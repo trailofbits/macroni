@@ -8,4 +8,9 @@ def RCU_Macro_Interface :
   let cppNamespace = "::macroni::kernel";
 }
 
+def RCU_Dereference_Interface :
+  OpInterface<"RCU_Dereference_Interface"> {
+  let cppNamespace = "::macroni::kernel";
+}
+
 #endif // KERNEL_IR_KERNEL_INTERFACES

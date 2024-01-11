@@ -132,37 +132,39 @@ def RCUCriticalSection :
 /* RCU macros */
 
 class RCU_Op<string mnemonic, list<Trait> traits = []>
-  : Kernel_Op<mnemonic, traits>;
-
-class RCU_Deference_Op<
-  string mnemonic
-  , list<Trait>
-    traits = [DeclareOpInterfaceMethods<RCU_Macro_Interface>]
-  > :
-  RCU_Op<mnemonic, traits>
-  , Arguments<(ins AnyType:$p)>
-  , Results<(outs AnyType:$result)> {
-    let summary = "An expansion of an rcu_dereference() macro variant";
+  : Kernel_Op<mnemonic, !listconcat(traits, [])> {
     let description = [{
       See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
     }];
+}
+
+class RCU_Unary_Op<string mnemonic, list<Trait> traits = []>
+  : RCU_Op<mnemonic, !listconcat(traits,
+    [DeclareOpInterfaceMethods<RCU_Macro_Interface>])>
+  , Arguments<(ins AnyType:$p)>
+  , Results<(outs AnyType:$result)> {
+    let summary = "An expansion of an RCU macro with one paramter, p";
     let assemblyFormat = [{
-    `(` $p `)` attr-dict
-    `:` functional-type( operands, results )
-  }];
+      `(` $p `)` attr-dict
+      `:` functional-type( operands, results )
+    }];
+}
+
+def RCUAccessPointer : RCU_Unary_Op<"rcu_access_pointer">;
+
+class RCU_Deference_Op<string mnemonic, list<Trait> traits = []> :
+  RCU_Unary_Op<mnemonic, !listconcat(traits,
+    [DeclareOpInterfaceMethods<RCU_Dereference_Interface>])> {
+    let summary = "An expansion of an rcu_dereference() macro variant";
 }
 
 def RCUDereference : RCU_Deference_Op<"rcu_dereference">;
 def RCUDereferenceBH : RCU_Deference_Op<"rcu_dereference_bh">;
 def RCUDereferenceSched : RCU_Deference_Op<"rcu_dereference_sched">;
-def RCUAccessPointer : RCU_Deference_Op<"rcu_access_pointer">;
 
-class RCU_Deference_Check_Op<
-  string mnemonic
-  , list<Trait>
-  traits = [DeclareOpInterfaceMethods<RCU_Macro_Interface>]
-  > :
-  RCU_Op<mnemonic, traits>
+class RCU_Deference_Check_Op<string mnemonic, list<Trait> traits = []>
+  : RCU_Op<mnemonic, !listconcat(traits,
+  [DeclareOpInterfaceMethods<RCU_Macro_Interface>])>
   , Arguments<(ins
     AnyType:$p,
     AnyType:$c)>
