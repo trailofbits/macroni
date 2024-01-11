@@ -1,5 +1,6 @@
 #pragma once
 
+#include <macroni/Dialect/Kernel/KernelAttributes.hpp>
 #include <macroni/Dialect/Kernel/KernelDialect.hpp>
 #include <macroni/Dialect/Kernel/KernelTypes.hpp>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
@@ -18,14 +19,49 @@ struct KernelCodeGenVisitorMixin
   using parent_t = macroni::MacroniCodeGenVisitorMixin<Derived>;
 
   using parent_t::mlir_builder;
+  using parent_t::stmt_visitor::lens::acontext;
   using parent_t::stmt_visitor::lens::mcontext;
 
   using parent_t::Visit;
 
   std::int64_t lock_level = 0;
 
+  bool is_context_attr(const clang::AnnotateAttr *attr) {
+    return attr->getAttrName()->getName() == "context" &&
+           attr->args_size() == 3;
+  }
+
+  mlir::Attribute Visit(const clang::Attr *attr) {
+    if (const auto *anno = clang::dyn_cast<clang::AnnotateAttr>(attr);
+        anno && is_context_attr(anno)) {
+      const auto *context_arg_1 = *anno->args_begin();
+      const auto *context_arg_2 = clang::dyn_cast_or_null<clang::ConstantExpr>(
+          *std::next(anno->args_begin(), 1));
+      const auto *context_arg_3 = clang::dyn_cast_or_null<clang::ConstantExpr>(
+          *std::next(anno->args_begin(), 2));
+      if (!(context_arg_1 && context_arg_2 && context_arg_3)) {
+        return parent_t::attr_visitor::Visit(attr);
+      }
+      std::string lock;
+      auto os = llvm::raw_string_ostream(lock);
+      context_arg_1->printPretty(os, nullptr, acontext().getPrintingPolicy());
+      auto lock_name = mlir::StringAttr::get(&mcontext(), llvm::Twine(lock));
+
+      auto starts_with_lock = context_arg_2->getResultAsAPSInt();
+      auto ends_with_lock = context_arg_3->getResultAsAPSInt();
+      if (starts_with_lock == 1 && ends_with_lock == 1) {
+        return macroni::kernel::MustHoldAttr::get(&mcontext(), lock_name);
+      } else if (starts_with_lock == 0 && ends_with_lock == 1) {
+        return macroni::kernel::AcquiresAttr::get(&mcontext(), lock_name);
+      } else if (starts_with_lock == 1 && ends_with_lock == 0) {
+        return macroni::kernel::ReleasesAttr::get(&mcontext(), lock_name);
+      }
+    }
+    return parent_t::attr_visitor::Visit(attr);
+  }
+
   mlir::Type Visit(clang::QualType type) {
-    auto ty = parent_t::type_visitor_with_dl::Visit(type);
+    auto ty = parent_t::type_visitor::Visit(type);
     auto attributed_type = clang::dyn_cast<clang::AttributedType>(type);
     if (!attributed_type) {
       return ty;
@@ -67,7 +103,7 @@ struct KernelCodeGenVisitorMixin
   }
 
   void VisitCallExpr(pasta::CallExpr &call_expr, mlir::Operation *op) {
-    auto call_op = mlir::dyn_cast<vast::hl::CallOp>(op);
+    auto call_op = mlir::dyn_cast_or_null<vast::hl::CallOp>(op);
     if (!call_op) {
       return;
     }

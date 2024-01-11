@@ -25,17 +25,21 @@ def Kernel_Dialect : Dialect {
 
     let extraClassDeclaration = [{
         void registerTypes();
+        void registerAttributes();
         static llvm::StringRef rcu_read_lock() { return "rcu_read_lock"; }
         static llvm::StringRef rcu_read_unlock() { return "rcu_read_unlock"; }
     }];
 
     let useDefaultTypePrinterParser = 1;
+    let useDefaultAttributePrinterParser = 1;
 }
 
 class Kernel_Op<string mnemonic, list<Trait> traits = []>
     : Op<Kernel_Dialect, mnemonic, traits>;
 
-include "KernelOps.td"
+include "KernelAttributes.td"
 include "KernelTypes.td"
+include "KernelInterfaces.td"
+include "KernelOps.td"
 
 #endif // MACRONI_DIALECT_IR_KERNEL

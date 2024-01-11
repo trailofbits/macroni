@@ -2,12 +2,8 @@
 
 namespace macroni::kernel {
 
-bool has_name(macroni::MacroParameter mp, std::string name) {
-  return mp.getParameterName() == name;
-}
-
-bool has_name(macroni::MacroExpansion exp, std::string name) {
-  return exp.getMacroName() == name;
+template <class T> bool has_name(macroni::MacroExpansion exp) {
+  return exp.getMacroName() == T::getOperationName().split('.').second;
 }
 
 bool has_results_and_n_parameters(macroni::MacroExpansion exp, size_t n) {
@@ -15,24 +11,92 @@ bool has_results_and_n_parameters(macroni::MacroExpansion exp, size_t n) {
 }
 
 bool is_get_user(macroni::MacroExpansion exp) {
-  return has_results_and_n_parameters(exp, 2) && has_name(exp, "get_user");
+  return has_results_and_n_parameters(exp, 2) && has_name<GetUser>(exp);
 }
 
 bool is_offsetof(macroni::MacroExpansion exp) {
-  return has_results_and_n_parameters(exp, 2) && has_name(exp, "offsetof");
+  return has_results_and_n_parameters(exp, 2) && has_name<OffsetOf>(exp);
 }
 
 bool is_container_of(macroni::MacroExpansion exp) {
-  return has_results_and_n_parameters(exp, 3) && has_name(exp, "container_of");
+  return has_results_and_n_parameters(exp, 3) && has_name<ContainerOf>(exp);
 }
 
 bool is_rcu_dereference(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 1) &&
-         has_name(exp, "rcu_dereference");
+         (has_name<RCUDereference>(exp) || has_name<RCUDereferenceBH>(exp) ||
+          has_name<RCUDereferenceSched>(exp));
+}
+
+bool is_rcu_dereference_check(macroni::MacroExpansion exp) {
+  return has_results_and_n_parameters(exp, 2) &&
+         (has_name<RCUDereferenceCheck>(exp) ||
+          has_name<RCUDereferenceBHCheck>(exp) ||
+          has_name<RCUDereferenceSchedCheck>(exp) ||
+          has_name<RCUDereferenceProtected>(exp));
+}
+
+bool is_rcu_access_pointer(macroni::MacroExpansion exp) {
+  return has_results_and_n_parameters(exp, 1) &&
+         has_name<RCUAccessPointer>(exp);
+}
+
+bool is_rcu_assign_pointer(macroni::MacroExpansion exp) {
+  return has_results_and_n_parameters(exp, 2) &&
+         has_name<RCUAssignPointer>(exp);
+}
+
+bool is_rcu_replace_pointer(macroni::MacroExpansion exp) {
+  return has_results_and_n_parameters(exp, 3) &&
+         has_name<RCUReplacePointer>(exp);
 }
 
 bool is_smp_mb(macroni::MacroExpansion exp) {
-  return has_results_and_n_parameters(exp, 0) && has_name(exp, "smp_mb");
+  return has_results_and_n_parameters(exp, 0) && has_name<SMPMB>(exp);
+}
+
+template <typename... Names>
+void fetch_macro_params_helper(macroni::MacroParameter &mp,
+                               mlir::Operation *&op, Names &&...names);
+
+template <typename First, typename... Rest>
+void fetch_macro_params_helper(macroni::MacroParameter &mp,
+                               mlir::Operation *&op, First first,
+                               Rest &&...rest) {
+  if (mp.getParameterName() == first) {
+    op = mp;
+    return;
+  }
+  fetch_macro_params_helper(mp, op, rest...);
+}
+
+template <>
+void fetch_macro_params_helper(macroni::MacroParameter &mp,
+                               mlir::Operation *&op) {}
+
+template <typename... Args>
+std::array<mlir::Operation *, sizeof...(Args)>
+fetch_macro_parameters(mlir::Operation *op, Args &&...args) {
+  auto results = std::array<mlir::Operation *, sizeof...(Args)>();
+  auto walker = [&](macroni::MacroParameter mp) {
+    for (auto &result : results) {
+      fetch_macro_params_helper(mp, result, args...);
+    }
+  };
+  op->walk(walker);
+  return results;
+}
+
+template <typename T, typename... ReplacementArgs>
+bool replace_if_name_matches(mlir::PatternRewriter &rewriter,
+                             macroni::MacroExpansion &exp,
+                             ReplacementArgs &&...replacement_args) {
+  if (!has_name<T>(exp)) {
+    return false;
+  }
+  rewriter.replaceOpWithNewOp<T>(
+      exp, exp.getType(0), std::forward<ReplacementArgs>(replacement_args)...);
+  return true;
 }
 
 mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
@@ -40,17 +104,7 @@ mlir::LogicalResult rewrite_get_user(macroni::MacroExpansion exp,
   if (!is_get_user(exp)) {
     return mlir::failure();
   }
-  mlir::Operation *x = nullptr;
-  mlir::Operation *ptr = nullptr;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op)) {
-      if (!x && has_name(mp, "x")) {
-        x = op;
-      } else if (!ptr && has_name(mp, "ptr")) {
-        ptr = op;
-      }
-    }
-  });
+  auto [x, ptr] = fetch_macro_parameters(exp, "x", "ptr");
   if (!(x && ptr && x->getNumResults() == 1 && ptr->getNumResults() == 1)) {
     return mlir::failure();
   }
@@ -77,7 +131,7 @@ mlir::LogicalResult rewrite_offsetof(macroni::MacroExpansion exp,
   }
   std::optional<mlir::TypeAttr> type;
   std::optional<mlir::StringAttr> member;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
+  auto walker = [&](mlir::Operation *op) {
     auto member_op = mlir::dyn_cast<vast::hl::RecordMemberOp>(op);
     if (!member_op) {
       return;
@@ -89,7 +143,8 @@ mlir::LogicalResult rewrite_offsetof(macroni::MacroExpansion exp,
       type = mlir::TypeAttr::get(record_ty);
     }
     member = member_op.getNameAttr();
-  });
+  };
+  exp.getExpansion().walk(walker);
   if (!(type && member)) {
     return mlir::failure();
   }
@@ -106,9 +161,9 @@ mlir::LogicalResult rewrite_container_of(macroni::MacroExpansion exp,
   mlir::Operation *ptr = nullptr;
   std::optional<mlir::TypeAttr> type;
   std::optional<mlir::StringAttr> member;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
+  auto walker = [&](mlir::Operation *op) {
     if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
-        mp && has_name(mp, "ptr")) {
+        mp && mp.getParameterName() == "ptr") {
       ptr = op;
       return;
     }
@@ -123,7 +178,8 @@ mlir::LogicalResult rewrite_container_of(macroni::MacroExpansion exp,
       type = mlir::TypeAttr::get(record_ty);
     }
     member = member_op.getNameAttr();
-  });
+  };
+  exp.getExpansion().walk(walker);
   if (!(ptr && type && member && ptr->getNumResults() == 1)) {
     return mlir::failure();
   }
@@ -139,20 +195,99 @@ mlir::LogicalResult rewrite_rcu_dereference(macroni::MacroExpansion exp,
   if (!is_rcu_dereference(exp)) {
     return mlir::failure();
   }
-  mlir::Operation *p = nullptr;
-  exp.getExpansion().walk([&](mlir::Operation *op) {
-    if (auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
-        mp && has_name(mp, "p")) {
-      p = op;
-    }
-  });
+  auto [p] = fetch_macro_parameters(exp, "p");
   if (!(p && p->getNumResults() == 1)) {
     return mlir::failure();
   }
 
   auto p_clone = rewriter.clone(*p);
-  rewriter.replaceOpWithNewOp<RCUDereference>(exp, exp.getType(0),
-                                              p_clone->getResult(0));
+  auto p_clone_result = p_clone->getResult(0);
+  return mlir::success(
+      replace_if_name_matches<RCUDereference>(rewriter, exp, p_clone_result) ||
+      replace_if_name_matches<RCUDereferenceBH>(rewriter, exp,
+                                                p_clone_result) ||
+      replace_if_name_matches<RCUDereferenceSched>(rewriter, exp,
+                                                   p_clone_result));
+}
+
+mlir::LogicalResult
+rewrite_rcu_dereference_check(macroni::MacroExpansion exp,
+                              mlir::PatternRewriter &rewriter) {
+  if (!is_rcu_dereference_check(exp)) {
+    return mlir::failure();
+  }
+  auto [p, c] = fetch_macro_parameters(exp, "p", "c");
+  if (!((p && p->getNumResults() == 1) && (c && c->getNumResults() == 1))) {
+    return mlir::failure();
+  }
+
+  auto p_clone = rewriter.clone(*p);
+  auto c_clone = rewriter.clone(*c);
+  auto p_clone_result = p_clone->getResult(0);
+  auto c_clone_result = c_clone->getResult(0);
+  return mlir::success(replace_if_name_matches<RCUDereferenceCheck>(
+                           rewriter, exp, p_clone_result, c_clone_result) ||
+                       replace_if_name_matches<RCUDereferenceBHCheck>(
+                           rewriter, exp, p_clone_result, c_clone_result) ||
+                       replace_if_name_matches<RCUDereferenceSchedCheck>(
+                           rewriter, exp, p_clone_result, c_clone_result) ||
+                       replace_if_name_matches<RCUDereferenceProtected>(
+                           rewriter, exp, p_clone_result, c_clone_result));
+}
+
+mlir::LogicalResult
+rewrite_rcu_access_pointer(macroni::MacroExpansion exp,
+                           mlir::PatternRewriter &rewriter) {
+  if (!is_rcu_access_pointer(exp)) {
+    return mlir::failure();
+  }
+  auto [p] = fetch_macro_parameters(exp, "p");
+  if (!(p && p->getNumResults() == 1)) {
+    return mlir::failure();
+  }
+
+  auto p_clone = rewriter.clone(*p);
+  rewriter.replaceOpWithNewOp<RCUAccessPointer>(exp, exp.getType(0),
+                                                p_clone->getResult(0));
+  return mlir::success();
+}
+
+mlir::LogicalResult
+rewrite_rcu_assign_pointer(macroni::MacroExpansion exp,
+                           mlir::PatternRewriter &rewriter) {
+  if (!is_rcu_assign_pointer(exp)) {
+    return mlir::failure();
+  }
+  auto [p, v] = fetch_macro_parameters(exp, "p", "v");
+  if (!((p && p->getNumResults() == 1) && (v && v->getNumResults() == 1))) {
+    return mlir::failure();
+  }
+
+  auto p_clone = rewriter.clone(*p);
+  auto c_clone = rewriter.clone(*p);
+  rewriter.replaceOpWithNewOp<RCUAssignPointer>(
+      exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
+  return mlir::success();
+}
+
+mlir::LogicalResult
+rewrite_rcu_replace_pointer(macroni::MacroExpansion exp,
+                            mlir::PatternRewriter &rewriter) {
+  if (!is_rcu_replace_pointer(exp)) {
+    return mlir::failure();
+  }
+  auto [rcu_ptr, ptr, c] = fetch_macro_parameters(exp, "rcu_ptr", "ptr", "c");
+  if (!((rcu_ptr && rcu_ptr->getNumResults() == 1) &&
+        (ptr && ptr->getNumResults() == 1) && (c && c->getNumResults() == 1))) {
+    return mlir::failure();
+  }
+
+  auto rcu_ptr_clone = rewriter.clone(*rcu_ptr);
+  auto ptr_clone = rewriter.clone(*ptr);
+  auto c_clone = rewriter.clone(*c);
+  rewriter.replaceOpWithNewOp<RCUReplacePointer>(
+      exp, exp.getType(0), rcu_ptr_clone->getResult(0), ptr_clone->getResult(0),
+      c_clone->getResult(0));
   return mlir::success();
 }
 
@@ -168,19 +303,7 @@ mlir::LogicalResult rewrite_smp_mb(macroni::MacroExpansion exp,
 
 mlir::LogicalResult rewrite_list_for_each(vast::hl::ForOp for_op,
                                           mlir::PatternRewriter &rewriter) {
-  mlir::Operation *pos = nullptr;
-  mlir::Operation *head = nullptr;
-  for_op.getCondRegion().walk([&](mlir::Operation *op) {
-    auto mp = mlir::dyn_cast<macroni::MacroParameter>(op);
-    if (!mp) {
-      return;
-    }
-    if (has_name(mp, "pos")) {
-      pos = op;
-    } else if (has_name(mp, "head")) {
-      head = op;
-    }
-  });
+  auto [pos, head] = fetch_macro_parameters(for_op, "pos", "head");
   if (!(pos && head)) {
     return mlir::failure();
   }
@@ -233,6 +356,32 @@ mlir::LogicalResult rewrite_rcu_read_unlock(vast::hl::CallOp call_op,
     op = temp;
   }
   rewriter.eraseOp(unlock_op);
+  return mlir::success();
+}
+
+mlir::LogicalResult rewrite_label_stmt(vast::hl::LabelStmt label_stmt,
+                                       mlir::PatternRewriter &rewriter) {
+  // In the Linux Kernel, a common idiom is to call `rcu_read_unlock()` right
+  // after declaring a label. This idiom prevents our `CallOp` pattern rewriter
+  // from detecting such unlocks as the end of a critical section. To fix this,
+  // we look for labels which are immediately followed by a call to
+  // `rcu_read_unlock()`, and move the call before the label.
+
+  auto ops = label_stmt.getOps();
+  if (ops.empty()) {
+    return mlir::failure();
+  }
+
+  auto call_op = mlir::dyn_cast<vast::hl::CallOp>(*ops.begin());
+  if (!call_op || call_op.getCalleeAttr().getValue() != "rcu_read_unlock") {
+    return mlir::failure();
+  }
+
+  // TODO(bpp): Keep track of which calls to `rcu_read_unlock()` were originally
+  // nested under labels.
+  rewriter.setInsertionPoint(label_stmt);
+  rewriter.clone(*call_op.getOperation());
+  rewriter.eraseOp(call_op);
   return mlir::success();
 }
 

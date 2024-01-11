@@ -1,5 +1,8 @@
 // Copyright (c) 2023-present, Trail of Bits, Inc.
 
+#include "macroni/Dialect/Kernel/KernelAttributes.hpp"
+#include <macroni/Dialect/Kernel/KernelTypes.hpp>
+#include <macroni/Dialect/Kernel/KernelInterfaces.hpp>
 #include "macroni/Dialect/Kernel/KernelOps.hpp"
 #include "macroni/Dialect/Kernel/KernelDialect.hpp"
 

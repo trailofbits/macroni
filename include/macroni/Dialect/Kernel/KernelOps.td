@@ -6,10 +6,12 @@
 include "mlir/IR/BuiltinTypes.td"
 include "mlir/IR/OpBase.td"
 
+include "macroni/Dialect/Kernel/KernelInterfaces.td"
+
 /* Special macros */
 
 def GetUser :
-  Kernel_Op< "get_user", [] >
+  Kernel_Op<"get_user">
   , Arguments<(ins
     AnyType:$x,
     AnyType:$ptr
@@ -21,15 +23,17 @@ def GetUser :
     space. It accepts two arguments:
     - x: A variable in which to store the result.
     - ptr: A source address in user space.
-    get_user returns zero on success, or -EFAULT on error.
+    et_user returns zero on success, or -EFAULT on error.
 
     More information: https://www.cs.bham.ac.uk/~exr/lectures/opsys/12_13/docs/kernelAPI/r3776.html
   }];
-  let assemblyFormat = "`get_user` `(` $x `,` $ptr `)` attr-dict `:` functional-type( operands, results )";
+  let assemblyFormat = [{
+    `(` $x `,` $ptr `)` attr-dict `:` functional-type( operands, results )
+  }];
 }
 
 def OffsetOf :
-  Kernel_Op< "offsetof", [] >
+  Kernel_Op<"offsetof">
   , Arguments<(ins
     TypeAttr:$type,
     StrAttr:$member
@@ -51,11 +55,13 @@ def OffsetOf :
 
     More information: https://man7.org/linux/man-pages/man3/offsetof.3.html
   }];
-  let assemblyFormat = "`offsetof` `(` $type `,` $member `)` attr-dict `:` functional-type( operands, results )";
+  let assemblyFormat = [{
+    `(` $type `,` $member `)` attr-dict `:` functional-type( operands, results )
+  }];
 }
 
 def ContainerOf :
-  Kernel_Op< "container_of", [] >
+  Kernel_Op<"container_of">
   , Arguments<(ins
     AnyType:$ptr,
     TypeAttr:$type,
@@ -69,13 +75,13 @@ def ContainerOf :
      member.
   }];
   let assemblyFormat = [{
-    `container_of` `(` $ptr `,` $type `,` $member `)`
+    `(` $ptr `,` $type `,` $member `)`
     attr-dict `:` functional-type( operands, results )
   }];
 }
 
 def ListForEach :
-  Kernel_Op< "list_for_each()", [SingleBlock, NoTerminator] >
+  Kernel_Op<"list_for_each()", [SingleBlock, NoTerminator] >
   , Arguments<(ins
     AnyType:$pos,
     AnyType:$head
@@ -95,12 +101,24 @@ def ListForEach :
       "std::unique_ptr< mlir::Region > &&":$bodyRegion
     )>
   ];
-  let assemblyFormat = "`list_for_each` `(` $pos `,` $head `)` attr-dict `:` functional-type( operands, results ) $bodyRegion";
+  let assemblyFormat = [{
+    `(` $pos `,` $head `)` attr-dict
+    `:` functional-type( operands, results ) $bodyRegion
+  }];
+}
+
+def SMPMB :
+  Kernel_Op<"smp_mb">
+  , Results<(outs AnyType:$result)> {
+  let summary = "An expansion of the Linux kernel macro, smp_mb()";
+  let description = "smp_mb() activates a memory barrier";
+  let assemblyFormat = [{
+    `(` `)` attr-dict `:` functional-type( operands, results )
+  }];
 }
 
 def RCUCriticalSection :
-  Kernel_Op< "rcu.critical_section", [NoTerminator] >
-{
+  Kernel_Op<"rcu.critical_section", [NoTerminator] > {
   let summary = "An RCU critical section";
   let description = [{
     An RCU critical section denoted by an rcu_read_lock() and rcu_read_unlock()
@@ -111,29 +129,97 @@ def RCUCriticalSection :
   let assemblyFormat = "$bodyRegion attr-dict";
 }
 
-def RCUDereference :
-  Kernel_Op< "rcu_dereference", [] >
+/* RCU macros */
+
+class RCU_Op<string mnemonic, list<Trait> traits = []>
+  : Kernel_Op<mnemonic, !listconcat(traits, [])> {
+    let description = [{
+      See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+    }];
+}
+
+class RCU_Unary_Op<string mnemonic, list<Trait> traits = []>
+  : RCU_Op<mnemonic, !listconcat(traits,
+    [DeclareOpInterfaceMethods<RCU_Macro_Interface>])>
   , Arguments<(ins AnyType:$p)>
   , Results<(outs AnyType:$result)> {
-  let summary = "An expansion of the Linux kernel macro, rcu_dereference()";
+    let summary = "An expansion of an RCU macro with one paramter, p";
+    let assemblyFormat = [{
+      `(` $p `)` attr-dict
+      `:` functional-type( operands, results )
+    }];
+}
+
+def RCUAccessPointer : RCU_Unary_Op<"rcu_access_pointer">;
+
+class RCU_Deference_Op<string mnemonic, list<Trait> traits = []> :
+  RCU_Unary_Op<mnemonic, !listconcat(traits,
+    [DeclareOpInterfaceMethods<RCU_Dereference_Interface>])> {
+    let summary = "An expansion of an rcu_dereference() macro variant";
+}
+
+def RCUDereference : RCU_Deference_Op<"rcu_dereference">;
+def RCUDereferenceBH : RCU_Deference_Op<"rcu_dereference_bh">;
+def RCUDereferenceSched : RCU_Deference_Op<"rcu_dereference_sched">;
+
+class RCU_Deference_Check_Op<string mnemonic, list<Trait> traits = []>
+  : RCU_Op<mnemonic, !listconcat(traits,
+  [DeclareOpInterfaceMethods<RCU_Macro_Interface>])>
+  , Arguments<(ins
+    AnyType:$p,
+    AnyType:$c)>
+  , Results<(outs AnyType:$result)> {
+    let summary = "An expansion of an rcu_dereference_check() macro variant";
+    let description = [{
+      See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+    }];
+    let assemblyFormat = [{
+      `(` $p `,` $c `)` attr-dict
+      `:` functional-type( operands, results )
+    }];
+}
+
+def RCUDereferenceCheck : RCU_Deference_Check_Op<"rcu_dereference_check">;
+def RCUDereferenceBHCheck : RCU_Deference_Check_Op<"rcu_dereference_bh_check">;
+def RCUDereferenceSchedCheck :
+  RCU_Deference_Check_Op<"rcu_dereference_sched_check">;
+def RCUDereferenceProtected :
+  RCU_Deference_Check_Op<"rcu_dereference_protected">;
+
+def RCUAssignPointer :
+  RCU_Op<"rcu_assign_pointer">
+  , Arguments<(ins
+    AnyType:$p
+    , AnyType:$v)>
+  , Results<(outs AnyType:$result)> {
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_assign_pointer()
+  }];
   let description = [{
-    rcu_dereference() - fetch RCU-protected pointer for dereferencing
-    @p: The pointer to read, prior to dereferencing
-    This is a simple wrapper around rcu_dereference_check().
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
   }];
   let assemblyFormat = [{
-    `rcu_dereference` `(` $p `)` attr-dict
+    `(` $p `,` $v `)` attr-dict
     `:` functional-type( operands, results )
   }];
 }
 
-def SMPMB :
-  Kernel_Op< "smp_mb", [] >
+def RCUReplacePointer :
+  RCU_Op<"rcu_replace_pointer">
+  , Arguments<(ins
+    AnyType:$rcu_ptr
+    , AnyType:$ptr
+    , AnyType:$c)>
   , Results<(outs AnyType:$result)> {
-  let summary = "An expansion of the Linux kernel macro, smp_mb()";
-  let description = "smp_mb() activates a memory barrier";
+  let summary = [{
+    An expansion of the Linux kernel macro, rcu_replace_pointer()
+  }];
+  let description = [{
+    See https://www.kernel.org/doc/html/next/core-api/kernel-api.html
+  }];
   let assemblyFormat = [{
-    `smp_mb` `(` `)` attr-dict `:` functional-type( operands, results )
+    `(` $rcu_ptr `,` $ptr `,` $c `)` attr-dict
+    `:` functional-type( operands, results )
   }];
 }
 

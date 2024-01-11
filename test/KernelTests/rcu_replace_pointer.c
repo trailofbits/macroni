@@ -1,11 +1,11 @@
 // RUN: kernelize -x c %s | FileCheck %s --match-full-lines
 
-#define get_user(x, ptr) ({ int res = 0; if (1) { x = *ptr; res = 1; } res; })
+#define rcu_replace_pointer(rcu_ptr, ptr, c) (c && ((rcu_ptr) = (ptr)))
 
 int main(void) {
-        int x, *ptr;
-        get_user(x, ptr);
-        return 0;
+  int *rcu_ptr, *ptr;
+  rcu_replace_pointer(rcu_ptr, ptr, 1);
+  return 0;
 }
 
 // CHECK:hl.translation_unit {
@@ -28,19 +28,23 @@ int main(void) {
 // CHECK:  hl.typedef "__builtin_va_list" : !hl.array<1, !hl.record<"__va_list_tag">>
 // CHECK:  hl.func @main () -> !hl.int {
 // CHECK:    core.scope {
-// CHECK:      %0 = hl.var "x" : !hl.lvalue<!hl.int>
+// CHECK:      %0 = hl.var "rcu_ptr" : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      %1 = hl.var "ptr" : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      %2 = macroni.parameter "ptr" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %6 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:        hl.value.yield %6 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:        %7 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:        hl.value.yield %7 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
 // CHECK:      %3 = macroni.parameter "ptr" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %6 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:        hl.value.yield %6 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:        %7 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:        hl.value.yield %7 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
-// CHECK:      %4 = kernel.get_user(%2, %3) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
-// CHECK:      %5 = hl.const #core.integer<0> : !hl.int
-// CHECK:      hl.return %5 : !hl.int
+// CHECK:      %4 = macroni.parameter "ptr" : !hl.lvalue<!hl.ptr<!hl.int>> {
+// CHECK:        %7 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:        hl.value.yield %7 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:      }
+// CHECK:      %5 = kernel.rcu_replace_pointer(%2, %3, %4) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
+// CHECK:      %6 = hl.const #core.integer<0> : !hl.int
+// CHECK:      hl.return %6 : !hl.int
 // CHECK:    }
 // CHECK:  }
 // CHECK:}
