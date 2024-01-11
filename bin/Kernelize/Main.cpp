@@ -6,6 +6,7 @@
 
 #include "KernelCodeGenVisitorMixin.hpp"
 #include "macroni/Dialect/Kernel/KernelDialect.hpp"
+#include "macroni/Dialect/Kernel/KernelInterfaces.hpp"
 #include "mlir/IR/Visitors.h"
 #include <functional>
 #include <iostream>
@@ -35,8 +36,8 @@ std::string format_location(mlir::Operation *op) {
   return s;
 }
 
-void emit_warning_for_rcu_macro_outside_of_critical_section(
-    macroni::kernel::RCU_Macro_Interface &op) {
+void emit_warning_rcu_dereference_outside_critical_section(
+    macroni::kernel::RCU_Dereference_Interface &op) {
   // Skip dialect namespace prefix when printing op name
   op.emitWarning() << format_location(op.getOperation())
                    << ": warning: Invocation of "
@@ -56,8 +57,9 @@ void check_unannotated_function_for_rcu_invocations(vast::hl::FuncOp &func) {
       return mlir::WalkResult::skip();
     }
     if (auto rcu_op =
-            mlir::dyn_cast<macroni::kernel::RCU_Macro_Interface>(op)) {
-      emit_warning_for_rcu_macro_outside_of_critical_section(rcu_op);
+            mlir::dyn_cast<macroni::kernel::RCU_Dereference_Interface>(
+                op)) {
+      emit_warning_rcu_dereference_outside_critical_section(rcu_op);
     }
     return mlir::WalkResult::advance();
   });
@@ -71,8 +73,9 @@ create_walker_until_call_with_name_found(llvm::StringRef name) {
       return mlir::WalkResult::interrupt();
     }
     if (auto rcu_op =
-            mlir::dyn_cast<macroni::kernel::RCU_Macro_Interface>(op)) {
-      emit_warning_for_rcu_macro_outside_of_critical_section(rcu_op);
+            mlir::dyn_cast<macroni::kernel::RCU_Dereference_Interface>(
+                op)) {
+      emit_warning_rcu_dereference_outside_critical_section(rcu_op);
     }
     return mlir::WalkResult::advance();
   };
@@ -104,7 +107,7 @@ void check_critical_section_section_for_rcu_invocations(
   cs.walk([](macroni::kernel::RCUAccessPointer op) {
     op->emitWarning() << format_location(op)
                       << ": info: Use rcu_dereference_protected() instead of "
-                         "rcu_access_pointer()\n";
+                         "rcu_access_pointer() in critical section\n";
   });
 }
 
