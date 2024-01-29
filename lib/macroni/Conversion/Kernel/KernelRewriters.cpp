@@ -1,4 +1,12 @@
+#include <array>
+#include <cstddef>
 #include <macroni/Conversion/Kernel/KernelRewriters.hpp>
+#include <macroni/Dialect/Macroni/MacroniOps.hpp>
+#include <mlir/IR/BuiltinTypes.h>
+#include <mlir/IR/Operation.h>
+#include <mlir/IR/Visitors.h>
+#include <mlir/Support/LLVM.h>
+#include <utility>
 
 namespace macroni::kernel {
 
@@ -55,32 +63,17 @@ bool is_smp_mb(macroni::MacroExpansion exp) {
   return has_results_and_n_parameters(exp, 0) && has_name<SMPMB>(exp);
 }
 
-template <typename... Names>
-void fetch_macro_params_helper(macroni::MacroParameter &mp,
-                               mlir::Operation *&op, Names &&...names);
-
-template <typename First, typename... Rest>
-void fetch_macro_params_helper(macroni::MacroParameter &mp,
-                               mlir::Operation *&op, First first,
-                               Rest &&...rest) {
-  if (mp.getParameterName() == first) {
-    op = mp;
-    return;
-  }
-  fetch_macro_params_helper(mp, op, rest...);
-}
-
-template <>
-void fetch_macro_params_helper(macroni::MacroParameter &mp,
-                               mlir::Operation *&op) {}
-
 template <typename... Args>
 std::array<mlir::Operation *, sizeof...(Args)>
 fetch_macro_parameters(mlir::Operation *op, Args &&...args) {
   auto results = std::array<mlir::Operation *, sizeof...(Args)>();
+  auto names = std::array<const char *, sizeof...(Args)>({args...});
   auto walker = [&](macroni::MacroParameter mp) {
-    for (auto &result : results) {
-      fetch_macro_params_helper(mp, result, args...);
+    for (size_t i = 0; i < sizeof...(Args); i++) {
+      llvm::errs() << names[i] << "\n";
+      if (results[i] == nullptr && mp.getParameterName().equals(names[i])) {
+        results[i] = mp.getOperation();
+      }
     }
   };
   op->walk(walker);
@@ -264,9 +257,9 @@ rewrite_rcu_assign_pointer(macroni::MacroExpansion exp,
   }
 
   auto p_clone = rewriter.clone(*p);
-  auto c_clone = rewriter.clone(*p);
+  auto v_clone = rewriter.clone(*v);
   rewriter.replaceOpWithNewOp<RCUAssignPointer>(
-      exp, exp.getType(0), p_clone->getResult(0), c_clone->getResult(0));
+      exp, exp.getType(0), p_clone->getResult(0), v_clone->getResult(0));
   return mlir::success();
 }
 

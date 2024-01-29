@@ -77,8 +77,8 @@ int main(void) {
 // CHECK:          %11 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:          hl.value.yield %11 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:        }
-// CHECK:        %10 = macroni.parameter "pos" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> {
-// CHECK:          %11 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
+// CHECK:        %10 = macroni.parameter "head" : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>> {
+// CHECK:          %11 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:          hl.value.yield %11 : !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>
 // CHECK:        }
 // CHECK:        kernel.list_for_each()(%9, %10) : (!hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>, !hl.lvalue<!hl.ptr<!hl.elaborated<!hl.record<"list_head">>>>) -> () {

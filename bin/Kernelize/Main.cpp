@@ -57,8 +57,7 @@ void check_unannotated_function_for_rcu_invocations(vast::hl::FuncOp &func) {
       return mlir::WalkResult::skip();
     }
     if (auto rcu_op =
-            mlir::dyn_cast<macroni::kernel::RCU_Dereference_Interface>(
-                op)) {
+            mlir::dyn_cast<macroni::kernel::RCU_Dereference_Interface>(op)) {
       emit_warning_rcu_dereference_outside_critical_section(rcu_op);
     }
     return mlir::WalkResult::advance();
@@ -73,8 +72,7 @@ create_walker_until_call_with_name_found(llvm::StringRef name) {
       return mlir::WalkResult::interrupt();
     }
     if (auto rcu_op =
-            mlir::dyn_cast<macroni::kernel::RCU_Dereference_Interface>(
-                op)) {
+            mlir::dyn_cast<macroni::kernel::RCU_Dereference_Interface>(op)) {
       emit_warning_rcu_dereference_outside_critical_section(rcu_op);
     }
     return mlir::WalkResult::advance();
