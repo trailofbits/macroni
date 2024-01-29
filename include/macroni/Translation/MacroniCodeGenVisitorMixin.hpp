@@ -4,11 +4,13 @@
 #include <macroni/Dialect/Macroni/MacroniOps.hpp>
 #include <macroni/Translation/MacroniCodeGenContext.hpp>
 #include <macroni/Translation/MacroniMetaGenerator.hpp>
+#include <memory>
 #include <optional>
 #include <pasta/AST/AST.h>
 #include <pasta/AST/Macro.h>
 #include <pasta/Util/File.h>
 #include <set>
+#include <tuple>
 #include <vast/CodeGen/CodeGen.hpp>
 #include <vast/CodeGen/FallBackVisitor.hpp>
 #include <vast/CodeGen/UnreachableVisitor.hpp>
@@ -118,7 +120,9 @@ struct MacroniCodeGenVisitorMixin
 
     // We call `make_stmt_expr_region` here because a macro may not expand to an
     // expression
-    auto [region, return_type] = make_maybe_value_yield_region(stmt);
+    std::unique_ptr<mlir::Region> region;
+    mlir::Type return_type;
+    std::tie(region, return_type) = make_maybe_value_yield_region(stmt);
 
     // Check if the macro is an expansion or a parameter, and return the
     // appropriate operation

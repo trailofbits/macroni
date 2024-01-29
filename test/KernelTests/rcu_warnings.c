@@ -132,24 +132,24 @@ int main(void) {
         return 0;
 }
 
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:44:9: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:45:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:46:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:58:9: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:59:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:60:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:91:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:90:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:89:9: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:77:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:76:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:75:9: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:106:9: warning: Invocation of rcu_dereference() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:107:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:108:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
-// CHECK:/home/bpappas/trail-of-bits/macroni/test/KernelTests/rcu_warnings.c:18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::44:9: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::45:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
+// CHECK::46:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
+// CHECK::18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::58:9: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::59:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
+// CHECK::60:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
+// CHECK::18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::91:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
+// CHECK::90:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
+// CHECK::89:9: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::77:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
+// CHECK::76:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
+// CHECK::75:9: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::106:9: warning: Invocation of rcu_dereference() outside of RCU critical section
+// CHECK::107:9: warning: Invocation of rcu_dereference_bh() outside of RCU critical section
+// CHECK::108:9: warning: Invocation of rcu_dereference_sched() outside of RCU critical section
+// CHECK::18:19: warning: Invocation of rcu_dereference() outside of RCU critical section
 
