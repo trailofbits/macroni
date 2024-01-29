@@ -30,19 +30,19 @@ int main(void) {
 // CHECK:    core.scope {
 // CHECK:      %0 = hl.var "rcu_ptr" : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      %1 = hl.var "ptr" : !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:      %2 = macroni.parameter "ptr" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %7 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:      %2 = macroni.parameter "rcu_ptr" : !hl.lvalue<!hl.ptr<!hl.int>> {
+// CHECK:        %7 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:        hl.value.yield %7 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
 // CHECK:      %3 = macroni.parameter "ptr" : !hl.lvalue<!hl.ptr<!hl.int>> {
 // CHECK:        %7 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:        hl.value.yield %7 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
-// CHECK:      %4 = macroni.parameter "ptr" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %7 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:        hl.value.yield %7 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:      %4 = macroni.parameter "c" : !hl.int {
+// CHECK:        %7 = hl.const #core.integer<1> : !hl.int
+// CHECK:        hl.value.yield %7 : !hl.int
 // CHECK:      }
-// CHECK:      %5 = kernel.rcu_replace_pointer(%2, %3, %4) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
+// CHECK:      %5 = kernel.rcu_replace_pointer(%2, %3, %4) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>, !hl.int) -> !hl.int
 // CHECK:      %6 = hl.const #core.integer<0> : !hl.int
 // CHECK:      hl.return %6 : !hl.int
 // CHECK:    }

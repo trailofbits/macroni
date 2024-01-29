@@ -70,45 +70,42 @@ int main(void) {
 // CHECK:        %25 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:        hl.value.yield %25 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
-// CHECK:      %11 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %25 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:        hl.value.yield %25 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:      %11 = macroni.parameter "c" : !hl.int {
+// CHECK:        %25 = hl.const #core.integer<1> : !hl.int
+// CHECK:        hl.value.yield %25 : !hl.int
 // CHECK:      }
-// CHECK:      %12 = kernel.rcu_dereference_check(%10, %11) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
+// CHECK:      %12 = kernel.rcu_dereference_check(%10, %11) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.int) -> !hl.int
 // CHECK:      %13 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
 // CHECK:        %25 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:        hl.value.yield %25 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
-// CHECK:      %14 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %25 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:        hl.value.yield %25 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:      %14 = macroni.parameter "c" : !hl.int {
+// CHECK:        %25 = hl.const #core.integer<1> : !hl.int
+// CHECK:        hl.value.yield %25 : !hl.int
 // CHECK:      }
-// CHECK:      %15 = kernel.rcu_dereference_bh_check(%13, %14) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
+// CHECK:      %15 = kernel.rcu_dereference_bh_check(%13, %14) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.int) -> !hl.int
 // CHECK:      %16 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
 // CHECK:        %25 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:        hl.value.yield %25 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
-// CHECK:      %17 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %25 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:        hl.value.yield %25 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:      %17 = macroni.parameter "c" : !hl.int {
+// CHECK:        %25 = hl.const #core.integer<1> : !hl.int
+// CHECK:        hl.value.yield %25 : !hl.int
 // CHECK:      }
-// CHECK:      %18 = kernel.rcu_dereference_sched_check(%16, %17) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
+// CHECK:      %18 = kernel.rcu_dereference_sched_check(%16, %17) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.int) -> !hl.int
 // CHECK:      %19 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
 // CHECK:        %25 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:        hl.value.yield %25 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
-// CHECK:      %20 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %25 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:        hl.value.yield %25 : !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:      %20 = macroni.parameter "c" : !hl.int {
+// CHECK:        %25 = hl.const #core.integer<1> : !hl.int
+// CHECK:        hl.value.yield %25 : !hl.int
 // CHECK:      }
-// CHECK:      %21 = kernel.rcu_dereference_protected(%19, %20) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.int
+// CHECK:      %21 = kernel.rcu_dereference_protected(%19, %20) : (!hl.lvalue<!hl.ptr<!hl.int>>, !hl.int) -> !hl.int
 // CHECK:      %22 = macroni.expansion "deref(p)" : !hl.lvalue<!hl.int> {
 // CHECK:        %25 = hl.expr : !hl.lvalue<!hl.int> {
 // CHECK:          %26 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:            %28 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:              %29 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:              hl.value.yield %29 : !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:            }
+// CHECK:            %28 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:            hl.value.yield %28 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:          }
 // CHECK:          %27 = kernel.rcu_dereference(%26) : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.int>

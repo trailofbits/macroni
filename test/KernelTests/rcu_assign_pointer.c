@@ -30,8 +30,8 @@ int main(void) {
 // CHECK:    core.scope {
 // CHECK:      %0 = hl.var "p" : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      %1 = hl.var "v" : !hl.lvalue<!hl.ptr<!hl.int>>
-// CHECK:      %2 = macroni.parameter "v" : !hl.lvalue<!hl.ptr<!hl.int>> {
-// CHECK:        %6 = hl.ref %1 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
+// CHECK:      %2 = macroni.parameter "p" : !hl.lvalue<!hl.ptr<!hl.int>> {
+// CHECK:        %6 = hl.ref %0 : (!hl.lvalue<!hl.ptr<!hl.int>>) -> !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:        hl.value.yield %6 : !hl.lvalue<!hl.ptr<!hl.int>>
 // CHECK:      }
 // CHECK:      %3 = macroni.parameter "v" : !hl.lvalue<!hl.ptr<!hl.int>> {
