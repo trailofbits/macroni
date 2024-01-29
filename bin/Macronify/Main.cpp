@@ -23,8 +23,8 @@ int main(int argc, char **argv) {
 
   // Register the MLIR dialects we will be lowering to
   mlir::DialectRegistry registry;
-  registry
-      .insert<vast::hl::HighLevelDialect, macroni::macroni::MacroniDialect>();
+  registry.insert<vast::hl::HighLevelDialect, vast::unsup::UnsupportedDialect,
+                  macroni::macroni::MacroniDialect>();
   auto mctx = mlir::MLIRContext(registry);
 
   // Generate the MLIR
