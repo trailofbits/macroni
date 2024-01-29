@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
 #include <pasta/AST/Macro.h>
 
@@ -6,6 +7,7 @@ std::optional<pasta::MacroSubstitution>
 lowest_unvisited_substitution(pasta::Stmt &stmt,
                               std::set<pasta::MacroSubstitution> &visited) {
   auto subs = stmt.AlignedSubstitutions();
+  std::reverse(subs.begin(), subs.end());
   for (auto sub : subs) {
     // Don't visit macros more than once
     if (visited.contains(sub)) {
