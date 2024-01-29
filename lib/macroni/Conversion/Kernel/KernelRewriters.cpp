@@ -70,7 +70,6 @@ fetch_macro_parameters(mlir::Operation *op, Args &&...args) {
   auto names = std::array<const char *, sizeof...(Args)>({args...});
   auto walker = [&](macroni::MacroParameter mp) {
     for (size_t i = 0; i < sizeof...(Args); i++) {
-      llvm::errs() << names[i] << "\n";
       if (results[i] == nullptr && mp.getParameterName().equals(names[i])) {
         results[i] = mp.getOperation();
       }
