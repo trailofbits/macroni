@@ -6,55 +6,106 @@ Macroni is an MLIR dialect that adds macro expansions to VAST's tower of IRS.
 
 - [Macroni](#macroni)
   - [Table of Contents](#table-of-contents)
-  - [Requirements](#requirements)
   - [Setting up](#setting-up)
   - [Running Macroni](#running-macroni)
   - [Testing](#testing)
   - [License](#license)
 
-## Requirements
-
-- [Clang 17 and LLVM 17](https://apt.llvm.org/). If on Debian/Ubuntu:
-
-  ```
-  wget https://apt.llvm.org/llvm.sh
-  chmod +x llvm.sh
-  sudo ./llvm.sh 17
-  sudo apt install libclang-17-dev libmlir-17-dev mlir-17-tools
-  ```
-
-- [`gap`](https://github.com/lifting-bits/gap)
-- [`PASTA`](https://github.com/trailofbits/pasta/)
-- [`VAST`](https://github.com/trailofbits/vast)
-  - Macroni currently uses [this
-    fork](https://github.com/trailofbits/vast/tree/mx_codegen) of VAST, so we
-    recommend you install this one to run Macroni.
-
-We also recommend installing [`ccache`](https://ccache.dev/) to improve build times.
-
 ## Setting up
 
-Clone Macroni:
+The following instructions assume an Ubuntu 22.04.4 LTS x86_64 operating system:
 
-```bash
-git clone https://github.com/trailofbits/macroni.git
-```
+- Download and build `gap`:
 
-We offer a `CMakePresets.json` file to ease configuration and building. This
-file relies on a number of environment variables (e.g,
-`$env{MACRONI_Clang_DIR}`), so to use this presets file you must define these
-environment variables first. Once you have done that you can configure Macroni
-with:
+  ```bash
+  git clone https://github.com/lifting-bits/gap.git gap/
+  cd gap/ && git checkout ad8fefaf7235a9cd6670e272ca4487807ed81f8a && cd ../
+  mkdir -p build/gap/Debug/
+  cmake -S gap/ -B build/gap/Debug/ -G "Ninja Multi-Config" \
+    -DCMAKE_CONFIGURATION_TYPES="Debug" \
+    -DCMAKE_INSTALL_PREFIX="`realpath -s .`" \
+    -DGAP_ENABLE_EXAMPLES="FALSE" \
+    -DGAP_ENABLE_TESTING="FALSE" \
+    -DGAP_ENABLE_VCPKG="FALSE" \
+    -DGAP_WARNINGS_AS_ERRORS="FALSE"
+  cmake --build build/gap/Debug/ --config Debug --target install
+  ```
 
-```bash
-cmake --preset macroni-ninja-multiconfig
-```
+- Download a patched version of LLVM/Clang:
 
-Build and install Macroni:
+  ```bash
+  wget -O llvm-pasta-beeda8d.tar.xz https://github.com/trail-of-forks/llvm-project/releases/download/beeda8d/llvm-pasta-beeda8d.tar.xz
+  mkdir -p llvm-pasta-beeda8d
+  tar -xvf llvm-pasta-beeda8d.tar.xz --directory llvm-pasta-beeda8d
+  ```
 
-```bash
-cmake --build --preset macroni-ninja-multiconfig -t install
-```
+- Download and build `PASTA`:
+
+  ```bash
+  git clone https://github.com/trailofbits/pasta.git pasta/
+  cd pasta/ && git checkout c84abe593f1d1640859a548ba84f5863523a90ce && cd ../
+  mkdir -p build/pasta/Release/
+  cmake -S pasta/ -B build/pasta/Release/ -G "Ninja" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="`realpath -s .`" \
+    -DPASTA_USE_VENDORED_CLANG=OFF \
+    -DClang_DIR="`realpath -s ./llvm-pasta-beeda8d/lib/cmake/clang`" \
+    -DLLVM_DIR="`realpath -s ./llvm-pasta-beeda8d/lib/cmake/llvm`" \
+    -DCMAKE_C_COMPILER="`realpath -s ./llvm-pasta-beeda8d/bin/clang`" \
+    -DCMAKE_CXX_COMPILER="`realpath -s ./llvm-pasta-beeda8d/bin/clang++`" \
+    -DPASTA_BOOTSTRAP_MACROS=OFF \
+    -DPASTA_BOOTSTRAP_TYPES=OFF \
+    -DPASTA_ENABLE_TESTING=OFF \
+    -DPASTA_ENABLE_PY_BINDINGS=OFF \
+    -DPASTA_ENABLE_INSTALL=ON
+  cmake --build build/pasta/Release/ --config Release --target install -j4
+  ```
+
+- Download and build `VAST`:
+
+  ```bash
+  git clone --depth=1 https://github.com/PappasBrent/vast.git vast/
+  mkdir -p build/vast/Debug/
+  cmake -S vast/ -B build/vast/Debug/ -G "Ninja Multi-Config" \
+    -DCMAKE_INSTALL_PREFIX=. \
+    -DCMAKE_CONFIGURATION_TYPES="Debug" \
+    -DCMAKE_C_COMPILER="`realpath -s ./llvm-pasta-beeda8d/bin/clang`" \
+    -DCMAKE_CXX_COMPILER="`realpath -s ./llvm-pasta-beeda8d/bin/clang++`" \
+    -DLLVM_DIR="`realpath -s ./llvm-pasta-beeda8d/lib/cmake/llvm`" \
+    -DClang_DIR="`realpath -s ./llvm-pasta-beeda8d/lib/cmake/clang`" \
+    -DMLIR_DIR="`realpath -s ./llvm-pasta-beeda8d/lib/cmake/mlir`" \
+    -Dgap_DIR="`realpath -s ./lib/cmake/gap`" \
+    -DLLVM_USE_LINKER="mold" \
+    -DLLVM_ENABLE_RTTI=ON \
+    -DVAST_ENABLE_GAP_SUBMODULE=OFF \
+    -DVAST_WARNINGS_AS_ERRORS=OFF \
+    -DVAST_ENABLE_TESTING=OFF
+    cmake --build build/vast/Debug/ --config Debug --target install -j4
+  ```
+
+- And finally download and build macroni:
+
+  ```bash
+  git clone https://github.com/trailofbits/macroni macroni/
+  cmake -S macroni/ -B build/macroni/Debug/ -G "Ninja Multi-Config" \
+    -DCMAKE_INSTALL_PREFIX=build/macroni/Debug/ \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=true \
+    -DCMAKE_BUILD_TYPE="Debug" \
+    -DCMAKE_C_COMPILER="`realpath -s ./llvm-pasta-beeda8d/bin/clang`" \
+    -DCMAKE_CXX_COMPILER="`realpath -s ./llvm-pasta-beeda8d/bin/clang++`" \
+    -DLLVM_DIR="`realpath -s ./llvm-pasta-beeda8d/lib/cmake/llvm`" \
+    -DClang_DIR="`realpath -s ./llvm-pasta-beeda8d/lib/cmake/clang`" \
+    -DMLIR_DIR="`realpath -s ./llvm-pasta-beeda8d/lib/cmake/mlir`" \
+    -DLLVM_ENABLE_RTTI=true \
+    -DMACRONI_WARNINGS_AS_ERRORS=false \
+    -DMACRONI_USE_VENDORED_GAP=false \
+    -DMACRONI_USE_VENDORED_PASTA=false \
+    -DMACRONI_USE_VENDORED_VAST=false \
+    -Dgap_DIR="`realpath -s ./lib/cmake/gap/`" \
+    -Dpasta_DIR="`realpath -s ./lib/cmake/pasta/`" \
+    -DVAST_DIR="`realpath -s ./lib/cmake/VAST/`"
+  cmake --build build/macroni/Debug/ --config Debug --target kernelize -j4
+  ```
 
 ## Running Macroni
 
