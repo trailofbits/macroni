@@ -325,9 +325,11 @@ add_subdirectory(bin)
 #
 # macroni tests
 #
-enable_testing()
-add_subdirectory(test)
-
+option(MACRONI_ENABLE_TESTING "Enable Macroni's test suite." OFF)
+if (MACRONI_ENABLE_TESTING)
+  enable_testing()
+  add_subdirectory(test)
+endif()
 #
 # Install settings
 #
