@@ -262,27 +262,6 @@ endif()
 
 add_library(macroni::settings ALIAS macroni_settings)
 
-#
-# Add external libraries
-#
-add_subdirectory(external)
-
-if (NOT MACRONI_USE_VENDORED_GAP)
-  find_package(gap CONFIG REQUIRED)
-endif()
-
-if (NOT MACRONI_USE_VENDORED_PASTA)
-  find_package(pasta CONFIG REQUIRED)
-endif()
-
-if (NOT MACRONI_USE_VENDORED_VAST)
-  # TODO(bpp): Allow using vendored VAST without using vendored gap
-  if (MACRONI_USE_VENDORED_GAP)
-    message(FATAL_ERROR "Using non-vendored VAST requires using non-vendored gap")
-  endif()
-  find_package(VAST CONFIG REQUIRED)
-endif()
-
 target_link_libraries(macroni_settings
   INTERFACE
     gap::gap
@@ -290,15 +269,18 @@ target_link_libraries(macroni_settings
     VAST::vast_settings
 )
 
+find_package(gap CONFIG REQUIRED)
 get_target_property(GAP_CORE_INCLUDE_DIR
   gap::gap-core INTERFACE_INCLUDE_DIRECTORIES)
 
 get_target_property(GAP_SETTINGS_INCLUDE_DIR
-gap::gap-settings INTERFACE_INCLUDE_DIRECTORIES)
+  gap::gap-settings INTERFACE_INCLUDE_DIRECTORIES)
 
+find_package(VAST CONFIG REQUIRED)
 get_target_property(VAST_SETTINGS_INCLUDE_DIR
   VAST::vast_settings INTERFACE_INCLUDE_DIRECTORIES)
 
+find_package(pasta CONFIG REQUIRED)
 get_target_property(PASTA_CXX_SETTINGS_INCLUDE_DIR
   pasta::pasta_cxx_settings INTERFACE_INCLUDE_DIRECTORIES)
 
@@ -325,9 +307,11 @@ add_subdirectory(bin)
 #
 # macroni tests
 #
-enable_testing()
-add_subdirectory(test)
-
+option(MACRONI_ENABLE_TESTING "Enable Macroni's test suite." OFF)
+if (MACRONI_ENABLE_TESTING)
+  enable_testing()
+  add_subdirectory(test)
+endif()
 #
 # Install settings
 #
