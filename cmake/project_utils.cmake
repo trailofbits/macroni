@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.29)
 
-function(FindAndSelectClangCompiler)
+function(find_and_select_clang_compiler)
 
   # Append to CMake message context. We don't need to pop this change since
   # local changes will be undone at the end of the function call anyway.

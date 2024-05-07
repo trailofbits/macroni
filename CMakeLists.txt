@@ -65,7 +65,7 @@ if (CCACHE_PROGRAM)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
-FindAndSelectClangCompiler()
+find_and_select_clang_compiler()
 
 #
 # LLVM & MLIR & Clang
