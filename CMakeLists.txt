@@ -19,7 +19,7 @@ set(BUG_REPORT_URL "https://github.com/trailofbits/macroni/issues" CACHE STRING 
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# include(prevent_in_source_builds)
+include(prevent_in_source_builds)
 
 # Check if macroni is being used directly or via add_subdirectory, but allow
 # overriding
