@@ -29,9 +29,7 @@ message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 # Generate a compile commands JSON file for LSP support (e.g., clangd).
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-#
-# compiler and linker flags
-#
+# Toggle interprocedural optimization
 option(ENABLE_IPO
   "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" OFF
 )
