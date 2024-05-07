@@ -80,6 +80,8 @@ function(find_and_select_clang_compiler)
 endfunction()
 
 macro(setup_package_version_variables _packageName)
+  # TODO(Brent): Refactor this macro into a function with arguments and out
+  # variables.
   list(APPEND CMAKE_MESSAGE_CONTEXT "projectUtils.setupPackageVersionVariables")
 
   if(DEFINED ${_packageName}_VERSION)
