@@ -60,6 +60,7 @@ function(find_and_select_clang_compiler)
 endfunction()
 
 macro (setup_package_version_variables _packageName)
+    list(APPEND CMAKE_MESSAGE_CONTEXT "projectUtils.setupPackageVersionVariables")
 
     if (DEFINED ${_packageName}_VERSION)
         string (REGEX MATCHALL "[0-9]+" _versionComponents "${${_packageName}_VERSION}")
@@ -81,4 +82,6 @@ macro (setup_package_version_variables _packageName)
         set (${_packageName}_VERSION_COUNT 0)
         set (${_packageName}_VERSION "")
     endif()
+
+    list(POP_BACK CMAKE_MESSAGE_CONTEXT)
 endmacro()
