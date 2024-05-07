@@ -4,7 +4,7 @@ function(find_and_select_clang_compiler)
 
   # Append to CMake message context. We don't need to pop this change since
   # local changes will be undone at the end of the function call anyway.
-  list(APPEND CMAKE_MESSAGE_CONTEXT "projectUtils")
+  list(APPEND CMAKE_MESSAGE_CONTEXT "projectUtils.findAndSelectClangCompiler")
 
   if(DEFINED ENV{LLVM_INSTALL_PREFIX})
     set(LLVM_INSTALL_PREFIX $ENV{LLVM_INSTALL_PREFIX} PARENT_SCOPE)
