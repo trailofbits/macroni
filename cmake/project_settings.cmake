@@ -3,6 +3,9 @@
 
 include_guard(GLOBAL)
 
+# Append to message context here and pop changes at the end of this file.
+list(APPEND CMAKE_MESSAGE_CONTEXT "projectSettings")
+
 # default build type
 if(WIN32)
   set(CMAKE_BUILD_TYPE Release)
