@@ -33,6 +33,7 @@ include(project_utils)
 #
 # Setup package version
 #
+set(macroni_VERSION "${PROJECT_VERSION}")
 setup_package_version_variables(macroni)
 
 set(MACRONI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
