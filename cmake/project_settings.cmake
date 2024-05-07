@@ -61,3 +61,6 @@ elseif(WIN32)
 else()
   message("This platform is not officially supported")
 endif()
+
+# Pop message log context changes.
+list(POP_BACK CMAKE_MESSAGE_CONTEXT)
