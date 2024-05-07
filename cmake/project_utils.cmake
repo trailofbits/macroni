@@ -20,8 +20,8 @@ function(FindAndSelectClangCompiler)
 
   set(executable_extension "$<$<BOOL:${WIN32}>:.exe>")
 
-  # it is important to avoid re-defining these variables if they have been already
-  # set or you risk ending up in a configure loop!
+  # Define compilers and linkers if not already defined. We must be careful not
+  # to redefine this variables since doing so may create an infinite loop.
   if(NOT DEFINED CMAKE_C_COMPILER)
     if(DEFINED LLVM_INSTALL_PREFIX)
       set(CMAKE_C_COMPILER "${LLVM_INSTALL_PREFIX}/bin/clang${executable_extension}"
