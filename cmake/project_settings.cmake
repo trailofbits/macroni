@@ -31,8 +31,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Toggle interprocedural optimization
 option(ENABLE_IPO
-  "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)" OFF
-)
+       "Enable Interprocedural Optimization, aka Link Time Optimization (LTO)"
+       OFF)
 
 if(ENABLE_IPO)
   include(CheckIPOSupported)
@@ -61,4 +61,3 @@ elseif(WIN32)
 else()
   message("This platform is not officially supported")
 endif()
-
