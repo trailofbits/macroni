@@ -24,11 +24,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # Check if macroni is being used directly or via add_subdirectory, but allow
 # overriding
 if(NOT DEFINED MACRONI_MASTER_PROJECT)
-    if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-        set(MACRONI_MASTER_PROJECT ON)
-    else()
-        set(MACRONI_MASTER_PROJECT OFF)
-    endif()
+  set(MACRONI_MASTER_PROJECT "$<STREQUAL:${CMAKE_CURRENT_SOURCE_DIR},${CMAKE_SOURCE_DIR}>")
 endif()
 
 include(project_settings)
