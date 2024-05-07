@@ -13,11 +13,7 @@ function(FindAndSelectClangCompiler)
     message(STATUS "Using LLVM_INSTALL_PREFIX hints for find_package(LLVM): ${FINDPACKAGE_LLVM_HINTS}")
   endif()
 
-  if(DEFINED WIN32)
-    set(executable_extension ".exe")
-  else()
-    set(executable_extension "")
-  endif()
+  set(executable_extension "$<$<BOOL:${WIN32}>:.exe>")
 
   # it is important to avoid re-defining these variables if they have been already
   # set or you risk ending up in a configure loop!
