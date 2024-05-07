@@ -6,20 +6,15 @@ include_guard(GLOBAL)
 # Append to message context here and pop changes at the end of this file.
 list(APPEND CMAKE_MESSAGE_CONTEXT "projectSettings")
 
-# default build type
-if(WIN32)
-  set(CMAKE_BUILD_TYPE Release)
-else()
-  # Set a default build type if none was specified
-  if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message( STATUS "Setting build type to 'RelWithDebInfo' as none was specified." )
-    set(CMAKE_BUILD_TYPE
-        RelWithDebInfo
-        CACHE STRING "Choose the type of build." FORCE)
-    # Set the possible values of build type for cmake-gui, ccmake
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-                "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-  endif()
+# Set a default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message( STATUS "Setting build type to 'RelWithDebInfo' as none was specified." )
+  set(CMAKE_BUILD_TYPE
+      RelWithDebInfo
+      CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui, ccmake
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+              "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
