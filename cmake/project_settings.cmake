@@ -6,15 +6,22 @@ include_guard(GLOBAL)
 # Append to message context here and pop changes at the end of this file.
 list(APPEND CMAKE_MESSAGE_CONTEXT "projectSettings")
 
-# Set a default build type if none was specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message( STATUS "Setting build type to 'RelWithDebInfo' as none was specified." )
+# If macroni is the root project and we are using a single-configuration
+# generator, but no configuration was specified, switch to a default
+# configuration.
+set(MACRONI_DEFAULT_CONFIG Debug)
+if(MACRONI_MASTER_PROJECT
+   AND NOT CMAKE_BUILD_TYPE
+   AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "No configuration specified.")
+  message(STATUS "Defaulting to '${MACRONI_DEFAULT_CONFIG}'")
   set(CMAKE_BUILD_TYPE
-      RelWithDebInfo
+      ${MACRONI_DEFAULT_CONFIG}
       CACHE STRING "Choose the type of build." FORCE)
-  # Set the possible values of build type for cmake-gui, ccmake
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-              "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+
+  # Set the possible values of build type for cmake-gui and ccmake
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+                                               "MinSizeRel" "RelWithDebInfo")
 endif()
 
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
