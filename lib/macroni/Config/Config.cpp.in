@@ -8,5 +8,7 @@ unsigned macroni_version_patch = @macroni_VERSION_PATCH@+0;
 unsigned macroni_version_tweak = @macroni_VERSION_TWEAK@+0;
 
 const char *macroni_git_hash = "@macroni_GIT_HASH@";
+unsigned macroni_commits_since_last_version_change = @macroni_COMMITS_SINCE_LAST_VERSION_CHANGE@;
+
 const char *bug_report_url = "@BUG_REPORT_URL@";
 } // namespace macroni

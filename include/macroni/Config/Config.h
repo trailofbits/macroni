@@ -18,5 +18,7 @@ extern unsigned macroni_version_patch;
 extern unsigned macroni_version_tweak;
 
 extern const char *macroni_git_hash;
+extern unsigned macroni_commits_since_last_version_change;
+
 extern const char *bug_report_url;
 } // namespace macroni
