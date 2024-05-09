@@ -1,6 +1,7 @@
 # Counts the number of commits made since the last change to the project
 # version. Requires that Git already be loaded and the file
-# cmake/project_version_details.cmake exists
+# cmake/project_version_details.cmake exists. Based on code taken from page 284
+# of Professional CMake: A Practical Guide, 18th Edition, by Craig Scott.
 
 function(count_commits_since_last_version_change function_output_variable)
 
