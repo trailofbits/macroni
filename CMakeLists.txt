@@ -30,12 +30,6 @@ endif()
 include(project_settings)
 include(project_utils)
 
-#
-# Setup package version
-#
-set(macroni_VERSION "${PROJECT_VERSION}")
-setup_package_version_variables(macroni)
-
 set(MACRONI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MACRONI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(MACRONI_INCLUDE_DIR ${MACRONI_BINARY_DIR}/include)
