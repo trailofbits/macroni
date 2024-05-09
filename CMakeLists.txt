@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.29)
 
 project(macroni
     LANGUAGES C CXX
-    VERSION 0.0.0
+    VERSION 0.0.0.0
     DESCRIPTION "Intermediate representation of macros for program analysis"
     HOMEPAGE_URL "https://github.com/trailofbits/macroni.git"
 )
