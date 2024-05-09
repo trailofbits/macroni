@@ -8,16 +8,17 @@
 
 cmake_minimum_required(VERSION 3.29)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(project_version_details)
+
 project(macroni
     LANGUAGES C CXX
-    VERSION 0.0.0.0
+    VERSION ${macroni_PROJECT_VERSION_INTERNAL}
     DESCRIPTION "Intermediate representation of macros for program analysis"
     HOMEPAGE_URL "https://github.com/trailofbits/macroni.git"
 )
 
 set(BUG_REPORT_URL "https://github.com/trailofbits/macroni/issues" CACHE STRING "")
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(prevent_in_source_builds)
 
@@ -41,6 +42,8 @@ set(MACRONI_INCLUDE_DIR ${MACRONI_BINARY_DIR}/include)
 find_package(Git REQUIRED)
 include(get_git_hash)
 get_git_hash(macroni_GIT_HASH)
+include(count_commits_since_last_version_change)
+count_commits_since_last_version_change(macroni_COMMITS_SINCE_LAST_VERSION_CHANGE)
 
 #
 # Clang
