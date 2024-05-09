@@ -35,6 +35,14 @@ set(MACRONI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(MACRONI_INCLUDE_DIR ${MACRONI_BINARY_DIR}/include)
 
 #
+# Git
+#
+
+find_package(Git REQUIRED)
+include(get_git_hash)
+get_git_hash(macroni_GIT_HASH)
+
+#
 # Clang
 #
 find_package(Clang REQUIRED CONFIG)
