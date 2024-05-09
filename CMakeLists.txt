@@ -41,11 +41,6 @@ find_package(Clang REQUIRED CONFIG)
 
 set(CLANG_RESOURCE_DIR  ${LLVM_LIBRARY_DIR}/clang/${LLVM_VERSION_MAJOR})
 
-configure_file(
-  ${MACRONI_SOURCE_DIR}/include/macroni/Config/config.h.cmake
-  ${MACRONI_BINARY_DIR}/include/macroni/Config/config.h
-)
-
 #
 # CCACHE
 #
