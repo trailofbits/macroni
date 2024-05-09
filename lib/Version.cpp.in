@@ -1,0 +1,7 @@
+#include <macroni/Version.h>
+
+const char *macroni_version = "@macroni_VERSION@";
+unsigned macroni_version_major = @macroni_VERSION_MAJOR@ + 0;
+unsigned macroni_version_minor = @macroni_VERSION_MINOR@ + 0;
+unsigned macroni_version_patch = @macroni_VERSION_PATCH@ + 0;
+unsigned macroni_version_tweak = @macroni_VERSION_TWEAK@ + 0;

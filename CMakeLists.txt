@@ -34,12 +34,6 @@ set(MACRONI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MACRONI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(MACRONI_INCLUDE_DIR ${MACRONI_BINARY_DIR}/include)
 
-# Configure macroni Version.inc file.
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/macroni/Version.inc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/include/macroni/Version.inc
-)
-
 #
 # Clang
 #
