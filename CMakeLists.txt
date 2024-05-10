@@ -60,7 +60,7 @@ if (CCACHE)
 endif()
 
 #
-# LLVM & MLIR & Clang
+# LLVM
 #
 find_package(LLVM 17 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
