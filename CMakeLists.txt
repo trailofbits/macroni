@@ -45,19 +45,19 @@ include(count_commits_since_last_version_change)
 count_commits_since_last_version_change(macroni_COMMITS_SINCE_LAST_VERSION_CHANGE)
 
 #
-# Find Clang
-#
-find_package(Clang REQUIRED CONFIG)
-find_and_select_clang_compiler()
-message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
-
-#
 # Find CCACHE
 #
 find_program(CCACHE ccache)
 if (CCACHE)
   set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE}")
 endif()
+
+#
+# Find Clang
+#
+find_package(Clang REQUIRED CONFIG)
+find_and_select_clang_compiler()
+message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
 
 #
 # Find LLVM
