@@ -72,6 +72,7 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 #
 find_package(MLIR REQUIRED CONFIG)
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
+include_directories(${MLIR_INCLUDE_DIRS})
 
 #
 # LLVM Libraries
@@ -91,6 +92,7 @@ include(HandleLLVMOptions)
 
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 
+include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 add_definitions(${CLANG_DEFINITIONS})
@@ -273,8 +275,6 @@ get_target_property(VAST_SETTINGS_INCLUDE_DIR
 get_target_property(PASTA_CXX_SETTINGS_INCLUDE_DIR
   pasta::pasta_cxx_settings INTERFACE_INCLUDE_DIRECTORIES)
 
-include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${MLIR_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_BINARY_DIR}/include)
 include_directories(${GAP_CORE_INCLUDE_DIR})
