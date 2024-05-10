@@ -50,6 +50,7 @@ count_commits_since_last_version_change(macroni_COMMITS_SINCE_LAST_VERSION_CHANG
 #
 find_package(Clang REQUIRED CONFIG)
 find_and_select_clang_compiler()
+message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
 
 #
 # CCACHE
