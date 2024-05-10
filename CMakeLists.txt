@@ -49,6 +49,7 @@ count_commits_since_last_version_change(macroni_COMMITS_SINCE_LAST_VERSION_CHANG
 # Clang
 #
 find_package(Clang REQUIRED CONFIG)
+find_and_select_clang_compiler()
 
 #
 # CCACHE
@@ -58,14 +59,13 @@ if (CCACHE)
   set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE}")
 endif()
 
-find_and_select_clang_compiler()
-
 #
 # LLVM & MLIR & Clang
 #
 find_package(LLVM 17 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
 #
 # MLIR
 #
