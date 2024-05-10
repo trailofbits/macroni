@@ -76,9 +76,11 @@ message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 #
 # LLVM Libraries
 #
+# TODO(Brent): Determine why (if?) we need these lines.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/bin)
 set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/lib)
 
+# See https://llvm.org/docs/CMake.html#developing-llvm-passes-out-of-source
 list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
 
