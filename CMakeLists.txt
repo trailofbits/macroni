@@ -53,9 +53,9 @@ find_package(Clang REQUIRED CONFIG)
 #
 # CCACHE
 #
-find_program(CCACHE_PROGRAM ccache)
-if (CCACHE_PROGRAM)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+find_program(CCACHE ccache)
+if (CCACHE)
+  set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE}")
 endif()
 
 find_and_select_clang_compiler()
