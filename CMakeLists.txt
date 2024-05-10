@@ -50,8 +50,6 @@ count_commits_since_last_version_change(macroni_COMMITS_SINCE_LAST_VERSION_CHANG
 #
 find_package(Clang REQUIRED CONFIG)
 
-set(CLANG_RESOURCE_DIR  ${LLVM_LIBRARY_DIR}/clang/${LLVM_VERSION_MAJOR})
-
 #
 # CCACHE
 #
