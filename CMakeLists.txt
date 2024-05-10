@@ -36,9 +36,8 @@ set(MACRONI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(MACRONI_INCLUDE_DIR ${MACRONI_BINARY_DIR}/include)
 
 #
-# Git
+# Find Git
 #
-
 find_package(Git REQUIRED)
 include(get_git_hash)
 get_git_hash(macroni_GIT_HASH)
@@ -46,14 +45,14 @@ include(count_commits_since_last_version_change)
 count_commits_since_last_version_change(macroni_COMMITS_SINCE_LAST_VERSION_CHANGE)
 
 #
-# Clang
+# Find Clang
 #
 find_package(Clang REQUIRED CONFIG)
 find_and_select_clang_compiler()
 message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
 
 #
-# CCACHE
+# Find CCACHE
 #
 find_program(CCACHE ccache)
 if (CCACHE)
@@ -61,21 +60,21 @@ if (CCACHE)
 endif()
 
 #
-# LLVM
+# Find LLVM
 #
 find_package(LLVM 17 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 #
-# MLIR
+# Find MLIR
 #
 find_package(MLIR REQUIRED CONFIG)
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
 include_directories(${MLIR_INCLUDE_DIRS})
 
 #
-# LLVM Libraries
+# Find LLVM, MLIR, and Clang libraries
 #
 # TODO(Brent): Determine why (if?) we need these lines.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/bin)
