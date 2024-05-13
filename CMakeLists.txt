@@ -158,7 +158,7 @@ define_property(GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
 add_library(macroni_settings INTERFACE)
 
 include(compiler_warnings)
-set_project_warnings(macroni_settings)
+set_target_compiler_warnings(macroni_settings)
 
 target_include_directories(macroni_settings INTERFACE
   $<BUILD_INTERFACE:${MACRONI_SOURCE_DIR}/include>
