@@ -238,8 +238,6 @@ get_target_property(VAST_SETTINGS_INCLUDE_DIR
 get_target_property(PASTA_CXX_SETTINGS_INCLUDE_DIR
   pasta::pasta_cxx_settings INTERFACE_INCLUDE_DIRECTORIES)
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(${PROJECT_BINARY_DIR}/include)
 include_directories(${GAP_CORE_INCLUDE_DIR})
 include_directories(${GAP_SETTINGS_INCLUDE_DIR})
 include_directories(${PASTA_CXX_SETTINGS_INCLUDE_DIR})
