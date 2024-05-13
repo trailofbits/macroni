@@ -157,7 +157,7 @@ define_property(GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
 
 add_library(macroni_settings INTERFACE)
 
-include(cmake/compiler_warnings.cmake)
+include(compiler_warnings)
 set_project_warnings(macroni_settings)
 
 target_include_directories(macroni_settings INTERFACE
