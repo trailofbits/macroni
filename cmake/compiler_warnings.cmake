@@ -1,5 +1,4 @@
 function(set_project_warnings project_name)
-  option(MACRONI_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" TRUE)
 
   set(CLANG_WARNINGS
       -Wall
@@ -25,6 +24,7 @@ function(set_project_warnings project_name)
       -Wno-gnu-zero-variadic-macro-arguments
   )
 
+  option(MACRONI_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" TRUE)
   if (MACRONI_WARNINGS_AS_ERRORS)
     set(CLANG_WARNINGS ${CLANG_WARNINGS} -Werror)
   endif()
