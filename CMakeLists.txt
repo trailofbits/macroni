@@ -49,6 +49,7 @@ count_commits_since_last_version_change(macroni_COMMITS_SINCE_LAST_VERSION_CHANG
 #
 find_program(CCACHE ccache)
 if (CCACHE)
+  set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE}")
   set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE}")
 endif()
 
