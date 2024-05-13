@@ -185,7 +185,7 @@ include(sanitizers)
 enable_sanitizers(macroni_settings)
 
 # allow for static analysis options
-include(cmake/static_analyzers.cmake)
+include(static_analyzers)
 
 option(ENABLE_PDLL_CONVERSIONS "Enable PDLL conversions" OFF)
 if (ENABLE_PDLL_CONVERSIONS)
