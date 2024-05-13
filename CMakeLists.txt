@@ -150,14 +150,8 @@ endif()
 # macroni build settings
 #
 
-add_custom_target(macroni-generic-headers)
-set_target_properties(macroni-generic-headers PROPERTIES FOLDER "Misc")
 add_custom_target(macroni-headers)
 set_target_properties(macroni-headers PROPERTIES FOLDER "Misc")
-add_dependencies(macroni-headers macroni-generic-headers)
-add_custom_target(macroni-tools)
-set_target_properties(macroni-tools PROPERTIES FOLDER "Misc")
-add_custom_target(macroni-doc)
 
 define_property(GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
 
