@@ -19,23 +19,22 @@ function(set_project_warnings project_name)
       -Wformat=2 # warn on security issues around functions that format output
                  # (ie printf)
       -Wno-unreachable-code-return
-      -Wno-gnu-zero-variadic-macro-arguments
-  )
+      -Wno-gnu-zero-variadic-macro-arguments)
 
   option(MACRONI_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" TRUE)
-  if (MACRONI_WARNINGS_AS_ERRORS)
+  if(MACRONI_WARNINGS_AS_ERRORS)
     set(CLANG_WARNINGS ${CLANG_WARNINGS} -Werror)
   endif()
 
   set(GCC_WARNINGS
-    ${CLANG_WARNINGS}
-    -Wmisleading-indentation # warn if indentation implies blocks where blocks
-                             # do not exist
-    -Wduplicated-cond # warn if if / else chain has duplicated conditions
-    -Wduplicated-branches # warn if if / else branches have duplicated code
-    -Wlogical-op # warn about logical operations being used where bitwise were
-                 # probably wanted
-    -Wuseless-cast # warn if you perform a cast to the same type
+      ${CLANG_WARNINGS}
+      -Wmisleading-indentation # warn if indentation implies blocks where blocks
+                               # do not exist
+      -Wduplicated-cond # warn if if / else chain has duplicated conditions
+      -Wduplicated-branches # warn if if / else branches have duplicated code
+      -Wlogical-op # warn about logical operations being used where bitwise were
+                   # probably wanted
+      -Wuseless-cast # warn if you perform a cast to the same type
   )
 
   if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
@@ -43,7 +42,9 @@ function(set_project_warnings project_name)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(PROJECT_WARNINGS ${GCC_WARNINGS})
   else()
-    message(AUTHOR_WARNING "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler.")
+    message(
+      AUTHOR_WARNING
+        "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler.")
   endif()
 
   target_compile_options(${project_name} INTERFACE ${PROJECT_WARNINGS})
