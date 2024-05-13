@@ -1,9 +1,8 @@
 #
-# Copyright (c) 2023-present, Trail of Bits, Inc.
-# All rights reserved.
+# Copyright (c) 2023-present, Trail of Bits, Inc. All rights reserved.
 #
-# This source code is licensed in accordance with the terms specified in
-# the LICENSE file found in the root directory of this source tree.
+# This source code is licensed in accordance with the terms specified in the
+# LICENSE file found in the root directory of this source tree.
 #
 
 cmake_minimum_required(VERSION 3.29)
@@ -11,21 +10,24 @@ cmake_minimum_required(VERSION 3.29)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(project_version_details)
 
-project(macroni
-    LANGUAGES C CXX
-    VERSION ${macroni_PROJECT_VERSION_INTERNAL}
-    DESCRIPTION "Intermediate representation of macros for program analysis"
-    HOMEPAGE_URL "https://github.com/trailofbits/macroni.git"
-)
+project(
+  macroni
+  LANGUAGES C CXX
+  VERSION ${macroni_PROJECT_VERSION_INTERNAL}
+  DESCRIPTION "Intermediate representation of macros for program analysis"
+  HOMEPAGE_URL "https://github.com/trailofbits/macroni.git")
 
-set(BUG_REPORT_URL "https://github.com/trailofbits/macroni/issues" CACHE STRING "")
+set(BUG_REPORT_URL
+    "https://github.com/trailofbits/macroni/issues"
+    CACHE STRING "")
 
 include(prevent_in_source_builds)
 
 # Check if macroni is being used directly or via add_subdirectory, but allow
 # overriding
 if(NOT DEFINED MACRONI_MASTER_PROJECT)
-  set(MACRONI_MASTER_PROJECT "$<STREQUAL:${CMAKE_CURRENT_SOURCE_DIR},${CMAKE_SOURCE_DIR}>")
+  set(MACRONI_MASTER_PROJECT
+      "$<STREQUAL:${CMAKE_CURRENT_SOURCE_DIR},${CMAKE_SOURCE_DIR}>")
 endif()
 
 include(project_settings)
@@ -42,13 +44,14 @@ find_package(Git REQUIRED)
 include(get_git_hash)
 get_git_hash(macroni_GIT_HASH)
 include(count_commits_since_last_version_change)
-count_commits_since_last_version_change(macroni_COMMITS_SINCE_LAST_VERSION_CHANGE)
+count_commits_since_last_version_change(
+  macroni_COMMITS_SINCE_LAST_VERSION_CHANGE)
 
 #
 # Find CCACHE
 #
 find_program(CCACHE ccache)
-if (CCACHE)
+if(CCACHE)
   set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE}")
   set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE}")
 endif()
@@ -97,23 +100,22 @@ link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 add_definitions(${CLANG_DEFINITIONS})
 
-if (LLVM_LINK_LLVM_DYLIB)
-    set(LLVM_LIBS LLVM)
+if(LLVM_LINK_LLVM_DYLIB)
+  set(LLVM_LIBS LLVM)
 else()
-    llvm_map_components_to_libnames(LLVM_LIBS
-      ${LLVM_TARGETS_TO_BUILD} target option
-    )
+  llvm_map_components_to_libnames(LLVM_LIBS ${LLVM_TARGETS_TO_BUILD} target
+                                  option)
 endif()
 
-if (MLIR_LINK_MLIR_DYLIB)
-    set(MLIR_LIBS MLIR)
+if(MLIR_LINK_MLIR_DYLIB)
+  set(MLIR_LIBS MLIR)
 else()
-    get_property(MLIR_DIALECT_LIBS GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-    get_property(MLIR_CONVERSION_LIBS GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
-    get_property(MLIR_EXTENSION_LIBS GLOBAL PROPERTY MLIR_EXTENSION_LIBS)
-    get_property(MLIR_TRANSLATION_LIBS GLOBAL PROPERTY MLIR_TRANSLATION_LIBS)
+  get_property(MLIR_DIALECT_LIBS GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+  get_property(MLIR_CONVERSION_LIBS GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+  get_property(MLIR_EXTENSION_LIBS GLOBAL PROPERTY MLIR_EXTENSION_LIBS)
+  get_property(MLIR_TRANSLATION_LIBS GLOBAL PROPERTY MLIR_TRANSLATION_LIBS)
 
-    set(MLIR_LIBS
+  set(MLIR_LIBS
       MLIRAnalysis
       MLIRDialect
       MLIRExecutionEngine
@@ -123,27 +125,24 @@ else()
       MLIRSupport
       MLIRTransforms
       MLIRTransformUtils
-
       ${MLIR_DIALECT_LIBS}
       ${MLIR_CONVERSION_LIBS}
       ${MLIR_EXTENSION_LIBS}
-      ${MLIR_TRANSLATION_LIBS}
-    )
+      ${MLIR_TRANSLATION_LIBS})
 endif()
 
-if (CLANG_LINK_CLANG_DYLIB)
-    set(CLANG_LIBS clang-cpp)
+if(CLANG_LINK_CLANG_DYLIB)
+  set(CLANG_LIBS clang-cpp)
 else()
-    set(CLANG_LIBS
-        clangAST
-        clangASTMatchers
-        clangBasic
-        clangCodeGen
-        clangDriver
-        clangFrontend
-        clangSerialization
-        clangTooling
-    )
+  set(CLANG_LIBS
+      clangAST
+      clangASTMatchers
+      clangBasic
+      clangCodeGen
+      clangDriver
+      clangFrontend
+      clangSerialization
+      clangTooling)
 endif()
 
 #
@@ -160,24 +159,20 @@ add_library(macroni_settings INTERFACE)
 include(compiler_warnings)
 set_target_compiler_warnings(macroni_settings)
 
-target_include_directories(macroni_settings INTERFACE
-  $<BUILD_INTERFACE:${MACRONI_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${MACRONI_BINARY_DIR}/include>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
+target_include_directories(
+  macroni_settings
+  INTERFACE $<BUILD_INTERFACE:${MACRONI_SOURCE_DIR}/include>
+            $<BUILD_INTERFACE:${MACRONI_BINARY_DIR}/include>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # enable exception on failure
-option(MACRONI_ENABLE_EXCEPTIONS "Enable exception throw on macroni failure" OFF)
-if (MACRONI_ENABLE_EXCEPTIONS)
+option(MACRONI_ENABLE_EXCEPTIONS "Enable exception throw on macroni failure"
+       OFF)
+if(MACRONI_ENABLE_EXCEPTIONS)
   target_compile_definitions(macroni_settings
-    INTERFACE
-      -DMACRONI_ENABLE_EXCEPTIONS
-  )
+                             INTERFACE -DMACRONI_ENABLE_EXCEPTIONS)
 
-  target_compile_options(macroni_settings
-    INTERFACE
-      -fexceptions
-  )
+  target_compile_options(macroni_settings INTERFACE -fexceptions)
 endif()
 
 # sanitizer options if supported by compiler
@@ -188,12 +183,10 @@ enable_sanitizers(macroni_settings)
 include(static_analyzers)
 
 option(ENABLE_PDLL_CONVERSIONS "Enable PDLL conversions" OFF)
-if (ENABLE_PDLL_CONVERSIONS)
+if(ENABLE_PDLL_CONVERSIONS)
   message(STATUS "ENABLE_PDLL_CONVERSIONS")
   target_compile_definitions(macroni_settings
-    INTERFACE
-      -DENABLE_PDLL_CONVERSIONS
-  )
+                             INTERFACE -DENABLE_PDLL_CONVERSIONS)
 endif()
 
 add_library(macroni::settings ALIAS macroni_settings)
@@ -203,43 +196,39 @@ add_library(macroni::settings ALIAS macroni_settings)
 #
 add_subdirectory(external)
 
-if (NOT MACRONI_USE_VENDORED_GAP)
+if(NOT MACRONI_USE_VENDORED_GAP)
   find_package(gap CONFIG REQUIRED)
 endif()
 
-if (NOT MACRONI_USE_VENDORED_PASTA)
+if(NOT MACRONI_USE_VENDORED_PASTA)
   find_package(pasta CONFIG REQUIRED)
 endif()
 
-if (NOT MACRONI_USE_VENDORED_VAST)
+if(NOT MACRONI_USE_VENDORED_VAST)
   # TODO(bpp): Allow using vendored VAST without using vendored gap
-  if (MACRONI_USE_VENDORED_GAP)
-    message(FATAL_ERROR "Using non-vendored VAST requires using non-vendored gap")
+  if(MACRONI_USE_VENDORED_GAP)
+    message(
+      FATAL_ERROR "Using non-vendored VAST requires using non-vendored gap")
   endif()
   find_package(VAST CONFIG REQUIRED)
 endif()
 
-target_link_libraries(macroni_settings
-  INTERFACE
-    gap::gap-core
-    gap::gap
-    gap::gap-settings
-    pasta::pasta
-    pasta:pasta_cxx_settings
-    VAST::vast_settings
-)
+target_link_libraries(
+  macroni_settings
+  INTERFACE gap::gap-core gap::gap gap::gap-settings pasta::pasta
+            pasta:pasta_cxx_settings VAST::vast_settings)
 
-get_target_property(GAP_CORE_INCLUDE_DIR
-  gap::gap-core INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(GAP_CORE_INCLUDE_DIR gap::gap-core
+                    INTERFACE_INCLUDE_DIRECTORIES)
 
-get_target_property(GAP_SETTINGS_INCLUDE_DIR
-gap::gap-settings INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(GAP_SETTINGS_INCLUDE_DIR gap::gap-settings
+                    INTERFACE_INCLUDE_DIRECTORIES)
 
-get_target_property(VAST_SETTINGS_INCLUDE_DIR
-  VAST::vast_settings INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(VAST_SETTINGS_INCLUDE_DIR VAST::vast_settings
+                    INTERFACE_INCLUDE_DIRECTORIES)
 
-get_target_property(PASTA_CXX_SETTINGS_INCLUDE_DIR
-  pasta::pasta_cxx_settings INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(PASTA_CXX_SETTINGS_INCLUDE_DIR pasta::pasta_cxx_settings
+                    INTERFACE_INCLUDE_DIRECTORIES)
 
 #
 # macroni libraries
@@ -256,9 +245,9 @@ add_subdirectory(bin)
 # macroni tests
 #
 option(MACRONI_ENABLE_TESTING "Enable Macroni's test suite" OFF)
-if (MACRONI_ENABLE_TESTING)
-        enable_testing()
-        add_subdirectory(test)
+if(MACRONI_ENABLE_TESTING)
+  enable_testing()
+  add_subdirectory(test)
 endif()
 
 #
@@ -267,12 +256,13 @@ endif()
 
 option(MACRONI_INSTALL "Generate the install target." ${MACRONI_MASTER_PROJECT})
 
-if (MACRONI_INSTALL)
+if(MACRONI_INSTALL)
   set(MACRONI_CMAKE_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
   get_property(MACRONI_INSTALL_TARGETS GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
 
-  install(DIRECTORY ${MACRONI_INCLUDE_DIR}/macroni
+  install(
+    DIRECTORY ${MACRONI_INCLUDE_DIR}/macroni
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT macroni-headers
     FILES_MATCHING
@@ -280,27 +270,26 @@ if (MACRONI_INSTALL)
     PATTERN "*.hpp"
     PATTERN "*.h.inc"
     PATTERN "*.hpp.inc"
-    PATTERN "CMakeFiles" EXCLUDE
-  )
+    PATTERN "CMakeFiles" EXCLUDE)
 
-  install(DIRECTORY ${MACRONI_SOURCE_DIR}/include/macroni
+  install(
+    DIRECTORY ${MACRONI_SOURCE_DIR}/include/macroni
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT macroni-headers
     FILES_MATCHING
     PATTERN "*.h"
     PATTERN "*.hpp"
-    PATTERN "CMakeFiles" EXCLUDE
-  )
+    PATTERN "CMakeFiles" EXCLUDE)
 
   install(TARGETS macroni_settings EXPORT macroniTargets)
 
   set(MACRONI_EXPORT_NAME macroniTargets)
 
-  install(EXPORT macroniTargets
+  install(
+    EXPORT macroniTargets
     FILE ${MACRONI_EXPORT_NAME}.cmake
     NAMESPACE macroni::
-    DESTINATION ${MACRONI_CMAKE_INSTALL_DIR}
-  )
+    DESTINATION ${MACRONI_CMAKE_INSTALL_DIR})
 
   #
   # packaging support
@@ -308,8 +297,7 @@ if (MACRONI_INSTALL)
 
   set(CPACK_PACKAGE_VENDOR "Trail of Bits")
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
-    "macroni: A C/C++ frontend for lowering macros down to MLIR"
-  )
+      "macroni: A C/C++ frontend for lowering macros down to MLIR")
   set(CPACK_PACKAGE_VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR})
   set(CPACK_PACKAGE_VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR})
   set(CPACK_PACKAGE_VERSION_PATCH ${CMAKE_PROJECT_VERSION_PATCH})
@@ -318,7 +306,8 @@ if (MACRONI_INSTALL)
   set(CPACK_OUTPUT_FILE_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/package")
   set(CPACK_PACKAGE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-  set(SYSTEM ${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_VERSION})
+  set(SYSTEM
+      ${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_VERSION})
   set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${SYSTEM}")
   set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-src")
 
@@ -333,19 +322,16 @@ if (MACRONI_INSTALL)
   configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${MACRONI_CONFIG_NAME}.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${MACRONI_PACKAGE_CONFIG_FILE}"
-    INSTALL_DESTINATION ${MACRONI_CMAKE_INSTALL_DIR}
-  )
+    INSTALL_DESTINATION ${MACRONI_CMAKE_INSTALL_DIR})
 
   write_basic_package_version_file(
     ${MACRONI_PACKAGE_CONFIG_VERSION_FILE}
     VERSION ${PACKAGE_VERSION}
-    COMPATIBILITY SameMajorVersion
-  )
+    COMPATIBILITY SameMajorVersion)
 
-  install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/${MACRONI_PACKAGE_CONFIG_FILE}"
-    "${CMAKE_CURRENT_BINARY_DIR}/${MACRONI_PACKAGE_CONFIG_VERSION_FILE}"
-    DESTINATION ${MACRONI_CMAKE_INSTALL_DIR}
-  )
+  install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/${MACRONI_PACKAGE_CONFIG_FILE}"
+          "${CMAKE_CURRENT_BINARY_DIR}/${MACRONI_PACKAGE_CONFIG_VERSION_FILE}"
+    DESTINATION ${MACRONI_CMAKE_INSTALL_DIR})
 
 endif()
