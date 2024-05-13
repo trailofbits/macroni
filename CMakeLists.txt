@@ -150,25 +150,6 @@ endif()
 # macroni build settings
 #
 
-# They are used as destination of target generators.
-set(MACRONI_RUNTIME_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
-set(MACRONI_LIBRARY_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${MACRONI_LIBDIR_SUFFIX})
-if(WIN32 OR CYGWIN)
-  # DLL platform -- put DLLs into bin.
-  set(MACRONI_SHLIB_OUTPUT_INTDIR ${MACRONI_RUNTIME_OUTPUT_INTDIR})
-else()
-  set(MACRONI_SHLIB_OUTPUT_INTDIR ${MACRONI_LIBRARY_OUTPUT_INTDIR})
-endif()
-
-set(MACRONI_TOOLS_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH
-  "Path for binary subdirectory (defaults to '${CMAKE_INSTALL_BINDIR}')"
-)
-
-set(MACRONI_TABLEGEN_EXE "${MLIR_TABLEGEN_EXE}" CACHE INTERNAL "")
-set(MACRONI_TABLEGEN_TARGET "${MLIR_TABLEGEN_TARGET}" CACHE INTERNAL "")
-set(MACRONI_PDLL_TABLEGEN_EXE "${MLIR_PDLL_TABLEGEN_EXE}" CACHE INTERNAL "")
-set(MACRONI_PDLL_TABLEGEN_TARGET "${MLIR_PDLL_TABLEGEN_TARGET}" CACHE INTERNAL "")
-
 add_custom_target(macroni-generic-headers)
 set_target_properties(macroni-generic-headers PROPERTIES FOLDER "Misc")
 add_custom_target(macroni-headers)
