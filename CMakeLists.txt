@@ -181,7 +181,7 @@ if (MACRONI_ENABLE_EXCEPTIONS)
 endif()
 
 # sanitizer options if supported by compiler
-include(cmake/sanitizers.cmake)
+include(sanitizers)
 enable_sanitizers(macroni_settings)
 
 # allow for static analysis options
