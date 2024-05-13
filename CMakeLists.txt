@@ -155,12 +155,6 @@ set_target_properties(macroni-headers PROPERTIES FOLDER "Misc")
 
 define_property(GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
 
-if(CMAKE_GENERATOR MATCHES "Ninja" AND
-    NOT "${NINJA_VERSION}" VERSION_LESS "1.9.0" AND
-    CMAKE_HOST_APPLE AND CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER "15.6.0")
-  set(MACRONI_TOUCH_STATIC_LIBRARIES ON)
-endif()
-
 add_library(macroni_settings INTERFACE)
 
 include(cmake/compiler_warnings.cmake)
