@@ -221,8 +221,11 @@ endif()
 
 target_link_libraries(macroni_settings
   INTERFACE
+    gap::gap-core
     gap::gap
+    gap::gap-settings
     pasta::pasta
+    pasta:pasta_cxx_settings
     VAST::vast_settings
 )
 
@@ -237,11 +240,6 @@ get_target_property(VAST_SETTINGS_INCLUDE_DIR
 
 get_target_property(PASTA_CXX_SETTINGS_INCLUDE_DIR
   pasta::pasta_cxx_settings INTERFACE_INCLUDE_DIRECTORIES)
-
-include_directories(${GAP_CORE_INCLUDE_DIR})
-include_directories(${GAP_SETTINGS_INCLUDE_DIR})
-include_directories(${PASTA_CXX_SETTINGS_INCLUDE_DIR})
-include_directories(${VAST_SETTINGS_INCLUDE_DIR})
 
 #
 # macroni libraries
