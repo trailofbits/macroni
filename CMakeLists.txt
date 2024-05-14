@@ -8,7 +8,7 @@
 cmake_minimum_required(VERSION 3.29)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(project_version_details)
+include(macroni/project_version_details)
 
 project(
   macroni
@@ -21,7 +21,7 @@ set(BUG_REPORT_URL
     "https://github.com/trailofbits/macroni/issues"
     CACHE STRING "")
 
-include(prevent_in_source_builds)
+include(macroni/prevent_in_source_builds)
 
 # Check if macroni is being used directly or via add_subdirectory, but allow
 # overriding
@@ -30,20 +30,19 @@ if(NOT DEFINED MACRONI_MASTER_PROJECT)
       "$<STREQUAL:${CMAKE_CURRENT_SOURCE_DIR},${CMAKE_SOURCE_DIR}>")
 endif()
 
-include(project_settings)
-include(project_utils)
+include(macroni/project_settings)
+include(macroni/project_utils)
 
 set(MACRONI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MACRONI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
-set(MACRONI_INCLUDE_DIR ${MACRONI_BINARY_DIR}/include)
 
 #
 # Find Git
 #
 find_package(Git REQUIRED)
-include(get_git_hash)
+include(macroni/get_git_hash)
 get_git_hash(macroni_GIT_HASH)
-include(count_commits_since_last_version_change)
+include(macroni/count_commits_since_last_version_change)
 count_commits_since_last_version_change(
   macroni_COMMITS_SINCE_LAST_VERSION_CHANGE)
 
@@ -75,7 +74,7 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 #
 find_package(MLIR REQUIRED CONFIG)
 message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-include_directories(${MLIR_INCLUDE_DIRS})
+include_directories(SYSTEM ${MLIR_INCLUDE_DIRS})
 
 #
 # Find LLVM, MLIR, and Clang libraries
@@ -95,7 +94,7 @@ include(HandleLLVMOptions)
 
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 
-include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 add_definitions(${CLANG_DEFINITIONS})
@@ -156,7 +155,7 @@ define_property(GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
 
 add_library(macroni_settings INTERFACE)
 
-include(compiler_warnings)
+include(macroni/compiler_warnings)
 set_target_compiler_warnings(macroni_settings)
 
 target_include_directories(
@@ -176,11 +175,11 @@ if(MACRONI_ENABLE_EXCEPTIONS)
 endif()
 
 # sanitizer options if supported by compiler
-include(sanitizers)
+include(macroni/sanitizers)
 enable_sanitizers(macroni_settings)
 
 # allow for static analysis options
-include(static_analyzers)
+include(macroni/static_analyzers)
 
 option(ENABLE_PDLL_CONVERSIONS "Enable PDLL conversions" OFF)
 if(ENABLE_PDLL_CONVERSIONS)
@@ -215,20 +214,10 @@ endif()
 
 target_link_libraries(
   macroni_settings
-  INTERFACE gap::gap-core gap::gap gap::gap-settings pasta::pasta
-            pasta:pasta_cxx_settings VAST::vast_settings)
+  INTERFACE pasta pasta_cxx_settings vast_settings)
 
-get_target_property(GAP_CORE_INCLUDE_DIR gap::gap-core
-                    INTERFACE_INCLUDE_DIRECTORIES)
-
-get_target_property(GAP_SETTINGS_INCLUDE_DIR gap::gap-settings
-                    INTERFACE_INCLUDE_DIRECTORIES)
-
-get_target_property(VAST_SETTINGS_INCLUDE_DIR VAST::vast_settings
-                    INTERFACE_INCLUDE_DIRECTORIES)
-
-get_target_property(PASTA_CXX_SETTINGS_INCLUDE_DIR pasta::pasta_cxx_settings
-                    INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${MACRONI_SOURCE_DIR}/include)
+include_directories(${MACRONI_BINARY_DIR}/include)
 
 #
 # macroni libraries
@@ -262,7 +251,7 @@ if(MACRONI_INSTALL)
   get_property(MACRONI_INSTALL_TARGETS GLOBAL PROPERTY MACRONI_INSTALL_TARGETS)
 
   install(
-    DIRECTORY ${MACRONI_INCLUDE_DIR}/macroni
+    DIRECTORY ${MACRONI_BINARY_DIR}/include/macroni
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT macroni-headers
     FILES_MATCHING
