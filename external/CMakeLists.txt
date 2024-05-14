@@ -30,7 +30,9 @@ if(MACRONI_USE_VENDORED_PASTA)
       CACHE
         BOOL
         "Use Pasta's vendored version of Clang. Will take a long time to build")
+  add_compile_options(-w)
   add_subdirectory(pasta)
+  add_compile_options(-w)
 endif()
 
 if(MACRONI_USE_VENDORED_VAST)
