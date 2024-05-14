@@ -4,9 +4,6 @@ add_mlir_dialect_library(MLIRMacroni
     MacroniDialect.cpp
     MacroniOps.cpp
 
-    ADDITIONAL_HEADER_DIRS
-        ${PROJECT_SOURCE_DIR}/include
-
     DEPENDS
         MLIRMacroniIncGen
 

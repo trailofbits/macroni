@@ -7,9 +7,6 @@ add_mlir_dialect_library(MLIRKernel
     KernelAttributes.cpp
     KernelTypes.cpp
 
-    ADDITIONAL_HEADER_DIRS
-        ${PROJECT_SOURCE_DIR}/include
-
     DEPENDS
         MLIRKernelAttributesIncGen
         MLIRKernelIncGen
