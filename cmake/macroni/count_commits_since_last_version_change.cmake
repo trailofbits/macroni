@@ -10,10 +10,10 @@ function(count_commits_since_last_version_change function_output_variable)
   endif()
 
   set(project_version_file
-      "${PROJECT_SOURCE_DIR}/cmake/project_version_details.cmake")
+      "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/project_version_details.cmake")
 
   if(NOT IS_READABLE ${project_version_file})
-    message(FATAL_ERROR "${project_version_file}" does not exist!)
+    message(FATAL_ERROR "${project_version_file}" " does not exist!")
   endif()
 
   execute_process(
