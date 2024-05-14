@@ -9,8 +9,8 @@ target_link_libraries(macronify
     PRIVATE
         macroni_api
         MLIRMacroni
-        VAST::VASTCodeGen
-        VAST::VASTFrontend
+        VASTCodeGen
+        VASTFrontend
 )
 
 mlir_check_link_libraries(macronify)

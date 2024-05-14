@@ -12,5 +12,6 @@ target_link_libraries(kernel_conversion
         MLIRTargetLLVMIRExport
         MLIRLLVMToLLVMIRTranslation
         MLIRToLLVMIRTranslationRegistration
+        vast_settings
 )
 add_library(macroni::kernel_conversion ALIAS kernel_conversion)

@@ -11,7 +11,7 @@ target_link_libraries(safe-c
         MLIRMacroni
         MLIRSafety
         safety_conversion
-        VAST::VASTCodeGen
+        VASTCodeGen
 )
 
 mlir_check_link_libraries(safe-c)
