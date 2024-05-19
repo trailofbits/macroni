@@ -16,7 +16,7 @@ Macroni is an MLIR dialect that adds macro expansions to VAST's tower of IRS.
 
 - [Clang 17 and LLVM 17](https://apt.llvm.org/). If on Debian/Ubuntu:
 
-  ```
+  ```bash
   wget https://apt.llvm.org/llvm.sh
   chmod +x llvm.sh
   sudo ./llvm.sh 17
