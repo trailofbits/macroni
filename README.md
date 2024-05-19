@@ -2,58 +2,75 @@
 
 Macroni is an MLIR dialect that adds macro expansions to VAST's tower of IRS.
 
-## Table of Contents
-
-- [Macroni](#macroni)
-  - [Table of Contents](#table-of-contents)
-  - [Requirements](#requirements)
-  - [Setting up](#setting-up)
-  - [Running Macroni](#running-macroni)
-  - [Testing](#testing)
-  - [License](#license)
-
 ## Requirements
 
-- [Clang 17 and LLVM 17](https://apt.llvm.org/). If on Debian/Ubuntu:
+The following instructions assume you are using an Ubuntu 22.04.4 LTS operating
+system and are at the root of a local clone of the macroni project tree:
+
+- LLVM, MLIR, and a PASTA-specific version of Clang:
 
   ```bash
-  wget https://apt.llvm.org/llvm.sh
-  chmod +x llvm.sh
-  sudo ./llvm.sh 17
-  sudo apt install libclang-17-dev libmlir-17-dev mlir-17-tools
+  wget -O external/llvm-pasta-beeda8d.tar.xz https://github.com/trail-of-forks/llvm-project/releases/download/beeda8d/llvm-pasta-beeda8d.tar.xz
+  mkdir -p external/llvm-pasta-beeda8d
+  tar -xvf external/llvm-pasta-beeda8d.tar.xz --directory external/llvm-pasta-beeda8d/
   ```
 
-- [`gap`](https://github.com/lifting-bits/gap)
 - [`PASTA`](https://github.com/trailofbits/pasta/)
+
+  ```bash
+  cd external/pasta
+  git submodule update --init
+  ```
+
 - [`VAST`](https://github.com/trailofbits/vast)
-  - Macroni currently uses [this
-    fork](https://github.com/trailofbits/vast/tree/mx_codegen) of VAST, so we
-    recommend you install this one to run Macroni.
+  
+  ```bash
+  cd external/vast
+  git submodule update --init --recursive
+  ```
 
-We also recommend installing [`ccache`](https://ccache.dev/) to improve build times.
+- Ccache (not required but strongly recommended)
 
-## Setting up
+  ```bash
+  sudo apt install ccache
+  ```
 
-Clone Macroni:
+- Mold (not required but strongly recommended)
+
+  ```bash
+  sudo apt install mold
+  ```
+
+- Ninja (not required but strongly recommended)
+
+  ```bash
+  sudo apt install ninja-build
+  ```
+
+## Building Macroni
+
+Configure Macroni, e.g., assuming all requirements and recommendations have been
+installed:
 
 ```bash
-git clone https://github.com/trailofbits/macroni.git
+cmake -S . -B build/ -G "Ninja Multi-Config" \
+  -D Clang_DIR:PATH="`realpath -s external/llvm-pasta-beeda8d/lib/cmake/clang`" \
+  -D CMAKE_BUILD_TYPE:STRING="Debug" \
+  -D CMAKE_C_COMPILER:PATH="`realpath -s external/llvm-pasta-beeda8d/bin/clang`" \
+  -D CMAKE_CXX_COMPILER:PATH="`realpath -s external/llvm-pasta-beeda8d/bin/clang++`" \
+  -D CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=true \
+  -D CMAKE_INSTALL_PREFIX:PATH=build/ \
+  -D CMAKE_LINKER_TYPE:STRING=MOLD \
+  -D LLVM_DIR:PATH="`realpath -s external/llvm-pasta-beeda8d/lib/cmake/llvm`" \
+  -D LLVM_ENABLE_RTTI:BOOL=true \
+  -D LLVM_USE_LINKER:STRING="mold" \
+  -D MLIR_DIR:PATH="`realpath -s external/llvm-pasta-beeda8d/lib/cmake/mlir`"
 ```
 
-We offer a `CMakePresets.json` file to ease configuration and building. This
-file relies on a number of environment variables (e.g,
-`$env{MACRONI_Clang_DIR}`), so to use this presets file you must define these
-environment variables first. Once you have done that you can configure Macroni
-with:
+Build macroni:
 
 ```bash
-cmake --preset macroni-ninja-multiconfig
-```
-
-Build and install Macroni:
-
-```bash
-cmake --build --preset macroni-ninja-multiconfig -t install
+cmake --build build/
 ```
 
 ## Running Macroni
@@ -67,7 +84,37 @@ macronify -xc some_file.c
 
 ## Testing
 
-TODO: Update this section to reflect latest changes to Macroni
+To run Macroni's tests first install LIT and FileCheck:
+
+- LIT
+  
+  ```bash
+  python3 -m pip install lit
+  ```
+
+- FileCheck
+
+  ```bash
+  wget https://apt.llvm.org/llvm.sh
+  chmod +x llvm.sh
+  sudo ./llvm.sh 17
+  sudo apt install llvm-17-tools
+  ```
+
+Then add the following definitions when configuring building Macroni:
+
+```bash
+cmake -S . -B build/ -G "Ninja Multi-Config" \
+  ...# Previous definitions
+  -D MACRONI_ENABLE_TESTING:BOOL=ON \
+  -D LLVM_EXTERNAL_LIT:STRING="`which -s lit`"
+```
+
+Finally, run Macroni's tests by building the target `check-macroni`:
+
+```bash
+cmake --build build/ --target check-macroni
+```
 
 ## License
 
