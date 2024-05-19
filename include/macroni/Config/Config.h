@@ -8,22 +8,17 @@
 
 /* This generated file is for internal use. Do not include it from headers. */
 
-#include <string_view>
-
-#ifdef MACRONI_CONFIG_H
-#error config.h can only be included once
-#else
-#define MACRONI_CONFIG_H
-
-#define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
+#pragma once
 
 namespace macroni {
+extern const char *macroni_version;
+extern unsigned macroni_version_major;
+extern unsigned macroni_version_minor;
+extern unsigned macroni_version_patch;
+extern unsigned macroni_version_tweak;
 
-    constexpr std::string_view version = "${MACRONI_VERSION}";
+extern const char *macroni_git_hash;
+extern unsigned macroni_commits_since_last_version_change;
 
-    constexpr std::string_view bug_report_url = "${BUG_REPORT_URL}";
+extern const char *bug_report_url;
 } // namespace macroni
-
-#endif
-
-

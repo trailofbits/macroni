@@ -11,7 +11,7 @@ target_link_libraries(kernelize
         MLIRMacroni
         MLIRKernel
         kernel_conversion
-        VAST::VASTCodeGen
+        VASTCodeGen
 )
 
 mlir_check_link_libraries(kernelize)
