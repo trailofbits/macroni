@@ -4,16 +4,6 @@ add_mlir_dialect_library(MLIRSafety
   SafetyDialect.cpp
   SafetyOps.cpp
 
-  DEPENDS
-    MLIRSafetyIncGen
+  DEPENDS MLIRSafetyIncGen
 
-  LINK_LIBS
-    PUBLIC
-      MLIRIR
-      MLIRSupport
-      MLIRSideEffectInterfaces
-      MLIRCallInterfaces
-      MLIRCastInterfaces
-      MLIRControlFlowInterfaces
-      MLIRDataLayoutInterfaces
-      MLIRInferTypeOpInterface)
+  LINK_LIBS PUBLIC ${MLIR_LIBS})

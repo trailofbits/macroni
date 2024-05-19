@@ -7,13 +7,4 @@ add_mlir_dialect_library(MLIRMacroni
   DEPENDS
     MLIRMacroniIncGen
 
-  LINK_LIBS
-    PUBLIC
-      MLIRIR
-      MLIRSupport
-      MLIRSideEffectInterfaces
-      MLIRCallInterfaces
-      MLIRCastInterfaces
-      MLIRControlFlowInterfaces
-      MLIRDataLayoutInterfaces
-      MLIRInferTypeOpInterface)
+  LINK_LIBS PUBLIC ${MLIR_LIBS})
