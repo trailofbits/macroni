@@ -2,13 +2,9 @@
 
 if(LLVM_EXTERNAL_LIT)
   get_filename_component(LLVM_LIT_TOOLS_DIR "${LLVM_EXTERNAL_LIT}" DIRECTORY)
-  find_program(FILECHECK_PATH FileCheck HINTS "${LLVM_LIT_TOOLS_DIR}")
+  find_program(FILECHECK_PATH FileCheck HINTS "${LLVM_LIT_TOOLS_DIR}" REQUIRED)
 else()
-  find_program(FILECHECK_PATH FileCheck)
-endif()
-
-if(FILECHECK_PATH STREQUAL "FILECHECK_PATH-NOTFOUND")
-  message(FATAL_ERROR "Could not find FileCheck")
+  find_program(FILECHECK_PATH FileCheck REQUIRED)
 endif()
 
 configure_lit_site_cfg(
