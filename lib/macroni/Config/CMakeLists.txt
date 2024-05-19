@@ -8,4 +8,5 @@ configure_file(Config.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/Config.cpp @ONLY)
 
 add_library(macroni_config STATIC ${CMAKE_CURRENT_BINARY_DIR}/Config.cpp)
 
+# Link against macroni_settings for include directories
 target_link_libraries(macroni_config PUBLIC macroni_settings)
