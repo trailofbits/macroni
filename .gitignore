@@ -4,6 +4,6 @@ build
 CMakeFiles/
 CMakeUserPresets.json
 compile_commands.json
-external/llvm-pasta-beeda8d.tar.xz
 external/llvm-pasta-beeda8d
+external/llvm-pasta-beeda8d.tar.xz
 tablegen_compile_commands.yml
