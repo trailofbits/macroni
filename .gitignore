@@ -1,6 +1,7 @@
 .cache
 .vscode
 build
+build.sh
 CMakeFiles/
 CMakeUserPresets.json
 compile_commands.json
