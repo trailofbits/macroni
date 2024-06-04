@@ -1,0 +1,6 @@
+[submodule "external/pasta"]
+	path = external/pasta
+	url = https://github.com/trailofbits/pasta
+[submodule "external/vast"]
+	path = external/vast
+	url = https://github.com/PappasBrent/vast.git
