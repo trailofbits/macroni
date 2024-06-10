@@ -217,6 +217,7 @@ target_link_libraries(
   macroni_settings
   INTERFACE ${LLVM_LIBS}
             ${CLANG_LIBS}
+            ${MACRONI_MLIR_LIBS}
             gap::gap
             pasta
             pasta_cxx_settings
