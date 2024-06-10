@@ -4,14 +4,14 @@
 // This source code is licensed in accordance with the terms specified in the
 // LICENSE file found in the root directory of this source tree.
 
+#include "macroni/Common/ParseAST.hpp"
+#include "vast/CodeGen/CodeGenBuilder.hpp"
+#include "vast/CodeGen/CodeGenDriver.hpp"
+#include "vast/CodeGen/CodeGenMeta.hpp"
+#include "vast/CodeGen/CodeGenOptions.hpp"
+#include "vast/CodeGen/Mangler.hpp"
+#include "vast/Frontend/Options.hpp"
 #include <iostream>
-#include <macroni/Common/GenerateMacroniModule.hpp>
-#include <macroni/Common/ParseAST.hpp>
-#include <macroni/Dialect/Macroni/MacroniDialect.hpp>
-#include <macroni/Translation/MacroniCodeGenVisitorMixin.hpp>
-#include <mlir/IR/DialectRegistry.h>
-#include <pasta/AST/AST.h>
-#include <vast/Dialect/HighLevel/HighLevelDialect.hpp>
 
 int main(int argc, char **argv) {
   auto maybe_ast = pasta::parse_ast(argc, argv);
@@ -20,19 +20,34 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
   auto pasta_ast = maybe_ast.TakeValue();
+  auto &ast = pasta_ast.UnderlyingAST();
+  auto mangle_ctx = ast.createMangleContext();
 
-  // Register the MLIR dialects we will be lowering to
-  mlir::DialectRegistry registry;
-  registry.insert<vast::hl::HighLevelDialect, vast::unsup::UnsupportedDialect,
-                  macroni::macroni::MacroniDialect>();
-  auto mctx = mlir::MLIRContext(registry);
+  auto mctx = vast::cg::mk_mcontext();
+  auto codegen_builder = std::make_unique<vast::cg::codegen_builder>(&*mctx);
+  auto mg = std::make_unique<vast::cg::default_meta_gen>(&ast, &*mctx);
+  auto sg = std::make_unique<vast::cg::default_symbol_mangler>(mangle_ctx);
+  vast::cg::options opts{
+      .lang = vast::cg::source_language::C,
+      .optimization_level = 0,
+      .has_strict_return = false,
+      .disable_unsupported = false,
+      .disable_vast_verifier = true,
+      .prepare_default_visitor_stack = true,
+  };
+  vast::cc::vast_args vast_args;
 
-  // Generate the MLIR
-  auto mod = macroni::generate_macroni_module<macroni::MacroniCodeGenInstance>(
-      pasta_ast, mctx);
+  vast::cg::driver driver(ast, std::move(mctx), opts,
+                          std::move(codegen_builder), std::move(mg),
+                          std::move(sg));
 
-  // Print the result
-  mod->print(llvm::outs());
+  driver.emit(ast.getTranslationUnitDecl());
+  driver.finalize();
+  driver.verify();
+
+  auto mod = driver.freeze();
+
+  mod->dump();
 
   return EXIT_SUCCESS;
 }
