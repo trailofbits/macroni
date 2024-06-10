@@ -211,9 +211,17 @@ if(NOT MACRONI_USE_VENDORED_VAST)
   find_package(VAST CONFIG REQUIRED)
 endif()
 
+# TODO(Brent): Only link vast libs to targets that need them.
+get_property(VAST_LIBS GLOBAL PROPERTY VAST_ALL_LIBS)
 target_link_libraries(
   macroni_settings
-  INTERFACE pasta pasta_cxx_settings vast_settings)
+  INTERFACE ${LLVM_LIBS}
+            ${CLANG_LIBS}
+            gap::gap
+            pasta
+            pasta_cxx_settings
+            vast_settings
+            ${VAST_LIBS})
 
 include_directories(${MACRONI_SOURCE_DIR}/include)
 include_directories(${MACRONI_BINARY_DIR}/include)
