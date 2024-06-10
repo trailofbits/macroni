@@ -15,20 +15,21 @@ namespace macroni {
 struct macroni_meta_generator final : public vast::cg::meta_generator {
 
 public:
-  macroni_meta_generator(vast::acontext_t *actx, vast::mcontext_t *mctx);
+  [[nodiscard]] macroni_meta_generator(vast::acontext_t *actx,
+                                       vast::mcontext_t *mctx);
 
-  vast::loc_t location(const clang::Decl *decl) const override;
+  [[nodiscard]] vast::loc_t location(const clang::Decl *decl) const override;
 
-  vast::loc_t location(const clang::Stmt *stmt) const override;
+  [[nodiscard]] vast::loc_t location(const clang::Stmt *stmt) const override;
 
-  vast::loc_t location(const clang::Expr *expr) const override;
+  [[nodiscard]] vast::loc_t location(const clang::Expr *expr) const override;
 
-  vast::loc_t location(pasta::MacroSubstitution sub) const;
+  [[nodiscard]] vast::loc_t location(pasta::MacroSubstitution sub) const;
 
 private:
-  vast::loc_t location(const clang::FullSourceLoc &loc) const;
+  [[nodiscard]] vast::loc_t location(const clang::FullSourceLoc &loc) const;
 
-  vast::loc_t location(const clang::SourceLocation &loc) const;
+  [[nodiscard]] vast::loc_t location(const clang::SourceLocation &loc) const;
 
   vast::acontext_t *m_actx;
   vast::mcontext_t *m_mctx;
