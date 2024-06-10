@@ -165,8 +165,7 @@ target_include_directories(
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # enable exception on failure
-option(MACRONI_ENABLE_EXCEPTIONS "Enable exception throw on macroni failure"
-       OFF)
+option(MACRONI_ENABLE_EXCEPTIONS "Enable exception throw on macroni failure" ON)
 if(MACRONI_ENABLE_EXCEPTIONS)
   target_compile_definitions(macroni_settings
                              INTERFACE -DMACRONI_ENABLE_EXCEPTIONS)
