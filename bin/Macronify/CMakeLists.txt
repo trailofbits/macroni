@@ -7,8 +7,8 @@ llvm_update_compile_flags(macronify)
 
 target_link_libraries(macronify
     PRIVATE
-        macroni_api
-        MLIRMacroni
+        macroni_settings
+        macroni_common
         VASTCodeGen
         VASTFrontend
 )
