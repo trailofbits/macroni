@@ -3,4 +3,5 @@
 	url = https://github.com/trailofbits/pasta
 [submodule "external/vast"]
 	path = external/vast
-	url = https://github.com/PappasBrent/vast.git
+	url = https://github.com/trailofbits/vast
+	branch = mx-integration
