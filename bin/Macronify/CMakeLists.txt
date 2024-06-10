@@ -1,6 +1,6 @@
 set(LLVM_LINK_COMPONENTS Core Support AsmParser)
 
-add_executable(macronify Main.cpp)
+add_executable(macronify Macronify.cpp)
 
 llvm_update_compile_flags(macronify)
 
