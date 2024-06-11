@@ -4,6 +4,6 @@ add_executable(macronify Macronify.cpp)
 
 llvm_update_compile_flags(macronify)
 
-target_link_libraries(macronify PRIVATE macroni_api)
+target_link_libraries(macronify PRIVATE macroni_api MLIRMacroni)
 
 mlir_check_link_libraries(macronify)
