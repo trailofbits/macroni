@@ -1,11 +1,9 @@
 // Copyright (c) 2023-present, Trail of Bits, Inc.
 
 #include "macroni/Dialect/Macroni/MacroniOps.hpp"
-#include "macroni/Dialect/Macroni/MacroniDialect.hpp"
-
+#include "vast/Util/Common.hpp"
 #include <llvm/Support/ErrorHandling.h>
 #include <mlir/IR/Builders.h>
-#include <mlir/IR/FunctionImplementation.h>
 #include <mlir/IR/OpImplementation.h>
 #include <mlir/IR/OperationSupport.h>
 #include <mlir/IR/SymbolTable.h>
@@ -13,35 +11,34 @@
 #include <mlir/Support/LogicalResult.h>
 
 namespace macroni::macroni {
+void build_region(vast::mlir_builder &bld, vast::op_state &st,
+                  vast::builder_callback_ref callback) {
+  bld.createBlock(st.addRegion());
+  callback(bld, st.location);
+}
 
 void MacroExpansion::build(mlir::OpBuilder &odsBuilder,
                            mlir::OperationState &odsState,
                            mlir::StringAttr macroName,
                            mlir::ArrayAttr parameterNames,
                            mlir::BoolAttr functionLike, mlir::Type rty,
-                           std::unique_ptr<mlir::Region> &&region) {
+                           vast::builder_callback_ref callback) {
   mlir::OpBuilder::InsertionGuard guard(odsBuilder);
-
   odsState.addAttribute("macroName", macroName);
   odsState.addAttribute("parameterNames", parameterNames);
   odsState.addAttribute("functionLike", functionLike);
-  odsState.addRegion(std::move(region));
-  if (rty) {
-    odsState.addTypes(rty);
-  }
+  build_region(odsBuilder, odsState, callback);
+  odsState.addTypes(rty);
 }
 
 void MacroParameter::build(mlir::OpBuilder &odsBuilder,
                            mlir::OperationState &odsState,
                            mlir::StringAttr parameterName, mlir::Type rty,
-                           std::unique_ptr<mlir::Region> &&region) {
+                           vast::builder_callback_ref callback) {
   mlir::OpBuilder::InsertionGuard guard(odsBuilder);
-
   odsState.addAttribute("parameterName", parameterName);
-  odsState.addRegion(std::move(region));
-  if (rty) {
-    odsState.addTypes(rty);
-  }
+  build_region(odsBuilder, odsState, callback);
+  odsState.addTypes(rty);
 }
 
 mlir::ParseResult parseMacroParameters(mlir::OpAsmParser &parser,
