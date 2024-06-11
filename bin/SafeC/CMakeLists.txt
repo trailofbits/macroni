@@ -8,10 +8,7 @@ llvm_update_compile_flags(safe-c)
 target_link_libraries(safe-c
     PRIVATE
         macroni_api
-        MLIRMacroni
         MLIRSafety
-        safety_conversion
-        VASTCodeGen
 )
 
 mlir_check_link_libraries(safe-c)
