@@ -7,4 +7,4 @@ add_mlir_dialect_library(MLIRMacroni
   DEPENDS
     MLIRMacroniIncGen
 
-  LINK_LIBS PUBLIC ${MLIR_LIBS})
+  LINK_LIBS PUBLIC macroni_settings)
