@@ -26,7 +26,7 @@ def MacroExpansion :
       "mlir::ArrayAttr":$parameterNames,
       "mlir::BoolAttr":$functionLike,
       "mlir::Type":$rty,
-      "std::unique_ptr< mlir::Region > &&":$region
+      "vast::builder_callback_ref":$subexpr_builder
     )>
   ];
   let assemblyFormat = [{
@@ -49,7 +49,7 @@ def MacroParameter :
     OpBuilder<(ins
       "mlir::StringAttr":$parameterName,
       "mlir::Type":$rty,
-      "std::unique_ptr< mlir::Region > &&":$region
+      "vast::builder_callback_ref":$subexpr_builder
     )>
   ];
   let assemblyFormat = "$parameterName attr-dict `:` type($result) $expansion";
