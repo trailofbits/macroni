@@ -37,7 +37,7 @@ macroni_meta_generator::location(pasta::MacroSubstitution sub) const {
   auto column = file_loc ? file_loc->Column() : 0;
   auto filepath = file ? file->Path().string() : "<unknown>";
   auto filename = mlir::StringAttr::get(m_mctx, llvm::Twine(filepath));
-  return mlir::FileLineColLoc::get(filename, line, column);
+  return mlir::FileLineColLoc::get(m_mctx, filename, line, column);
 }
 
 vast::loc_t
@@ -46,7 +46,7 @@ macroni_meta_generator::location(const clang::FullSourceLoc &loc) const {
   auto file = file_entry_ref ? file_entry_ref->getName() : "unknown";
   auto line = loc.getLineNumber();
   auto col = loc.getColumnNumber();
-  return {mlir::FileLineColLoc::get(m_mctx, file, line, col)};
+  return mlir::FileLineColLoc::get(m_mctx, file, line, col);
 }
 
 vast::loc_t
