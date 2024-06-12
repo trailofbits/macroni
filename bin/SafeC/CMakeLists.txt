@@ -10,7 +10,7 @@ set(MACRONI_ORIGINAL_LLVM_RUNTIME_OUTPUT_INTDIR ${LLVM_RUNTIME_OUTPUT_INTDIR})
 
 # Use a generator expression to set the build directory in the way CMake would.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-add_clang_executable(safe-c SafeC.cpp)
+add_clang_executable(safe-c SafeC.cpp SafeBlockConditionCollector.cpp)
 
 # Restore the original LLVM_RUNTIME_OUTPUT_INTDIR value.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${MACRONI_ORIGINAL_LLVM_RUNTIME_OUTPUT_INTDIR})
