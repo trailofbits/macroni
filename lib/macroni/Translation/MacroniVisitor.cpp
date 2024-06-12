@@ -121,12 +121,9 @@ vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
       [[maybe_unused]] auto _ = m_bld.scoped_insertion_at_end(last_block);
       auto stmt_loc = m_view.location(stmt);
 
-      if (last_op->getNumResults() > 0) {
-        m_bld.create<vast::hl::ValueYieldOp>(stmt_loc, last_op->getResult(0));
-      } else {
-        auto void_value = m_bld.void_value(m_view.location(stmt));
-        m_bld.create<vast::hl::ValueYieldOp>(stmt_loc, void_value);
-      }
+      auto value = last_op->getNumResults() > 0 ? last_op->getResult(0)
+                                                : m_bld.void_value(stmt_loc);
+      m_bld.create<vast::hl::ValueYieldOp>(stmt_loc, value);
     };
   };
 
