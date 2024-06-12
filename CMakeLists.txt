@@ -56,48 +56,29 @@ if(CCACHE)
 endif()
 
 #
-# Find Clang
-#
-find_package(Clang REQUIRED CONFIG)
-find_and_select_clang_compiler()
-message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
-
-#
 # Find LLVM
 #
 find_package(LLVM 18.1.4 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-#
-# Find MLIR
-#
-find_package(MLIR REQUIRED CONFIG)
-message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-include_directories(SYSTEM ${MLIR_INCLUDE_DIRS})
-
-#
-# Find LLVM, MLIR, and Clang libraries
-#
-# TODO(Brent): Determine why (if?) we need these lines.
+# These lines tell LLVM where to put any targets we create with calls to
+# add_clang_executable() (and presumably other functions like it).
+# 
+# TODO(Brent): See if we can place these binaries where ninja-multi-config would
+# place them so we don't overwrite release binaries with debug and vice-versa.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/bin)
 set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/lib)
 
-# See https://llvm.org/docs/CMake.html#developing-llvm-passes-out-of-source
-list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
 list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
-
 include(TableGen)
 include(AddLLVM)
-include(AddMLIR)
 include(HandleLLVMOptions)
-
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
-add_definitions(${CLANG_DEFINITIONS})
 
 if(LLVM_LINK_LLVM_DYLIB)
   set(LLVM_LIBS LLVM)
@@ -105,6 +86,42 @@ else()
   llvm_map_components_to_libnames(LLVM_LIBS ${LLVM_TARGETS_TO_BUILD} target
                                   option)
 endif()
+
+#
+# Find Clang
+#
+find_package(Clang REQUIRED CONFIG)
+find_and_select_clang_compiler()
+message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
+
+list(APPEND CMAKE_MODULE_PATH "${Clang_DIR}")
+include(AddClang)
+add_definitions(${CLANG_DEFINITIONS})
+
+if(CLANG_LINK_CLANG_DYLIB)
+  set(CLANG_LIBS clang-cpp)
+else()
+  set(CLANG_LIBS
+      clangAST
+      clangASTMatchers
+      clangBasic
+      clangCodeGen
+      clangDriver
+      clangFrontend
+      clangSerialization
+      clangTooling)
+endif()
+
+#
+# Find MLIR
+#
+find_package(MLIR REQUIRED CONFIG)
+message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
+
+list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+include(AddMLIR)
+
+include_directories(SYSTEM ${MLIR_INCLUDE_DIRS})
 
 if(MLIR_LINK_MLIR_DYLIB)
   set(MACRONI_MLIR_LIBS MLIR)
@@ -128,20 +145,6 @@ else()
       ${MLIR_CONVERSION_LIBS}
       ${MLIR_EXTENSION_LIBS}
       ${MLIR_TRANSLATION_LIBS})
-endif()
-
-if(CLANG_LINK_CLANG_DYLIB)
-  set(CLANG_LIBS clang-cpp)
-else()
-  set(CLANG_LIBS
-      clangAST
-      clangASTMatchers
-      clangBasic
-      clangCodeGen
-      clangDriver
-      clangFrontend
-      clangSerialization
-      clangTooling)
 endif()
 
 #
