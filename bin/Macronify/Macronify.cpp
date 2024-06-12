@@ -22,6 +22,15 @@
 #include <mlir/IR/DialectRegistry.h>
 #include <mlir/InitAllDialects.h>
 
+// Creates a new base visitor suitable for pushing to the given driver's stack.
+template <typename visitor_t>
+vast::cg::visitor_base_ptr mk_visitor(vast::cg::driver &driver) {
+  return std::make_unique<visitor_t>(
+      driver.mcontext(), driver.get_codegen_builder(),
+      driver.get_meta_generator(), driver.get_symbol_generator(),
+      vast::cg::visitor_view(driver.get_visitor_stack()));
+}
+
 namespace macroni {
 std::unique_ptr<vast::cg::driver> generate_macroni_driver(pasta::AST &pctx) {
   auto &actx = pctx.UnderlyingAST();
@@ -64,15 +73,9 @@ std::unique_ptr<vast::cg::driver> generate_macroni_driver(pasta::AST &pctx) {
       vast::cg::visitor_view(driver->get_visitor_stack())));
 
   // Then add the default visitor stack.
-  driver->push_visitor(std::make_unique<vast::cg::default_visitor>(
-      driver->mcontext(), driver->get_codegen_builder(),
-      driver->get_meta_generator(), driver->get_symbol_generator(),
-      vast::cg::visitor_view(driver->get_visitor_stack())));
+  driver->push_visitor(mk_visitor<vast::cg::default_visitor>(*driver));
 
-  driver->push_visitor(std::make_unique<vast::cg::unsup_visitor>(
-      driver->mcontext(), driver->get_codegen_builder(),
-      driver->get_meta_generator(), driver->get_symbol_generator(),
-      vast::cg::visitor_view(driver->get_visitor_stack())));
+  driver->push_visitor(mk_visitor<vast::cg::unsup_visitor>(*driver));
 
   driver->push_visitor(std::make_unique<vast::cg::unreach_visitor>(
       driver->mcontext(), driver->get_meta_generator(),
