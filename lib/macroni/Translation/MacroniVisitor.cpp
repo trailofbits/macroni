@@ -60,7 +60,7 @@ get_parameter_names(pasta::MacroSubstitution &sub) {
     if (auto bt = macro_tok.BeginToken()) {
       param_names.push_back(bt->Data());
     } else {
-      param_names.push_back("<a nameless macro parameter>");
+      param_names.push_back("");
     }
   }
   return param_names;
