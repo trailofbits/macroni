@@ -65,7 +65,7 @@ message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
 #
 # Find LLVM
 #
-find_package(LLVM 17 REQUIRED CONFIG)
+find_package(LLVM 18.1.4 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
@@ -165,8 +165,7 @@ target_include_directories(
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # enable exception on failure
-option(MACRONI_ENABLE_EXCEPTIONS "Enable exception throw on macroni failure"
-       OFF)
+option(MACRONI_ENABLE_EXCEPTIONS "Enable exception throw on macroni failure" ON)
 if(MACRONI_ENABLE_EXCEPTIONS)
   target_compile_definitions(macroni_settings
                              INTERFACE -DMACRONI_ENABLE_EXCEPTIONS)
@@ -212,9 +211,18 @@ if(NOT MACRONI_USE_VENDORED_VAST)
   find_package(VAST CONFIG REQUIRED)
 endif()
 
+# TODO(Brent): Only link vast libs to targets that need them.
+get_property(VAST_LIBS GLOBAL PROPERTY VAST_ALL_LIBS)
 target_link_libraries(
   macroni_settings
-  INTERFACE pasta pasta_cxx_settings vast_settings)
+  INTERFACE ${LLVM_LIBS}
+            ${CLANG_LIBS}
+            ${MACRONI_MLIR_LIBS}
+            gap::gap
+            pasta
+            pasta_cxx_settings
+            vast_settings
+            ${VAST_LIBS})
 
 include_directories(${MACRONI_SOURCE_DIR}/include)
 include_directories(${MACRONI_BINARY_DIR}/include)

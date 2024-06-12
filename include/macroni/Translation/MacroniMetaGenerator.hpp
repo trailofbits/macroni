@@ -1,64 +1,37 @@
 #pragma once
 
-#include <pasta/AST/AST.h>
-#include <pasta/AST/Macro.h>
-#include <vast/CodeGen/CodeGenMeta.hpp>
+#include "pasta/AST/Macro.h"
+#include "vast/CodeGen/CodeGenMeta.hpp"
+#include "vast/Util/Common.hpp"
+#include <clang/AST/DeclBase.h>
+#include <clang/AST/Expr.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceLocation.h>
 
 namespace macroni {
-struct MacroniMetaGenerator final : public vast::cg::meta_generator {
+// The macroni meta generator is mostly the same as vast's default meta
+// generator, with an additional method for returning the locations of
+// pasta macro substitutions.
+struct macroni_meta_generator final : public vast::cg::meta_generator {
 
 public:
-  MacroniMetaGenerator(clang::ASTContext *ast, mlir::MLIRContext *mctx)
-      : ast(ast), mctx(mctx), unknown_location(mlir::UnknownLoc::get(mctx)) {}
+  [[nodiscard]] macroni_meta_generator(vast::acontext_t *actx,
+                                       vast::mcontext_t *mctx);
 
-  mlir::Location location(const clang::FullSourceLoc &loc) const {
-    auto file_entry = loc.getFileEntry();
-    auto file = file_entry ? file_entry->getName() : "unknown";
-    auto line = loc.getLineNumber();
-    auto col = loc.getColumnNumber();
-    return {mlir::FileLineColLoc::get(mctx, file, line, col)};
-  }
+  [[nodiscard]] vast::loc_t location(const clang::Decl *decl) const override;
 
-  mlir::Location location(const clang::SourceLocation &loc) const {
-    return location(clang::FullSourceLoc(loc, ast->getSourceManager()));
-  }
+  [[nodiscard]] vast::loc_t location(const clang::Stmt *stmt) const override;
 
-  mlir::Location location(const clang::Decl *decl) const final {
-    return location(decl->getLocation());
-  }
+  [[nodiscard]] vast::loc_t location(const clang::Expr *expr) const override;
 
-  mlir::Location location(const clang::Stmt *stmt) const final {
-    return location(stmt->getBeginLoc());
-  }
+  [[nodiscard]] vast::loc_t location(pasta::MacroSubstitution sub) const;
 
-  mlir::Location location(const clang::Expr *expr) const final {
-    return location(expr->getExprLoc());
-  }
+private:
+  [[nodiscard]] vast::loc_t location(const clang::FullSourceLoc &loc) const;
 
-  mlir::Location location(const clang::Type *type) const {
-    return unknown_location;
-  }
+  [[nodiscard]] vast::loc_t location(const clang::SourceLocation &loc) const;
 
-  mlir::Location location(const clang::Attr *type) const {
-    return unknown_location;
-  }
-
-  mlir::Location location(const clang::QualType type) const {
-    return unknown_location;
-  }
-
-  mlir::Location location(pasta::MacroSubstitution sub) const {
-    auto begin_token = sub.BeginToken();
-    auto file_loc = begin_token ? begin_token->FileLocation() : std::nullopt;
-    auto file = file_loc ? pasta::File::Containing(file_loc) : std::nullopt;
-    auto filepath = file ? file->Path().string() : "<unknown>";
-    return mlir::FileLineColLoc::get(
-        mlir::StringAttr::get(mctx, llvm::Twine(filepath)),
-        file_loc ? file_loc->Line() : 0, file_loc ? file_loc->Column() : 0);
-  }
-
-  clang::ASTContext *ast;
-  mlir::MLIRContext *mctx;
-  const mlir::Location unknown_location;
+  vast::acontext_t *m_actx;
+  vast::mcontext_t *m_mctx;
 };
 } // namespace macroni
