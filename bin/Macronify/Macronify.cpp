@@ -6,8 +6,8 @@
 
 #include "macroni/Common/ParseAST.hpp"
 #include "macroni/Dialect/Macroni/MacroniDialect.hpp"
-#include "macroni/Translation/MacroniMetaGenerator.hpp"
-#include "macroni/Translation/MacroniVisitor.hpp"
+#include "macroni/Translation/Macroni/MacroniMetaGenerator.hpp"
+#include "macroni/Translation/Macroni/MacroniVisitor.hpp"
 #include "pasta/AST/AST.h"
 #include "vast/CodeGen/CodeGenDriver.hpp"
 #include "vast/CodeGen/CodeGenVisitorBase.hpp"
