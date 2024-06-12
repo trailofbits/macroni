@@ -118,7 +118,7 @@ vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
       // value.
       auto last_block = state.getBlock();
       auto last_op = std::prev(last_block->end());
-      (void)m_bld.scoped_insertion_at_end(last_block);
+      [[maybe_unused]] auto _ = m_bld.scoped_insertion_at_end(last_block);
       auto stmt_loc = m_view.location(stmt);
 
       if (last_op->getNumResults() > 0) {
