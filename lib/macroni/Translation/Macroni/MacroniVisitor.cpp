@@ -1,6 +1,6 @@
-#include "macroni/Translation/MacroniVisitor.hpp"
+#include "macroni/Translation/Macroni/MacroniVisitor.hpp"
 #include "macroni/Dialect/Macroni/MacroniOps.hpp"
-#include "macroni/Translation/MacroniMetaGenerator.hpp"
+#include "macroni/Translation/Macroni/MacroniMetaGenerator.hpp"
 #include "pasta/AST/Macro.h"
 #include "pasta/AST/Stmt.h"
 #include <llvm/ADT/StringRef.h>

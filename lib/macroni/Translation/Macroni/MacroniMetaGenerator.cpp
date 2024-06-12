@@ -1,4 +1,4 @@
-#include "macroni/Translation/MacroniMetaGenerator.hpp"
+#include "macroni/Translation/Macroni/MacroniMetaGenerator.hpp"
 #include "pasta/AST/Macro.h"
 #include "pasta/Util/File.h"
 #include "vast/Util/Common.hpp"
