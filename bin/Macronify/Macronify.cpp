@@ -25,6 +25,9 @@
 namespace macroni {
 std::unique_ptr<vast::cg::driver> generate_macroni_driver(pasta::AST &pctx) {
   auto &actx = pctx.UnderlyingAST();
+
+  // Load MLIR, VAST, and Macroni dialects into registry.
+
   mlir::DialectRegistry registry;
   mlir::registerAllDialects(registry);
   vast::registerAllDialects(registry);
@@ -32,6 +35,9 @@ std::unique_ptr<vast::cg::driver> generate_macroni_driver(pasta::AST &pctx) {
   auto mctx = std::make_unique<vast::mcontext_t>();
   mctx->appendDialectRegistry(registry);
   mctx->loadAllAvailableDialects();
+
+  // Set up variables for constructing the codegen driver.
+
   auto bld = vast::cg::mk_codegen_builder(mctx.get());
   auto mg = std::make_unique<macroni_meta_generator>(&actx, mctx.get());
   auto mangle_context = actx.createMangleContext();
@@ -43,6 +49,8 @@ std::unique_ptr<vast::cg::driver> generate_macroni_driver(pasta::AST &pctx) {
       .disable_unsupported = false,
       .disable_vast_verifier = true,
       .prepare_default_visitor_stack = false};
+
+  // Create the codegen driver and set up visitor stack.
 
   auto driver = std::make_unique<vast::cg::driver>(
       actx, std::move(mctx), std::move(copts), std::move(bld), std::move(mg),
