@@ -1,4 +1,5 @@
 #include "macroni/Translation/Safety/SafetyVisitor.hpp"
+#include "macroni/Common/EmptyVisitor.hpp"
 #include "macroni/Dialect/Safety/SafetyOps.hpp"
 #include "vast/CodeGen/CodeGenBuilder.hpp"
 #include "vast/CodeGen/CodeGenMeta.hpp"
@@ -19,7 +20,7 @@ safety_visitor::safety_visitor(
     vast::mcontext_t &mctx, vast::cg::codegen_builder &bld,
     vast::cg::meta_generator &mg, vast::cg::symbol_generator &sg,
     vast::cg::visitor_view view)
-    : visitor_base(mctx, mg, sg, view.options()),
+    : ::macroni::empty_visitor(mctx, mg, sg, view),
       m_safe_block_conditions(safe_block_conditions), m_bld(bld), m_view(view) {
 }
 
@@ -58,31 +59,5 @@ vast::operation safety_visitor::visit(const vast::cg::clang_stmt *stmt,
   vast::cg::default_stmt_visitor visitor(m_bld, m_view, scope);
   auto op = visitor.visit(else_branch);
   return op;
-}
-
-vast::operation safety_visitor::visit(const vast::cg::clang_decl *decl,
-                                      vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::mlir_type safety_visitor::visit(const vast::cg::clang_type *type,
-                                      vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::mlir_type safety_visitor::visit(vast::cg::clang_qual_type type,
-                                      vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::mlir_attr safety_visitor::visit(const vast::cg::clang_attr *attr,
-                                      vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::operation
-safety_visitor::visit_prototype(const vast::cg::clang_function *decl,
-                                vast::cg::scope_context &scope) {
-  return {};
 }
 } // namespace macroni::safety

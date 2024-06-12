@@ -1,5 +1,6 @@
 #pragma once
 
+#include "macroni/Common/EmptyVisitor.hpp"
 #include "vast/CodeGen/CodeGenBuilder.hpp"
 #include "vast/CodeGen/CodeGenMeta.hpp"
 #include "vast/CodeGen/CodeGenVisitorBase.hpp"
@@ -11,7 +12,7 @@
 #include <set>
 
 namespace macroni::safety {
-struct safety_visitor : vast::cg::visitor_base {
+struct safety_visitor : macroni::empty_visitor {
 
   [[nodiscard]] safety_visitor(
       std::set<const clang::IntegerLiteral *> &safe_block_conditions,
@@ -21,21 +22,6 @@ struct safety_visitor : vast::cg::visitor_base {
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
-
-  vast::operation visit(const vast::cg::clang_decl *decl,
-                        vast::cg::scope_context &scope) override;
-
-  vast::mlir_type visit(const vast::cg::clang_type *type,
-                        vast::cg::scope_context &scope) override;
-
-  vast::mlir_type visit(vast::cg::clang_qual_type type,
-                        vast::cg::scope_context &scope) override;
-
-  vast::mlir_attr visit(const vast::cg::clang_attr *attr,
-                        vast::cg::scope_context &scope) override;
-
-  vast::operation visit_prototype(const vast::cg::clang_function *decl,
-                                  vast::cg::scope_context &scope) override;
 
   std::set<const clang::IntegerLiteral *> &m_safe_block_conditions;
   vast::cg::codegen_builder &m_bld;

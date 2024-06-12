@@ -1,4 +1,5 @@
 #include "macroni/Translation/Macroni/MacroniVisitor.hpp"
+#include "macroni/Common/EmptyVisitor.hpp"
 #include "macroni/Dialect/Macroni/MacroniOps.hpp"
 #include "macroni/Translation/Macroni/MacroniMetaGenerator.hpp"
 #include "pasta/AST/Macro.h"
@@ -71,7 +72,7 @@ macroni_visitor::macroni_visitor(pasta::AST &pctx, vast::mcontext_t &mctx,
                                  vast::cg::meta_generator &mg,
                                  vast::cg::symbol_generator &sg,
                                  vast::cg::visitor_view view)
-    : visitor_base(mctx, mg, sg, view.options()), m_pctx(pctx), m_bld(bld),
+    : empty_visitor(mctx, mg, sg, view), m_pctx(pctx), m_bld(bld),
       m_view(view) {}
 
 vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
@@ -154,39 +155,5 @@ vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
       .bind(rty)
       .bind(make_expansion_region_builder(stmt))
       .freeze();
-}
-
-// We default these methods to return an empty op to force the fallback
-// visitor to handle them instead.
-//
-// TODO(Brent): Maybe I should add an empty_visitor type to return empty
-// options for all visitor methods, and inherit from that for all Macroni's
-// visitors so they can just override the single methods they're interested
-// in?
-
-vast::operation macroni_visitor::visit(const vast::cg::clang_decl *decl,
-                                       vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::mlir_type macroni_visitor::visit(const vast::cg::clang_type *type,
-                                       vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::mlir_type macroni_visitor::visit(vast::cg::clang_qual_type type,
-                                       vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::mlir_attr macroni_visitor::visit(const vast::cg::clang_attr *attr,
-                                       vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::operation
-macroni_visitor::visit_prototype(const vast::cg::clang_function *decl,
-                                 vast::cg::scope_context &scope) {
-  return {};
 }
 } // namespace macroni
