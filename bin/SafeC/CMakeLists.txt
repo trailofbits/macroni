@@ -15,6 +15,6 @@ add_clang_executable(safe-c SafeC.cpp)
 # Restore the original LLVM_RUNTIME_OUTPUT_INTDIR value.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${MACRONI_ORIGINAL_LLVM_RUNTIME_OUTPUT_INTDIR})
 
-target_link_libraries(safe-c PRIVATE macroni_settings macroni_common
-                                     safety_translation_api MLIRSafety)
+target_link_libraries(safe-c PRIVATE macroni_settings safety_translation_api
+                                     MLIRSafety)
 mlir_check_link_libraries(safe-c)
