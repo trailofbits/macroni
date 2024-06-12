@@ -1,6 +1,7 @@
 // Copyright (c) 2023-present, Trail of Bits, Inc.
 
 #include "macroni/Dialect/Macroni/MacroniOps.hpp"
+#include "macroni/Common/MLIRUtils.hpp"
 #include "vast/Util/Common.hpp"
 #include <llvm/Support/ErrorHandling.h>
 #include <mlir/IR/Builders.h>
@@ -11,12 +12,6 @@
 #include <mlir/Support/LogicalResult.h>
 
 namespace macroni::macroni {
-void build_region(vast::mlir_builder &bld, vast::op_state &st,
-                  vast::builder_callback_ref callback) {
-  bld.createBlock(st.addRegion());
-  callback(bld, st.location);
-}
-
 void MacroExpansion::build(mlir::OpBuilder &odsBuilder,
                            mlir::OperationState &odsState,
                            mlir::StringAttr macroName,

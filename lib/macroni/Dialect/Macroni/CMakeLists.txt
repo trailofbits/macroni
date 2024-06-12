@@ -11,4 +11,5 @@ add_mlir_dialect_library(
   #
   LINK_LIBS
   PUBLIC
-  macroni_settings)
+  macroni_settings
+  macroni_common)
