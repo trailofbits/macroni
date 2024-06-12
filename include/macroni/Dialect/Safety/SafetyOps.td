@@ -13,6 +13,11 @@ def UnsafeRegion :
     A region of code wrapped in an expansion of the "unsafe" macro.
   }];
   let regions = (region SizedRegion<1>:$bodyRegion);
+  let skipDefaultBuilders = 1;
+  let builders = [
+    OpBuilder<(ins "vast::builder_callback_ref":$bodyBuilder)>
+  ];
+  let assemblyFormat = [{ $bodyRegion attr-dict }];
 }
 
 #endif // MACRONI_DIALECT_IR_SAFETYOPS
