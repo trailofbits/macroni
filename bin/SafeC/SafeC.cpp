@@ -2,7 +2,9 @@
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
+#include <cstdlib>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/raw_ostream.h>
 
 static llvm::cl::OptionCategory g_tool_category("safe-c options");
 
@@ -18,7 +20,7 @@ int main(int argc, const char **argv) {
       clang::tooling::CommonOptionsParser::create(argc, argv, g_tool_category);
   if (!ExpectedParser) {
     llvm::errs() << ExpectedParser.takeError();
-    return 1;
+    return EXIT_FAILURE;
   }
 
   clang::tooling::CommonOptionsParser &OptionsParser = ExpectedParser.get();
