@@ -27,6 +27,12 @@ StatementMatcher rcu_assign_pointer_matcher =
                      ))
         .bind("rcu_assign_pointer");
 
+StatementMatcher rcu_access_pointer_matcher =
+    stmtExpr(
+        allOf(isExpandedFromMacro("rcu_access_pointer"),
+              hasDescendant(parenExpr(has(parenExpr(has(expr().bind("p"))))))))
+        .bind("rcu_access_pointer");
+
 void rcu_collector::run(const MatchFinder::MatchResult &Result) {
   if (auto rcu_dereference =
           Result.Nodes.getNodeAs<clang::StmtExpr>("rcu_dereference")) {
@@ -37,6 +43,10 @@ void rcu_collector::run(const MatchFinder::MatchResult &Result) {
     auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
     auto v = Result.Nodes.getNodeAs<clang::Expr>("v");
     m_rcu_assign_pointer_to_params.insert({rcu_assign_pointer, {p, v}});
+  } else if (auto rcu_access_pointer = Result.Nodes.getNodeAs<clang::StmtExpr>(
+                 "rcu_access_pointer")) {
+    auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
+    m_rcu_access_pointer_to_p.insert({rcu_access_pointer, p});
   }
 }
 } // namespace macroni::kernel
