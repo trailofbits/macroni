@@ -12,14 +12,9 @@ using namespace clang::ast_matchers;
 extern StatementMatcher rcu_deference_matcher;
 
 class rcu_collector : public MatchFinder::MatchCallback {
+public:
   virtual void run(const MatchFinder::MatchResult &Result) override;
 
-  virtual void onStartOfTranslationUnit() override;
-
-  virtual void onEndOfTranslationUnit() override;
-
-private:
-  clang::ASTContext *m_actx;
   rcu_dereference_table m_rcu_dereference_to_p;
 };
 } // namespace macroni::kernel
