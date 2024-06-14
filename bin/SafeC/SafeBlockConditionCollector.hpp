@@ -12,14 +12,9 @@ using namespace clang::ast_matchers;
 extern clang::ast_matchers::StatementMatcher safe_block_condition_matcher;
 
 class safe_block_condition_collector : public MatchFinder::MatchCallback {
+public:
   virtual void run(const MatchFinder::MatchResult &Result) override;
 
-  virtual void onStartOfTranslationUnit() override;
-
-  virtual void onEndOfTranslationUnit() override;
-
-private:
-  clang::ASTContext *m_actx;
   std::set<const clang::IntegerLiteral *> m_safe_block_conditions;
 };
 } // namespace macroni::safety
