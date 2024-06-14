@@ -4,7 +4,7 @@
 // This source code is licensed in accordance with the terms specified in the
 // LICENSE file found in the root directory of this source tree.
 
-#include "RCUCollector.hpp"
+#include "KernelASTConsumer.hpp"
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
@@ -31,9 +31,7 @@ int main(int argc, const char **argv) {
   clang::tooling::ClangTool Tool(OptionsParser.getCompilations(),
                                  OptionsParser.getSourcePathList());
 
-  clang::ast_matchers::MatchFinder finder;
-  macroni::kernel::rcu_collector matcher;
-  finder.addMatcher(macroni::kernel::rcu_deference_matcher, &matcher);
+  macroni::kernel::KernelASTConsumerFactory factory;
 
-  return Tool.run(clang::tooling::newFrontendActionFactory(&finder).get());
+  return Tool.run(clang::tooling::newFrontendActionFactory(&factory).get());
 }
