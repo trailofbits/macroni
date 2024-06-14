@@ -105,6 +105,7 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   rcu_collector matcher;
   finder.addMatcher(rcu_deference_matcher, &matcher);
   finder.addMatcher(rcu_assign_pointer_matcher, &matcher);
+  finder.addMatcher(rcu_access_pointer_matcher, &matcher);
   finder.matchAST(Ctx);
 
   // Set up the driver.
@@ -114,8 +115,9 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
 
   driver->push_visitor(std::make_unique<kernel_visitor>(
       matcher.m_rcu_dereference_to_p, matcher.m_rcu_assign_pointer_to_params,
-      driver->mcontext(), driver->get_codegen_builder(),
-      driver->get_meta_generator(), driver->get_symbol_generator(),
+      matcher.m_rcu_access_pointer_to_p, driver->mcontext(),
+      driver->get_codegen_builder(), driver->get_meta_generator(),
+      driver->get_symbol_generator(),
       vast::cg::visitor_view(driver->get_visitor_stack())));
 
   vast::cg::setup_default_visitor_stack(*driver);
