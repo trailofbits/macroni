@@ -1,9 +1,5 @@
 #include "rcu.h"
-
-struct string {
-  char *begin;
-  unsigned long size;
-};
+#include "test_structs.h"
 
 int main(void) {
   int *x = 0;
