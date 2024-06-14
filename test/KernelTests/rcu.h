@@ -253,4 +253,13 @@ static __always_inline void __write_once_size(volatile void *p, void *res,
 // don't have to match on it. We could add an alternative matcher just to be
 // safe though.
 
+#define __rcu_access_pointer(p, local, space)                                  \
+  ({                                                                           \
+    typeof(*p) *local = (typeof(*p) *__force)READ_ONCE(p);                     \
+    rcu_check_sparse(p, space);                                                \
+    ((typeof(*p) __force __kernel *)(local));                                  \
+  })
+
+#define rcu_access_pointer(p) __rcu_access_pointer((p), __UNIQUE_ID(rcu), __rcu)
+
 #endif
