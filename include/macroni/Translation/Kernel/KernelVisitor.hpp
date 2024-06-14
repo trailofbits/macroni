@@ -12,6 +12,7 @@
 #include <clang/AST/Expr.h>
 #include <map>
 #include <mlir/IR/Operation.h>
+#include <optional>
 
 namespace macroni::kernel {
 using rcu_dereference_table =
@@ -33,6 +34,10 @@ struct kernel_visitor : ::macroni::empty_visitor {
 
   [[nodiscard]] vast::mlir_attr visit(const vast::cg::clang_attr *attr,
                                       vast::cg::scope_context &scope) override;
+
+  [[nodiscard]] std::optional<vast::operation>
+  visit_rcu_dereference(const vast::cg::clang_stmt *stmt,
+                        vast::cg::scope_context &scope);
 
   [[nodiscard]] bool is_context_attr(const clang::AnnotateAttr *attr);
 

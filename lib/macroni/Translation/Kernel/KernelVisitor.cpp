@@ -13,6 +13,7 @@
 #include <clang/AST/Expr.h>
 #include <clang/Basic/LLVM.h>
 #include <mlir/IR/Operation.h>
+#include <optional>
 
 namespace macroni::kernel {
 kernel_visitor::kernel_visitor(rcu_dereference_table &rcu_dereference_to_p,
@@ -26,22 +27,7 @@ kernel_visitor::kernel_visitor(rcu_dereference_table &rcu_dereference_to_p,
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
-  auto rcu_dereference = clang::dyn_cast<clang::StmtExpr>(stmt);
-  if (!rcu_dereference) {
-    return {};
-  }
-
-  if (!m_rcu_dereference_to_p.contains(rcu_dereference)) {
-    return {};
-  }
-
-  auto loc = m_view.location(rcu_dereference);
-  auto p = m_rcu_dereference_to_p.at(rcu_dereference);
-  vast::cg::default_stmt_visitor visitor(m_bld, m_view, scope);
-  auto rty = m_view.visit(p->getType(), scope);
-  auto p_op = m_view.visit(p, scope);
-
-  return m_bld.create<RCUDereference>(loc, rty, p_op->getOpResult(0));
+  return visit_rcu_dereference(stmt, scope).value_or(nullptr);
 }
 
 vast::mlir_type kernel_visitor::visit(vast::cg::clang_qual_type type,
@@ -52,6 +38,27 @@ vast::mlir_type kernel_visitor::visit(vast::cg::clang_qual_type type,
 vast::mlir_attr kernel_visitor::visit(const vast::cg::clang_attr *attr,
                                       vast::cg::scope_context &scope) {
   return {};
+}
+
+std::optional<vast::operation>
+kernel_visitor::visit_rcu_dereference(const vast::cg::clang_stmt *stmt,
+                                      vast::cg::scope_context &scope) {
+  auto rcu_dereference = clang::dyn_cast<clang::StmtExpr>(stmt);
+  if (!rcu_dereference) {
+    return std::nullopt;
+  }
+
+  if (!m_rcu_dereference_to_p.contains(rcu_dereference)) {
+    return std::nullopt;
+  }
+
+  auto loc = m_view.location(rcu_dereference);
+  auto p = m_rcu_dereference_to_p.at(rcu_dereference);
+  vast::cg::default_stmt_visitor visitor(m_bld, m_view, scope);
+  auto rty = m_view.visit(p->getType(), scope);
+  auto p_op = m_view.visit(p, scope);
+
+  return m_bld.create<RCUDereference>(loc, rty, p_op->getOpResult(0));
 }
 
 bool kernel_visitor::is_context_attr(const clang::AnnotateAttr *attr) {
