@@ -39,6 +39,10 @@ struct kernel_visitor : ::macroni::empty_visitor {
   visit_rcu_dereference(const vast::cg::clang_stmt *stmt,
                         vast::cg::scope_context &scope);
 
+  [[nodiscard]] std::optional<vast::operation>
+  visit_rcu_read_lock_or_unlock(const vast::cg::clang_stmt *stmt,
+                                vast::cg::scope_context &scope);
+
   [[nodiscard]] bool is_context_attr(const clang::AnnotateAttr *attr);
 
   void set_lock_level(mlir::Operation &op);

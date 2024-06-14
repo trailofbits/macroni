@@ -1,5 +1,6 @@
 #include "macroni/Translation/Kernel/KernelVisitor.hpp"
 #include "macroni/Common/EmptyVisitor.hpp"
+#include "macroni/Dialect/Kernel/KernelDialect.hpp"
 #include "macroni/Dialect/Kernel/KernelOps.hpp"
 #include "vast/CodeGen/CodeGenBuilder.hpp"
 #include "vast/CodeGen/CodeGenMeta.hpp"
@@ -27,7 +28,8 @@ kernel_visitor::kernel_visitor(rcu_dereference_table &rcu_dereference_to_p,
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
-  return visit_rcu_dereference(stmt, scope).value_or(nullptr);
+  return visit_rcu_dereference(stmt, scope)
+      .value_or(visit_rcu_read_lock_or_unlock(stmt, scope).value_or(nullptr));
 }
 
 vast::mlir_type kernel_visitor::visit(vast::cg::clang_qual_type type,
@@ -61,6 +63,36 @@ kernel_visitor::visit_rcu_dereference(const vast::cg::clang_stmt *stmt,
   return m_bld.create<RCUDereference>(loc, rty, p_op->getOpResult(0));
 }
 
+std::optional<vast::operation>
+kernel_visitor::visit_rcu_read_lock_or_unlock(const vast::cg::clang_stmt *stmt,
+                                              vast::cg::scope_context &scope) {
+  auto call_expr = clang::dyn_cast<clang::CallExpr>(stmt);
+  if (!call_expr) {
+    return std::nullopt;
+  }
+
+  auto direct_callee = call_expr->getDirectCallee();
+  if (!direct_callee) {
+    return std::nullopt;
+  }
+
+  auto name = direct_callee->getName();
+  if (KernelDialect::rcu_read_lock() != name &&
+      KernelDialect::rcu_read_unlock() != name) {
+    return std::nullopt;
+  }
+
+  vast::cg::default_stmt_visitor visitor(m_bld, m_view, scope);
+  auto op = visitor.visit(stmt);
+  if (KernelDialect::rcu_read_lock() == name) {
+    lock_op(*op);
+  } else {
+    unlock_op(*op);
+  }
+
+  return op;
+}
+
 bool kernel_visitor::is_context_attr(const clang::AnnotateAttr *attr) {
   return false;
 }
@@ -79,20 +111,6 @@ void kernel_visitor::unlock_op(mlir::Operation &op) {
   set_lock_level(op);
 }
 } // namespace macroni::kernel
-
-// template <typename Derived>
-// struct KernelCodeGenVisitorMixin
-//     : macroni::MacroniCodeGenVisitorMixin<Derived> {
-
-//   using parent_t = macroni::MacroniCodeGenVisitorMixin<Derived>;
-
-//   using parent_t::mlir_builder;
-//   using parent_t::stmt_visitor::lens::acontext;
-//   using parent_t::stmt_visitor::lens::mcontext;
-
-//   using parent_t::Visit;
-
-//   std::int64_t lock_level = 0;
 
 //   bool is_context_attr(const clang::AnnotateAttr *attr) {
 //     return attr->getAttrName()->getName() == "context" &&
@@ -155,38 +173,3 @@ void kernel_visitor::unlock_op(mlir::Operation &op) {
 //     int space = addr_space->getAddressSpace() - first;
 //     return ::macroni::kernel::AddressSpaceType::get(&mcontext(), ty, space);
 //   }
-
-//   void UnalignedStmtVisited(pasta::Stmt &pasta_stmt, mlir::Operation *op) {
-//     if (auto call_expr = pasta::CallExpr::From(pasta_stmt)) {
-//       VisitCallExpr(*call_expr, op);
-//     }
-//   }
-
-//   void set_lock_level(mlir::Operation *op) {
-//     op->setAttr("lock_level", mlir_builder().getI64IntegerAttr(lock_level));
-//   }
-
-//   void lock_op(mlir::Operation *op) {
-//     set_lock_level(op);
-//     lock_level++;
-//   }
-
-//   void unlock_op(mlir::Operation *op) {
-//     lock_level--;
-//     set_lock_level(op);
-//   }
-
-//   void VisitCallExpr(pasta::CallExpr &call_expr, mlir::Operation *op) {
-//     auto call_op = mlir::dyn_cast_or_null<vast::hl::CallOp>(op);
-//     if (!call_op) {
-//       return;
-//     }
-
-//     auto name = call_op.getCalleeAttr().getValue();
-//     if (name == macroni::kernel::KernelDialect::rcu_read_lock()) {
-//       lock_op(op);
-//     } else if (name == macroni::kernel::KernelDialect::rcu_read_unlock()) {
-//       unlock_op(op);
-//     }
-//   }
-// };
