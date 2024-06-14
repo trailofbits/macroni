@@ -27,13 +27,16 @@ struct rcu_assign_pointer_parameters {
 using rcu_assign_pointer_table =
     std::map<const clang::DoStmt *, rcu_assign_pointer_parameters>;
 
+using rcu_access_pointer_table =
+    std::map<const clang::StmtExpr *, const clang::Expr *>;
+
 struct kernel_visitor : ::macroni::empty_visitor {
   [[nodiscard]] kernel_visitor(
       rcu_dereference_table &rcu_dereference_to_p,
       rcu_assign_pointer_table &rcu_assign_pointer_params,
-      vast::mcontext_t &mctx, vast::cg::codegen_builder &bld,
-      vast::cg::meta_generator &mg, vast::cg::symbol_generator &sg,
-      vast::cg::visitor_view view);
+      rcu_access_pointer_table &rcu_access_pointer_to_p, vast::mcontext_t &mctx,
+      vast::cg::codegen_builder &bld, vast::cg::meta_generator &mg,
+      vast::cg::symbol_generator &sg, vast::cg::visitor_view view);
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
@@ -56,6 +59,10 @@ struct kernel_visitor : ::macroni::empty_visitor {
   visit_rcu_assign_pointer(const vast::cg::clang_stmt *stmt,
                            vast::cg::scope_context &scope);
 
+  [[nodiscard]] std::optional<vast::operation>
+  visit_rcu_access_pointer(const vast::cg::clang_stmt *stmt,
+                           vast::cg::scope_context &scope);
+
   [[nodiscard]] bool is_context_attr(const clang::AnnotateAttr *attr);
 
   void set_lock_level(mlir::Operation &op);
@@ -66,6 +73,7 @@ struct kernel_visitor : ::macroni::empty_visitor {
 
   rcu_dereference_table &m_rcu_dereference_to_p;
   rcu_assign_pointer_table &m_rcu_assign_pointer_params;
+  rcu_access_pointer_table &m_rcu_access_pointer_to_p;
 
   vast::cg::codegen_builder &m_bld;
   vast::cg::visitor_view m_view;
