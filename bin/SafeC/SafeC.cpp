@@ -1,4 +1,4 @@
-#include "SafeBlockConditionCollector.hpp"
+#include "SafetyASTConsumer.hpp"
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
@@ -25,9 +25,7 @@ int main(int argc, const char **argv) {
   clang::tooling::ClangTool Tool(OptionsParser.getCompilations(),
                                  OptionsParser.getSourcePathList());
 
-  clang::ast_matchers::MatchFinder finder;
-  macroni::safety::safe_block_condition_collector matcher;
-  finder.addMatcher(macroni::safety::safe_block_condition_matcher, &matcher);
+  macroni::safety::SafetyASTConsumerFactory factory;
 
-  return Tool.run(clang::tooling::newFrontendActionFactory(&finder).get());
+  return Tool.run(clang::tooling::newFrontendActionFactory(&factory).get());
 }
