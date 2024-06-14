@@ -10,11 +10,13 @@ namespace macroni::kernel {
 using namespace clang::ast_matchers;
 
 extern StatementMatcher rcu_deference_matcher;
+extern StatementMatcher rcu_assign_pointer_matcher;
 
 class rcu_collector : public MatchFinder::MatchCallback {
 public:
   virtual void run(const MatchFinder::MatchResult &Result) override;
 
   rcu_dereference_table m_rcu_dereference_to_p;
+  rcu_assign_pointer_table m_rcu_assign_pointer_to_params;
 };
 } // namespace macroni::kernel
