@@ -1,4 +1,4 @@
-#include "SafetyASTConsumer.hpp"
+#include "macroni/ASTConsumers/Safety/SafetyASTConsumer.hpp"
 #include "macroni/ASTMatchers/Safety/SafetyMatchers.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
 #include "macroni/Dialect/Safety/SafetyDialect.hpp"
