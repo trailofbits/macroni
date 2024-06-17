@@ -1,8 +1,8 @@
 // Copyright (c) 2023-present, Trail of Bits, Inc.
 
 #include "macroni/Dialect/Safety/SafetyOps.hpp"
-#include "macroni/Common/MLIRUtils.hpp"
 #include "vast/Util/Common.hpp"
+#include "vast/Util/Region.hpp"
 #include <llvm/Support/ErrorHandling.h>
 #include <mlir/IR/Builders.h>
 #include <mlir/IR/OpImplementation.h>
@@ -16,7 +16,7 @@ void UnsafeRegion::build(mlir::OpBuilder &odsBuilder,
                          mlir::OperationState &odsState,
                          vast::builder_callback_ref callback) {
   mlir::OpBuilder::InsertionGuard guard(odsBuilder);
-  ::macroni::build_region(odsBuilder, odsState, callback);
+  vast::build_region(odsBuilder, odsState, callback);
 }
 } // namespace macroni::safety
 
