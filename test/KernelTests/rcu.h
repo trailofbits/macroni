@@ -262,4 +262,21 @@ static __always_inline void __write_once_size(volatile void *p, void *res,
 
 #define rcu_access_pointer(p) __rcu_access_pointer((p), __UNIQUE_ID(rcu), __rcu)
 
+#define __rcu_dereference_protected(p, local, c, space)                        \
+  ({                                                                           \
+    RCU_LOCKDEP_WARN(!(c), "suspicious rcu_dereference_protected() usage");    \
+    rcu_check_sparse(p, space);                                                \
+    ((typeof(*p) __force __kernel *)(p));                                      \
+  })
+
+#define rcu_dereference_protected(p, c)                                        \
+  __rcu_dereference_protected((p), __UNIQUE_ID(rcu), (c), __rcu)
+
+#define rcu_replace_pointer(rcu_ptr, ptr, c)                                   \
+  ({                                                                           \
+    typeof(ptr) __tmp = rcu_dereference_protected((rcu_ptr), (c));             \
+    rcu_assign_pointer((rcu_ptr), (ptr));                                      \
+    __tmp;                                                                     \
+  })
+
 #endif
