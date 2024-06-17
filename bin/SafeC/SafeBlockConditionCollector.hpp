@@ -7,13 +7,14 @@
 #include <set>
 
 namespace macroni::safety {
-using namespace clang::ast_matchers;
 
 extern clang::ast_matchers::StatementMatcher safe_block_condition_matcher;
 
-class safe_block_condition_collector : public MatchFinder::MatchCallback {
+class safe_block_condition_collector
+    : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  virtual void run(const MatchFinder::MatchResult &Result) override;
+  virtual void
+  run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 
   std::set<const clang::IntegerLiteral *> m_safe_block_conditions;
 };
