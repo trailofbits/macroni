@@ -6,34 +6,8 @@
 #include <clang/ASTMatchers/ASTMatchers.h>
 
 namespace macroni::kernel {
-using namespace clang::ast_matchers;
-
-StatementMatcher rcu_deference_matcher =
-    stmtExpr(
-        allOf(isExpandedFromMacro("rcu_dereference"),
-              hasDescendant(parenExpr(has(parenExpr(has(expr().bind("p"))))))))
-        .bind("rcu_dereference");
-
-StatementMatcher rcu_assign_pointer_matcher =
-    doStmt(allOf(isExpandedFromMacro("rcu_assign_pointer"),
-                 hasDescendant(callExpr(
-                     allOf(callee(functionDecl(hasName("__write_once_size"))),
-                           hasArgument(0, hasDescendant(parenExpr(has(parenExpr(
-                                              has(expr().bind("p")))))))))),
-                 hasDescendant(callExpr(allOf(
-                     callee(functionDecl(hasName("__builtin_constant_p"))),
-                     hasArgument(0, expr().bind("v")))))
-
-                     ))
-        .bind("rcu_assign_pointer");
-
-StatementMatcher rcu_access_pointer_matcher =
-    stmtExpr(
-        allOf(isExpandedFromMacro("rcu_access_pointer"),
-              hasDescendant(parenExpr(has(parenExpr(has(expr().bind("p"))))))))
-        .bind("rcu_access_pointer");
-
-void rcu_collector::run(const MatchFinder::MatchResult &Result) {
+void rcu_collector::run(
+    const clang::ast_matchers::MatchFinder::MatchResult &Result) {
   if (auto rcu_dereference =
           Result.Nodes.getNodeAs<clang::StmtExpr>("rcu_dereference")) {
     auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
