@@ -1,5 +1,5 @@
 #include "SafetyASTConsumer.hpp"
-#include "SafeBlockConditionCollector.hpp"
+#include "macroni/ASTMatchers/Safety/SafetyMatchers.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
 #include "macroni/Dialect/Safety/SafetyDialect.hpp"
 #include "macroni/Translation/Safety/SafetyVisitor.hpp"
