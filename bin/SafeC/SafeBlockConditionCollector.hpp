@@ -4,7 +4,7 @@
 #include <clang/AST/Expr.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
-#include <set>
+#include <unordered_set>
 
 namespace macroni::safety {
 
@@ -16,6 +16,6 @@ public:
   virtual void
   run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 
-  std::set<const clang::IntegerLiteral *> m_safe_block_conditions;
+  std::unordered_set<const clang::IntegerLiteral *> m_safe_block_conditions;
 };
 } // namespace macroni::safety
