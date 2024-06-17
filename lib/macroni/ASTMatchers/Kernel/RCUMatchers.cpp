@@ -21,6 +21,13 @@ void rcu_collector::run(
                  "rcu_access_pointer")) {
     auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
     m_rcu_access_pointer_to_p.insert({rcu_access_pointer, p});
+  } else if (auto rcu_replace_pointer = Result.Nodes.getNodeAs<clang::StmtExpr>(
+                 "rcu_replace_pointer")) {
+    auto rcu_ptr = Result.Nodes.getNodeAs<clang::Expr>("rcu_ptr");
+    auto ptr = Result.Nodes.getNodeAs<clang::Expr>("ptr");
+    auto c = Result.Nodes.getNodeAs<clang::Expr>("c");
+    m_rcu_replace_pointer_to_params.insert(
+        {rcu_replace_pointer, {rcu_ptr, ptr, c}});
   }
 }
 } // namespace macroni::kernel
