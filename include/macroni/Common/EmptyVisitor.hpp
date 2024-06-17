@@ -8,10 +8,10 @@
 
 namespace macroni {
 struct empty_visitor : vast::cg::visitor_base {
-  [[nodiscard]] empty_visitor(vast::mcontext_t &mctx,
-                              vast::cg::meta_generator &mg,
-                              vast::cg::symbol_generator &sg,
-                              vast::cg::visitor_view view);
+  [[nodiscard]] explicit empty_visitor(vast::mcontext_t &mctx,
+                                       vast::cg::meta_generator &mg,
+                                       vast::cg::symbol_generator &sg,
+                                       vast::cg::visitor_view view);
 
   vast::operation visit(const vast::cg::clang_stmt *stmt,
                         vast::cg::scope_context &scope) override;
