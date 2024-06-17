@@ -21,14 +21,17 @@ namespace macroni::kernel {
 kernel_visitor::kernel_visitor(
     rcu_dereference_table &rcu_dereference_to_p,
     rcu_assign_pointer_table &rcu_assign_pointer_params,
-    rcu_access_pointer_table &rcu_access_pointer_to_p, vast::mcontext_t &mctx,
-    vast::cg::codegen_builder &bld, vast::cg::meta_generator &mg,
-    vast::cg::symbol_generator &sg, vast::cg::visitor_view view)
+    rcu_access_pointer_table &rcu_access_pointer_to_p,
+    rcu_replace_pointer_table &rcu_replace_pointer_to_params,
+    vast::mcontext_t &mctx, vast::cg::codegen_builder &bld,
+    vast::cg::meta_generator &mg, vast::cg::symbol_generator &sg,
+    vast::cg::visitor_view view)
     : ::macroni::empty_visitor(mctx, mg, sg, view),
       m_rcu_dereference_to_p(rcu_dereference_to_p),
       m_rcu_assign_pointer_params(rcu_assign_pointer_params),
-      m_rcu_access_pointer_to_p(rcu_access_pointer_to_p), m_bld(bld),
-      m_view(view) {}
+      m_rcu_access_pointer_to_p(rcu_access_pointer_to_p),
+      m_rcu_replace_pointer_to_params(rcu_replace_pointer_to_params),
+      m_bld(bld), m_view(view) {}
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
@@ -36,6 +39,7 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
       .or_else([&] { return visit_rcu_read_lock_or_unlock(stmt, scope); })
       .or_else([&] { return visit_rcu_assign_pointer(stmt, scope); })
       .or_else([&] { return visit_rcu_access_pointer(stmt, scope); })
+      .or_else([&] { return visit_rcu_replace_pointer(stmt, scope); })
       // If we can't match anything, return nullptr
       .value_or(nullptr);
 }
@@ -146,6 +150,31 @@ kernel_visitor::visit_rcu_access_pointer(const vast::cg::clang_stmt *stmt,
   auto p_op = m_view.visit(p, scope);
 
   return m_bld.create<RCUAccessPointer>(loc, rty, p_op->getOpResult(0));
+}
+
+std::optional<vast::operation>
+kernel_visitor::visit_rcu_replace_pointer(const vast::cg::clang_stmt *stmt,
+                                          vast::cg::scope_context &scope) {
+  auto rcu_replace_pointer = clang::dyn_cast<clang::StmtExpr>(stmt);
+  if (!rcu_replace_pointer) {
+    return std::nullopt;
+  }
+
+  if (!m_rcu_replace_pointer_to_params.contains(rcu_replace_pointer)) {
+    return std::nullopt;
+  }
+
+  auto loc = m_view.location(rcu_replace_pointer);
+  auto params = m_rcu_replace_pointer_to_params.at(rcu_replace_pointer);
+  vast::cg::default_stmt_visitor visitor(m_bld, m_view, scope);
+  auto rty = m_view.visit(params.rcu_ptr->getType(), scope);
+  auto rcu_ptr_op = m_view.visit(params.rcu_ptr, scope);
+  auto ptr_op = m_view.visit(params.ptr, scope);
+  auto c_op = m_view.visit(params.c, scope);
+
+  return m_bld.create<RCUReplacePointer>(loc, rty, rcu_ptr_op->getOpResult(0),
+                                         ptr_op->getOpResult(0),
+                                         c_op->getOpResult(0));
 }
 
 bool kernel_visitor::is_context_attr(const clang::AnnotateAttr *attr) {
