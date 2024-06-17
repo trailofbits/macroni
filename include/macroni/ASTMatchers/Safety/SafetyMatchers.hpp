@@ -7,8 +7,11 @@
 #include <clang/ASTMatchers/ASTMatchers.h>
 
 namespace macroni::safety {
-
-extern clang::ast_matchers::StatementMatcher safe_block_condition_matcher;
+static const clang::ast_matchers::StatementMatcher
+    safe_block_condition_matcher =
+        clang::ast_matchers::integerLiteral(
+            clang::ast_matchers::isExpandedFromMacro("unsafe"))
+            .bind("root");
 
 class safe_block_condition_collector
     : public clang::ast_matchers::MatchFinder::MatchCallback {

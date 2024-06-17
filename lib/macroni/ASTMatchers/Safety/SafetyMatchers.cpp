@@ -4,12 +4,8 @@
 #include <clang/ASTMatchers/ASTMatchers.h>
 
 namespace macroni::safety {
-using namespace clang::ast_matchers;
-clang::ast_matchers::StatementMatcher safe_block_condition_matcher =
-    integerLiteral(isExpandedFromMacro("unsafe")).bind("root");
-
 void safe_block_condition_collector::run(
-    const MatchFinder::MatchResult &Result) {
+    const clang::ast_matchers::MatchFinder::MatchResult &Result) {
   auto match = Result.Nodes.getNodeAs<clang::IntegerLiteral>("root");
   m_safe_block_conditions.insert(match);
 }
