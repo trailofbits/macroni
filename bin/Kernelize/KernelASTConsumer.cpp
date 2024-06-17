@@ -1,5 +1,5 @@
 #include "KernelASTConsumer.hpp"
-#include "RCUCollector.hpp"
+#include "macroni/ASTMatchers/Kernel/RCUMatchers.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
 #include "macroni/Conversion/Kernel/KernelRewriters.hpp"
 #include "macroni/Dialect/Kernel/KernelAttributes.hpp"
