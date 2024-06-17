@@ -64,7 +64,7 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 # These lines tell LLVM where to put any targets we create with calls to
 # add_clang_executable() (and presumably other functions like it).
-# 
+#
 # TODO(Brent): See if we can place these binaries where ninja-multi-config would
 # place them so we don't overwrite release binaries with debug and vice-versa.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/bin)
@@ -197,6 +197,10 @@ add_library(macroni::settings ALIAS macroni_settings)
 #
 add_subdirectory(external)
 
+# TODO(bpp): Figure out which exact targets require this definition to compile;
+# right now we turn it on project-wide to prevent issues but it would be better
+# to enable it only where it is needed.
+add_compile_definitions(GAP_ENABLE_COROUTINES)
 if(NOT MACRONI_USE_VENDORED_GAP)
   find_package(gap CONFIG REQUIRED)
 endif()
