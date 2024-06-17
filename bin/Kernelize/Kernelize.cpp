@@ -4,7 +4,7 @@
 // This source code is licensed in accordance with the terms specified in the
 // LICENSE file found in the root directory of this source tree.
 
-#include "KernelASTConsumer.hpp"
+#include "macroni/ASTConsumers/Kernel/KernelASTConsumer.hpp"
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
