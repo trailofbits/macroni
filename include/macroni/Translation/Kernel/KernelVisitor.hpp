@@ -11,13 +11,13 @@
 #include <clang/AST/Attrs.inc>
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
-#include <map>
 #include <mlir/IR/Operation.h>
 #include <optional>
+#include <unordered_map>
 
 namespace macroni::kernel {
 using rcu_dereference_table =
-    std::map<const clang::StmtExpr *, const clang::Expr *>;
+    std::unordered_map<const clang::StmtExpr *, const clang::Expr *>;
 
 struct rcu_assign_pointer_parameters {
   const clang::Expr *p;
@@ -31,13 +31,13 @@ struct rcu_replace_pointer_parameters {
 };
 
 using rcu_assign_pointer_table =
-    std::map<const clang::DoStmt *, rcu_assign_pointer_parameters>;
+    std::unordered_map<const clang::DoStmt *, rcu_assign_pointer_parameters>;
 
 using rcu_access_pointer_table =
-    std::map<const clang::StmtExpr *, const clang::Expr *>;
+    std::unordered_map<const clang::StmtExpr *, const clang::Expr *>;
 
 using rcu_replace_pointer_table =
-    std::map<const clang::StmtExpr *, rcu_replace_pointer_parameters>;
+    std::unordered_map<const clang::StmtExpr *, rcu_replace_pointer_parameters>;
 
 struct kernel_visitor : ::macroni::empty_visitor {
   [[nodiscard]] explicit kernel_visitor(
