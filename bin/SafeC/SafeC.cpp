@@ -1,4 +1,4 @@
-#include "SafetyASTConsumer.hpp"
+#include "macroni/ASTConsumers/Safety/SafetyASTConsumer.hpp"
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>

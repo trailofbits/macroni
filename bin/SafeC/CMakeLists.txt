@@ -10,11 +10,11 @@ set(MACRONI_ORIGINAL_LLVM_RUNTIME_OUTPUT_INTDIR ${LLVM_RUNTIME_OUTPUT_INTDIR})
 
 # Use a generator expression to set the build directory in the way CMake would.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
-add_clang_executable(safe-c SafeC.cpp SafetyASTConsumer.cpp)
+add_clang_executable(safe-c SafeC.cpp)
 
 # Restore the original LLVM_RUNTIME_OUTPUT_INTDIR value.
 set(LLVM_RUNTIME_OUTPUT_INTDIR ${MACRONI_ORIGINAL_LLVM_RUNTIME_OUTPUT_INTDIR})
 
 target_link_libraries(safe-c PRIVATE macroni_settings safety_translation_api
-                                     safety_matchers MLIRSafety)
+                                     safety_consumer safety_matchers MLIRSafety)
 mlir_check_link_libraries(safe-c)
