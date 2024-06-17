@@ -1,4 +1,4 @@
-#include "KernelASTConsumer.hpp"
+#include "macroni/ASTConsumers/Kernel/KernelASTConsumer.hpp"
 #include "macroni/ASTMatchers/Kernel/RCUMatchers.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
 #include "macroni/Conversion/Kernel/KernelRewriters.hpp"
