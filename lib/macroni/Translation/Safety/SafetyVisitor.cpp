@@ -15,11 +15,12 @@
 #include <llvm/Support/raw_ostream.h>
 
 namespace macroni::safety {
-safety_visitor::safety_visitor(
-    std::set<const clang::IntegerLiteral *> &safe_block_conditions,
-    vast::mcontext_t &mctx, vast::cg::codegen_builder &bld,
-    vast::cg::meta_generator &mg, vast::cg::symbol_generator &sg,
-    vast::cg::visitor_view view)
+safety_visitor::safety_visitor(safety_conditions &safe_block_conditions,
+                               vast::mcontext_t &mctx,
+                               vast::cg::codegen_builder &bld,
+                               vast::cg::meta_generator &mg,
+                               vast::cg::symbol_generator &sg,
+                               vast::cg::visitor_view view)
     : ::macroni::empty_visitor(mctx, mg, sg, view),
       m_safe_block_conditions(safe_block_conditions), m_bld(bld), m_view(view) {
 }

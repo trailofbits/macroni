@@ -12,18 +12,21 @@
 #include <unordered_set>
 
 namespace macroni::safety {
+using safety_conditions = std::unordered_set<const clang::IntegerLiteral *>;
+
 struct safety_visitor : macroni::empty_visitor {
 
-  [[nodiscard]] safety_visitor(
-      std::unordered_set<const clang::IntegerLiteral *> &safe_block_conditions,
-      vast::mcontext_t &mctx, vast::cg::codegen_builder &bld,
-      vast::cg::meta_generator &mg, vast::cg::symbol_generator &sg,
-      vast::cg::visitor_view view);
+  [[nodiscard]] safety_visitor(safety_conditions &safe_block_conditions,
+                               vast::mcontext_t &mctx,
+                               vast::cg::codegen_builder &bld,
+                               vast::cg::meta_generator &mg,
+                               vast::cg::symbol_generator &sg,
+                               vast::cg::visitor_view view);
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
 
-  std::unordered_set<const clang::IntegerLiteral *> &m_safe_block_conditions;
+  safety_conditions &m_safe_block_conditions;
   vast::cg::codegen_builder &m_bld;
   vast::cg::visitor_view m_view;
 };
