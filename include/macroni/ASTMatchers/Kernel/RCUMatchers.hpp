@@ -4,17 +4,32 @@
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
+#include <string>
 
 namespace macroni::kernel {
+
+static inline const clang::ast_matchers::StatementMatcher
+make_rcu_dereference_matcher(std::string suffix) {
+  auto name = "rcu_dereference" + suffix;
+  return clang::ast_matchers::stmtExpr(
+             clang::ast_matchers::allOf(
+                 clang::ast_matchers::isExpandedFromMacro(name),
+                 clang::ast_matchers::hasDescendant(
+                     clang::ast_matchers::parenExpr(clang::ast_matchers::has(
+                         clang::ast_matchers::parenExpr(
+                             clang::ast_matchers::has(
+                                 clang::ast_matchers::expr().bind("p"))))))))
+      .bind(name);
+}
+
 static const clang::ast_matchers::StatementMatcher rcu_deference_matcher =
-    clang::ast_matchers::stmtExpr(
-        clang::ast_matchers::allOf(
-            clang::ast_matchers::isExpandedFromMacro("rcu_dereference"),
-            clang::ast_matchers::hasDescendant(
-                clang::ast_matchers::parenExpr(clang::ast_matchers::has(
-                    clang::ast_matchers::parenExpr(clang::ast_matchers::has(
-                        clang::ast_matchers::expr().bind("p"))))))))
-        .bind("rcu_dereference");
+    make_rcu_dereference_matcher("");
+
+static const clang::ast_matchers::StatementMatcher rcu_deference_bh_matcher =
+    make_rcu_dereference_matcher("_bh");
+
+static const clang::ast_matchers::StatementMatcher rcu_deference_sched_matcher =
+    make_rcu_dereference_matcher("_sched");
 
 static const clang::ast_matchers::StatementMatcher rcu_assign_pointer_matcher =
     clang::ast_matchers::doStmt(
@@ -124,6 +139,8 @@ public:
   run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 
   rcu_dereference_table m_rcu_dereference_to_p;
+  rcu_dereference_table m_rcu_dereference_bh_to_p;
+  rcu_dereference_table m_rcu_dereference_sched_to_p;
   rcu_assign_pointer_table m_rcu_assign_pointer_to_params;
   rcu_access_pointer_table m_rcu_access_pointer_to_p;
   rcu_replace_pointer_table m_rcu_replace_pointer_to_params;
