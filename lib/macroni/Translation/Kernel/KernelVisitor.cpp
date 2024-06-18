@@ -29,6 +29,8 @@
 namespace macroni::kernel {
 kernel_visitor::kernel_visitor(
     rcu_dereference_table &rcu_dereference_to_p,
+    rcu_dereference_table &rcu_dereference_bh_to_p,
+    rcu_dereference_table &rcu_dereference_sched_to_p,
     rcu_assign_pointer_table &rcu_assign_pointer_params,
     rcu_access_pointer_table &rcu_access_pointer_to_p,
     rcu_replace_pointer_table &rcu_replace_pointer_to_params,
@@ -37,6 +39,8 @@ kernel_visitor::kernel_visitor(
     vast::cg::symbol_generator &sg, vast::cg::visitor_view view)
     : ::macroni::empty_visitor(mctx, mg, sg, view),
       m_rcu_dereference_to_p(rcu_dereference_to_p),
+      m_rcu_dereference_bh_to_p(rcu_dereference_bh_to_p),
+      m_rcu_dereference_sched_to_p(rcu_dereference_sched_to_p),
       m_rcu_assign_pointer_params(rcu_assign_pointer_params),
       m_rcu_access_pointer_to_p(rcu_access_pointer_to_p),
       m_rcu_replace_pointer_to_params(rcu_replace_pointer_to_params),
@@ -61,17 +65,31 @@ kernel_visitor::visit_rcu_dereference(const vast::cg::clang_stmt *stmt,
     return std::nullopt;
   }
 
-  if (!m_rcu_dereference_to_p.contains(rcu_dereference)) {
+  if (!m_rcu_dereference_to_p.contains(rcu_dereference) &&
+      !m_rcu_dereference_bh_to_p.contains(rcu_dereference) &&
+      !m_rcu_dereference_sched_to_p.contains(rcu_dereference)) {
     return std::nullopt;
   }
 
   auto loc = m_view.location(rcu_dereference);
-  auto p = m_rcu_dereference_to_p.at(rcu_dereference);
   vast::cg::default_stmt_visitor visitor(m_bld, m_view, scope);
+
+  if (m_rcu_dereference_to_p.contains(rcu_dereference)) {
+    auto p = m_rcu_dereference_to_p.at(rcu_dereference);
+    auto rty = m_view.visit(p->getType(), scope);
+    auto p_op = m_view.visit(p, scope);
+    return m_bld.create<RCUDereference>(loc, rty, p_op->getOpResult(0));
+  } else if (m_rcu_dereference_bh_to_p.contains(rcu_dereference)) {
+    auto p = m_rcu_dereference_bh_to_p.at(rcu_dereference);
+    auto rty = m_view.visit(p->getType(), scope);
+    auto p_op = m_view.visit(p, scope);
+    return m_bld.create<RCUDereferenceBH>(loc, rty, p_op->getOpResult(0));
+  }
+  // m_rcu_dereference_sched_to_p.contains(rcu_dereference);
+  auto p = m_rcu_dereference_sched_to_p.at(rcu_dereference);
   auto rty = m_view.visit(p->getType(), scope);
   auto p_op = m_view.visit(p, scope);
-
-  return m_bld.create<RCUDereference>(loc, rty, p_op->getOpResult(0));
+  return m_bld.create<RCUDereferenceSched>(loc, rty, p_op->getOpResult(0));
 }
 
 std::optional<vast::operation>
