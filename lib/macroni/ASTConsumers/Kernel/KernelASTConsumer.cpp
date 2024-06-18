@@ -118,7 +118,7 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   driver->push_visitor(std::make_unique<kernel_visitor>(
       matcher.m_rcu_dereference_to_p, matcher.m_rcu_assign_pointer_to_params,
       matcher.m_rcu_access_pointer_to_p,
-      matcher.m_rcu_replace_pointer_to_params, driver->mcontext(),
+      matcher.m_rcu_replace_pointer_to_params, Ctx, driver->mcontext(),
       driver->get_codegen_builder(), driver->get_meta_generator(),
       driver->get_symbol_generator(),
       vast::cg::visitor_view(driver->get_visitor_stack())));
