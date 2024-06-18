@@ -11,6 +11,7 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <llvm/Support/raw_ostream.h>
 #include <memory>
 #include <mlir/IR/Iterators.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
@@ -142,7 +143,7 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
 
   // Print the result
 
-  mod->dump();
+  mod->print(llvm::outs());
 
   return;
   // Run analyses. The type of analysis we do depends on the annotation (if any)
