@@ -42,6 +42,8 @@ using rcu_replace_pointer_table =
 struct kernel_visitor : ::macroni::empty_visitor {
   [[nodiscard]] explicit kernel_visitor(
       rcu_dereference_table &rcu_dereference_to_p,
+      rcu_dereference_table &rcu_dereference_bh_to_p,
+      rcu_dereference_table &rcu_dereference_sched_to_p,
       rcu_assign_pointer_table &rcu_assign_pointer_params,
       rcu_access_pointer_table &rcu_access_pointer_to_p,
       rcu_replace_pointer_table &m_rcu_replace_pointer_to_params,
@@ -82,6 +84,8 @@ struct kernel_visitor : ::macroni::empty_visitor {
   void unlock_op(mlir::Operation &op);
 
   rcu_dereference_table &m_rcu_dereference_to_p;
+  rcu_dereference_table &m_rcu_dereference_bh_to_p;
+  rcu_dereference_table &m_rcu_dereference_sched_to_p;
   rcu_assign_pointer_table &m_rcu_assign_pointer_params;
   rcu_access_pointer_table &m_rcu_access_pointer_to_p;
   rcu_replace_pointer_table &m_rcu_replace_pointer_to_params;
