@@ -109,6 +109,8 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   clang::ast_matchers::MatchFinder finder;
   rcu_collector matcher;
   finder.addMatcher(rcu_deference_matcher, &matcher);
+  finder.addMatcher(rcu_deference_bh_matcher, &matcher);
+  finder.addMatcher(rcu_deference_sched_matcher, &matcher);
   finder.addMatcher(rcu_assign_pointer_matcher, &matcher);
   finder.addMatcher(rcu_access_pointer_matcher, &matcher);
   finder.addMatcher(rcu_replace_pointer_matcher, &matcher);
@@ -120,8 +122,9 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
                                          vast::cg::default_meta_gen>(Ctx);
 
   driver->push_visitor(std::make_unique<kernel_visitor>(
-      matcher.m_rcu_dereference_to_p, matcher.m_rcu_assign_pointer_to_params,
-      matcher.m_rcu_access_pointer_to_p,
+      matcher.m_rcu_dereference_to_p, matcher.m_rcu_dereference_bh_to_p,
+      matcher.m_rcu_dereference_sched_to_p,
+      matcher.m_rcu_assign_pointer_to_params, matcher.m_rcu_access_pointer_to_p,
       matcher.m_rcu_replace_pointer_to_params, Ctx, driver->mcontext(),
       driver->get_codegen_builder(), driver->get_meta_generator(),
       driver->get_symbol_generator(),
