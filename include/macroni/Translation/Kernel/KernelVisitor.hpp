@@ -52,12 +52,6 @@ struct kernel_visitor : ::macroni::empty_visitor {
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
 
-  [[nodiscard]] vast::mlir_type visit(vast::cg::clang_qual_type type,
-                                      vast::cg::scope_context &scope) override;
-
-  [[nodiscard]] vast::mlir_attr visit(const vast::cg::clang_attr *attr,
-                                      vast::cg::scope_context &scope) override;
-
   [[nodiscard]] std::optional<vast::operation>
   visit_rcu_dereference(const vast::cg::clang_stmt *stmt,
                         vast::cg::scope_context &scope);
@@ -77,8 +71,6 @@ struct kernel_visitor : ::macroni::empty_visitor {
   [[nodiscard]] std::optional<vast::operation>
   visit_rcu_replace_pointer(const vast::cg::clang_stmt *stmt,
                             vast::cg::scope_context &scope);
-
-  [[nodiscard]] bool is_context_attr(const clang::AnnotateAttr *attr);
 
   void set_lock_level(mlir::Operation &op);
 

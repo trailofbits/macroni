@@ -44,16 +44,6 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
       .value_or(nullptr);
 }
 
-vast::mlir_type kernel_visitor::visit(vast::cg::clang_qual_type type,
-                                      vast::cg::scope_context &scope) {
-  return {};
-}
-
-vast::mlir_attr kernel_visitor::visit(const vast::cg::clang_attr *attr,
-                                      vast::cg::scope_context &scope) {
-  return {};
-}
-
 std::optional<vast::operation>
 kernel_visitor::visit_rcu_dereference(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
@@ -175,10 +165,6 @@ kernel_visitor::visit_rcu_replace_pointer(const vast::cg::clang_stmt *stmt,
   return m_bld.create<RCUReplacePointer>(loc, rty, rcu_ptr_op->getOpResult(0),
                                          ptr_op->getOpResult(0),
                                          c_op->getOpResult(0));
-}
-
-bool kernel_visitor::is_context_attr(const clang::AnnotateAttr *attr) {
-  return false;
 }
 
 void kernel_visitor::set_lock_level(mlir::Operation &op) {
