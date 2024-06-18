@@ -24,6 +24,7 @@
 #include <mlir/IR/Operation.h>
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace macroni::kernel {
 kernel_visitor::kernel_visitor(
@@ -175,6 +176,23 @@ kernel_visitor::visit_rcu_replace_pointer(const vast::cg::clang_stmt *stmt,
                                          c_op->getOpResult(0));
 }
 
+template <typename AttrT>
+void annotate_op_with_attrs_in_text(vast::operation op, std::string_view text,
+                                    AttrT attr) {
+  if (text.contains(AttrT::getMnemonic())) {
+    op->setAttr(AttrT::getMnemonic(), attr);
+  }
+}
+
+template <typename AttrT, typename... Rest>
+void annotate_op_with_attrs_in_text(vast::operation op, std::string_view text,
+                                    AttrT attr, Rest... rest) {
+  if (text.contains(AttrT::getMnemonic())) {
+    op->setAttr(AttrT::getMnemonic(), attr);
+  }
+  annotate_op_with_attrs_in_text(op, text, rest...);
+}
+
 vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
                                       vast::cg::scope_context &scope) {
   auto function_decl = clang::dyn_cast<clang::FunctionDecl>(decl);
@@ -212,22 +230,10 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
   // are), we name each annotation after its attribute so that the attributes
   // are unique.
 
-  // TODO(Brent): Find out how to do this by iterating the types AcquiresAttr,
-  // ReleasesAttr, and MustHoldAttr. This would make the code less repetitive
-  // and error-prone.
-
-  if (source_text.contains(AcquiresAttr::getMnemonic())) {
-    op->setAttr(AcquiresAttr::getMnemonic(),
-                AcquiresAttr::get(&mctx, lock_level_attr));
-  }
-  if (source_text.contains(ReleasesAttr::getMnemonic())) {
-    op->setAttr(ReleasesAttr::getMnemonic(),
-                ReleasesAttr::get(&mctx, lock_level_attr));
-  }
-  if (source_text.contains(MustHoldAttr::getMnemonic())) {
-    op->setAttr(MustHoldAttr::getMnemonic(),
-                MustHoldAttr::get(&mctx, lock_level_attr));
-  }
+  annotate_op_with_attrs_in_text(op, source_text,
+                                 AcquiresAttr::get(&mctx, lock_level_attr),
+                                 ReleasesAttr::get(&mctx, lock_level_attr),
+                                 MustHoldAttr::get(&mctx, lock_level_attr));
 
   return op;
 }
