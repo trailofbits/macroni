@@ -1,5 +1,6 @@
 #pragma once
 
+#include "macroni/Common/EmptyVisitor.hpp"
 #include "pasta/AST/AST.h"
 #include "pasta/AST/Macro.h"
 #include "pasta/AST/Stmt.h"
@@ -30,7 +31,7 @@ lowest_unvisited_substitution(pasta::Stmt &stmt,
 // macro parameters, if any.
 std::vector<llvm::StringRef> get_parameter_names(pasta::MacroSubstitution &sub);
 
-struct macroni_visitor : vast::cg::visitor_base {
+struct macroni_visitor : empty_visitor {
 
   [[nodiscard]] macroni_visitor(pasta::AST &pctx, vast::mcontext_t &mctx,
                                 vast::cg::codegen_builder &bld,
@@ -40,29 +41,6 @@ struct macroni_visitor : vast::cg::visitor_base {
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
-
-  // We default these methods to return an empty op to force the fallback
-  // visitor to handle them instead.
-  //
-  // TODO(Brent): Maybe I should add an empty_visitor type to return empty
-  // options for all visitor methods, and inherit from that for all Macroni's
-  // visitors so they can just override the single methods they're interested
-  // in?
-
-  vast::operation visit(const vast::cg::clang_decl *decl,
-                        vast::cg::scope_context &scope) override;
-
-  vast::mlir_type visit(const vast::cg::clang_type *type,
-                        vast::cg::scope_context &scope) override;
-
-  vast::mlir_type visit(vast::cg::clang_qual_type type,
-                        vast::cg::scope_context &scope) override;
-
-  vast::mlir_attr visit(const vast::cg::clang_attr *attr,
-                        vast::cg::scope_context &scope) override;
-
-  vast::operation visit_prototype(const vast::cg::clang_function *decl,
-                                  vast::cg::scope_context &scope) override;
 
   pasta::AST &m_pctx;
   vast::cg::codegen_builder &m_bld;

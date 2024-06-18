@@ -2,10 +2,9 @@
 
 #pragma once
 
-
 #include "macroni/Dialect/Safety/SafetyDialect.hpp"
 
-#include <mlir/IR/FunctionInterfaces.h>
+#include "vast/Util/Common.hpp"
 #include <mlir/Interfaces/CallInterfaces.h>
 #include <mlir/Interfaces/InferTypeOpInterface.h>
 #include <mlir/Support/TypeID.h>

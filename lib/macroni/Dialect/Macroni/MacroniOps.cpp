@@ -2,6 +2,7 @@
 
 #include "macroni/Dialect/Macroni/MacroniOps.hpp"
 #include "vast/Util/Common.hpp"
+#include "vast/Util/Region.hpp"
 #include <llvm/Support/ErrorHandling.h>
 #include <mlir/IR/Builders.h>
 #include <mlir/IR/OpImplementation.h>
@@ -11,12 +12,6 @@
 #include <mlir/Support/LogicalResult.h>
 
 namespace macroni::macroni {
-void build_region(vast::mlir_builder &bld, vast::op_state &st,
-                  vast::builder_callback_ref callback) {
-  bld.createBlock(st.addRegion());
-  callback(bld, st.location);
-}
-
 void MacroExpansion::build(mlir::OpBuilder &odsBuilder,
                            mlir::OperationState &odsState,
                            mlir::StringAttr macroName,
@@ -27,7 +22,7 @@ void MacroExpansion::build(mlir::OpBuilder &odsBuilder,
   odsState.addAttribute("macroName", macroName);
   odsState.addAttribute("parameterNames", parameterNames);
   odsState.addAttribute("functionLike", functionLike);
-  build_region(odsBuilder, odsState, callback);
+  vast::build_region(odsBuilder, odsState, callback);
   odsState.addTypes(rty);
 }
 
@@ -37,7 +32,7 @@ void MacroParameter::build(mlir::OpBuilder &odsBuilder,
                            vast::builder_callback_ref callback) {
   mlir::OpBuilder::InsertionGuard guard(odsBuilder);
   odsState.addAttribute("parameterName", parameterName);
-  build_region(odsBuilder, odsState, callback);
+  vast::build_region(odsBuilder, odsState, callback);
   odsState.addTypes(rty);
 }
 
