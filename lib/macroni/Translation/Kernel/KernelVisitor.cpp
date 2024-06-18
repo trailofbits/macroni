@@ -1,21 +1,29 @@
 #include "macroni/Translation/Kernel/KernelVisitor.hpp"
 #include "macroni/Common/EmptyVisitor.hpp"
+#include "macroni/Dialect/Kernel/KernelAttributes.hpp"
 #include "macroni/Dialect/Kernel/KernelDialect.hpp"
 #include "macroni/Dialect/Kernel/KernelOps.hpp"
 #include "vast/CodeGen/CodeGenBuilder.hpp"
 #include "vast/CodeGen/CodeGenMeta.hpp"
 #include "vast/CodeGen/CodeGenVisitorBase.hpp"
 #include "vast/CodeGen/Common.hpp"
+#include "vast/CodeGen/DefaultDeclVisitor.hpp"
 #include "vast/CodeGen/DefaultStmtVisitor.hpp"
 #include "vast/CodeGen/ScopeContext.hpp"
 #include "vast/CodeGen/SymbolGenerator.hpp"
 #include "vast/Util/Common.hpp"
 #include <clang/AST/Attrs.inc>
+#include <clang/AST/Decl.h>
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 #include <clang/Basic/LLVM.h>
+#include <clang/Lex/Lexer.h>
+#include <llvm/ADT/Twine.h>
+#include <mlir/IR/Attributes.h>
+#include <mlir/IR/BuiltinAttributes.h>
 #include <mlir/IR/Operation.h>
 #include <optional>
+#include <string>
 
 namespace macroni::kernel {
 kernel_visitor::kernel_visitor(
@@ -23,15 +31,15 @@ kernel_visitor::kernel_visitor(
     rcu_assign_pointer_table &rcu_assign_pointer_params,
     rcu_access_pointer_table &rcu_access_pointer_to_p,
     rcu_replace_pointer_table &rcu_replace_pointer_to_params,
-    vast::mcontext_t &mctx, vast::cg::codegen_builder &bld,
-    vast::cg::meta_generator &mg, vast::cg::symbol_generator &sg,
-    vast::cg::visitor_view view)
+    vast::acontext_t &actx, vast::mcontext_t &mctx,
+    vast::cg::codegen_builder &bld, vast::cg::meta_generator &mg,
+    vast::cg::symbol_generator &sg, vast::cg::visitor_view view)
     : ::macroni::empty_visitor(mctx, mg, sg, view),
       m_rcu_dereference_to_p(rcu_dereference_to_p),
       m_rcu_assign_pointer_params(rcu_assign_pointer_params),
       m_rcu_access_pointer_to_p(rcu_access_pointer_to_p),
       m_rcu_replace_pointer_to_params(rcu_replace_pointer_to_params),
-      m_bld(bld), m_view(view) {}
+      m_actx(actx), m_bld(bld), m_view(view) {}
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
@@ -165,6 +173,62 @@ kernel_visitor::visit_rcu_replace_pointer(const vast::cg::clang_stmt *stmt,
   return m_bld.create<RCUReplacePointer>(loc, rty, rcu_ptr_op->getOpResult(0),
                                          ptr_op->getOpResult(0),
                                          c_op->getOpResult(0));
+}
+
+vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
+                                      vast::cg::scope_context &scope) {
+  auto function_decl = clang::dyn_cast<clang::FunctionDecl>(decl);
+  if (!function_decl || !function_decl->hasBody()) {
+    return nullptr;
+  }
+
+  // Get the source text of this function declaration so we can check if it
+  // contains an RCU annotation. The RCU annotations (__acquires(),
+  // __releases(), and __must_hold()) are not standard so Clang will not embed
+  // them in the AST, so we must check for their presence in the source text
+  // instead.
+
+  auto &sm = m_actx.getSourceManager();
+  auto &lo = m_actx.getLangOpts();
+  auto body = function_decl->getBody();
+  auto begin = function_decl->getBeginLoc();
+  auto end = body->getBeginLoc();
+  auto s_range = clang::SourceRange(begin, end);
+  auto cs_range = clang::CharSourceRange::getCharRange(s_range);
+  auto source_text = clang::Lexer::getSourceText(cs_range, sm, lo);
+
+  // Get the op for this function decl.
+
+  vast::cg::default_decl_visitor visitor(m_bld, m_view, scope);
+  auto op = visitor.visit(decl);
+
+  // Create the lock level attribute.
+
+  auto lock_level_twine = llvm::Twine(std::to_string(lock_level));
+  auto lock_level_attr = mlir::StringAttr::get(&mctx, lock_level_twine);
+
+  // Attach the present attributes to the operation.
+
+  // TODO(Brent): Find out how to do this by iterating the types AcquiresAttr,
+  // ReleasesAttr, and MustHoldAttr. This would make the code less repetitive
+  // and error-prone.
+
+  // TODO(Brent): Allow for the possibility of multiple RCU attributes being
+  // present (right now these branches overwrite each other).
+
+  // TODO(Brent): Encode the "annotate" key somewhere to protect against typos.
+
+  if (source_text.contains(AcquiresAttr::getMnemonic())) {
+    op->setAttr("annotate", AcquiresAttr::get(&mctx, lock_level_attr));
+  }
+  if (source_text.contains(ReleasesAttr::getMnemonic())) {
+    op->setAttr("annotate", ReleasesAttr::get(&mctx, lock_level_attr));
+  }
+  if (source_text.contains(MustHoldAttr::getMnemonic())) {
+    op->setAttr("annotate", MustHoldAttr::get(&mctx, lock_level_attr));
+  }
+
+  return op;
 }
 
 void kernel_visitor::set_lock_level(mlir::Operation &op) {
