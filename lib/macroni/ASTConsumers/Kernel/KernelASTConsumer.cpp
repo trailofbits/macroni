@@ -149,7 +149,6 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
 
   mod->print(llvm::outs());
 
-  return;
   // Run analyses. The type of analysis we do depends on the annotation (if any)
   // that a given function definition is annotated with.
 
