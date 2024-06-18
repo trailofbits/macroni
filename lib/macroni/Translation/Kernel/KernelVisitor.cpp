@@ -207,25 +207,26 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
   auto lock_level_twine = llvm::Twine(std::to_string(lock_level));
   auto lock_level_attr = mlir::StringAttr::get(&mctx, lock_level_twine);
 
-  // Attach the present attributes to the operation.
+  // Attach the present attributes to the operation. Because one function may be
+  // annotaed with several RCU attributes (though I'm not sure if any actually
+  // are), we name each annotation after its attribute so that the attributes
+  // are unique.
 
   // TODO(Brent): Find out how to do this by iterating the types AcquiresAttr,
   // ReleasesAttr, and MustHoldAttr. This would make the code less repetitive
   // and error-prone.
 
-  // TODO(Brent): Allow for the possibility of multiple RCU attributes being
-  // present (right now these branches overwrite each other).
-
-  // TODO(Brent): Encode the "annotate" key somewhere to protect against typos.
-
   if (source_text.contains(AcquiresAttr::getMnemonic())) {
-    op->setAttr("annotate", AcquiresAttr::get(&mctx, lock_level_attr));
+    op->setAttr(AcquiresAttr::getMnemonic(),
+                AcquiresAttr::get(&mctx, lock_level_attr));
   }
   if (source_text.contains(ReleasesAttr::getMnemonic())) {
-    op->setAttr("annotate", ReleasesAttr::get(&mctx, lock_level_attr));
+    op->setAttr(ReleasesAttr::getMnemonic(),
+                ReleasesAttr::get(&mctx, lock_level_attr));
   }
   if (source_text.contains(MustHoldAttr::getMnemonic())) {
-    op->setAttr("annotate", MustHoldAttr::get(&mctx, lock_level_attr));
+    op->setAttr(MustHoldAttr::getMnemonic(),
+                MustHoldAttr::get(&mctx, lock_level_attr));
   }
 
   return op;

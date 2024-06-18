@@ -157,12 +157,12 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
 
   mod->walk([](vast::hl::FuncOp func) {
     auto op = func.getOperation();
-    if (op->getAttrOfType<MustHoldAttr>("annotate")) {
+    if (op->getAttrOfType<MustHoldAttr>(MustHoldAttr::getMnemonic())) {
       // TODO(bpp): Investigate whether we should be checking __must_hold
       // functions for RCU macro invocations
-    } else if (op->getAttrOfType<AcquiresAttr>("annotate")) {
+    } else if (op->getAttrOfType<AcquiresAttr>(AcquiresAttr::getMnemonic())) {
       check_acquires_function_for_rcu_invocations(func);
-    } else if (op->getAttrOfType<ReleasesAttr>("annotate")) {
+    } else if (op->getAttrOfType<ReleasesAttr>(ReleasesAttr::getMnemonic())) {
       check_releases_function_for_rcu_invocations(func);
     } else {
       check_unannotated_function_for_rcu_invocations(func);
