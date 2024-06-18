@@ -279,4 +279,112 @@ static __always_inline void __write_once_size(volatile void *p, void *res,
     __tmp;                                                                     \
   })
 
+static inline int rcu_read_lock_bh_held(void) { return 1; }
+
+#define rcu_dereference_bh_check(p, c)                                         \
+  __rcu_dereference_check((p), __UNIQUE_ID(rcu),                               \
+                          (c) || rcu_read_lock_bh_held(), __rcu)
+
+#define rcu_dereference_bh(p) rcu_dereference_bh_check(p, 0)
+
+#ifdef CONFIG_PREEMPT_COUNT
+
+#define preempt_disable()                                                      \
+  do {                                                                         \
+    preempt_count_inc();                                                       \
+    barrier();                                                                 \
+  } while (0)
+
+#define sched_preempt_enable_no_resched()                                      \
+  do {                                                                         \
+    barrier();                                                                 \
+    preempt_count_dec();                                                       \
+  } while (0)
+
+#define preempt_enable_no_resched() sched_preempt_enable_no_resched()
+
+#define preemptible() (preempt_count() == 0 && !irqs_disabled())
+
+#ifdef CONFIG_PREEMPTION
+#define preempt_enable()                                                       \
+  do {                                                                         \
+    barrier();                                                                 \
+    if (unlikely(preempt_count_dec_and_test()))                                \
+      __preempt_schedule();                                                    \
+  } while (0)
+
+#define preempt_enable_notrace()                                               \
+  do {                                                                         \
+    barrier();                                                                 \
+    if (unlikely(__preempt_count_dec_and_test()))                              \
+      __preempt_schedule_notrace();                                            \
+  } while (0)
+
+#define preempt_check_resched()                                                \
+  do {                                                                         \
+    if (should_resched(0))                                                     \
+      __preempt_schedule();                                                    \
+  } while (0)
+
+#else /* !CONFIG_PREEMPTION */
+#define preempt_enable()                                                       \
+  do {                                                                         \
+    barrier();                                                                 \
+    preempt_count_dec();                                                       \
+  } while (0)
+
+#define preempt_enable_notrace()                                               \
+  do {                                                                         \
+    barrier();                                                                 \
+    __preempt_count_dec();                                                     \
+  } while (0)
+
+#define preempt_check_resched()                                                \
+  do {                                                                         \
+  } while (0)
+#endif /* CONFIG_PREEMPTION */
+
+#define preempt_disable_notrace()                                              \
+  do {                                                                         \
+    __preempt_count_inc();                                                     \
+    barrier();                                                                 \
+  } while (0)
+
+#define preempt_enable_no_resched_notrace()                                    \
+  do {                                                                         \
+    barrier();                                                                 \
+    __preempt_count_dec();                                                     \
+  } while (0)
+
+#else /* !CONFIG_PREEMPT_COUNT */
+
+/*
+ * Even if we don't have any preemption, we need preempt disable/enable
+ * to be barriers, so that we don't have things like get_user/put_user
+ * that can cause faults and scheduling migrate into our preempt-protected
+ * region.
+ */
+#define preempt_disable() barrier()
+#define sched_preempt_enable_no_resched() barrier()
+#define preempt_enable_no_resched() barrier()
+#define preempt_enable() barrier()
+#define preempt_check_resched()                                                \
+  do {                                                                         \
+  } while (0)
+
+#define preempt_disable_notrace() barrier()
+#define preempt_enable_no_resched_notrace() barrier()
+#define preempt_enable_notrace() barrier()
+#define preemptible() 0
+
+#endif /* CONFIG_PREEMPT_COUNT */
+
+static inline int rcu_read_lock_sched_held(void) { return !preemptible(); }
+
+#define rcu_dereference_sched_check(p, c)                                      \
+  __rcu_dereference_check((p), __UNIQUE_ID(rcu),                               \
+                          (c) || rcu_read_lock_sched_held(), __rcu)
+
+#define rcu_dereference_sched(p) rcu_dereference_sched_check(p, 0)
+
 #endif
