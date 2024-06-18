@@ -45,9 +45,9 @@ struct kernel_visitor : ::macroni::empty_visitor {
       rcu_assign_pointer_table &rcu_assign_pointer_params,
       rcu_access_pointer_table &rcu_access_pointer_to_p,
       rcu_replace_pointer_table &m_rcu_replace_pointer_to_params,
-      vast::mcontext_t &mctx, vast::cg::codegen_builder &bld,
-      vast::cg::meta_generator &mg, vast::cg::symbol_generator &sg,
-      vast::cg::visitor_view view);
+      vast::acontext_t &actx, vast::mcontext_t &mctx,
+      vast::cg::codegen_builder &bld, vast::cg::meta_generator &mg,
+      vast::cg::symbol_generator &sg, vast::cg::visitor_view view);
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
@@ -72,6 +72,9 @@ struct kernel_visitor : ::macroni::empty_visitor {
   visit_rcu_replace_pointer(const vast::cg::clang_stmt *stmt,
                             vast::cg::scope_context &scope);
 
+  [[nodiscard]] vast::operation visit(const vast::cg::clang_decl *decl,
+                                      vast::cg::scope_context &scope) override;
+
   void set_lock_level(mlir::Operation &op);
 
   void lock_op(mlir::Operation &op);
@@ -83,6 +86,7 @@ struct kernel_visitor : ::macroni::empty_visitor {
   rcu_access_pointer_table &m_rcu_access_pointer_to_p;
   rcu_replace_pointer_table &m_rcu_replace_pointer_to_params;
 
+  vast::acontext_t &m_actx;
   vast::cg::codegen_builder &m_bld;
   vast::cg::visitor_view m_view;
   std::int64_t lock_level = 0;
