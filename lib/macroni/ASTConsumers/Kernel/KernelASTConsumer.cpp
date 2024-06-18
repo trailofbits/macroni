@@ -16,6 +16,10 @@
 #include <mlir/IR/Iterators.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
 
+// NOTE(Brent): Not sure where to put this file's local functions. It may be
+// better to create some sort of "Analysis" module for them and place them
+// there.
+
 namespace macroni::kernel {
 // Format an operation's location as a string for diagnostics
 std::string format_location(mlir::Operation *op) {
