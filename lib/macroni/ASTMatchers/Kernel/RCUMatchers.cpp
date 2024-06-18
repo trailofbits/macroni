@@ -12,6 +12,15 @@ void rcu_collector::run(
           Result.Nodes.getNodeAs<clang::StmtExpr>("rcu_dereference")) {
     auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
     m_rcu_dereference_to_p.insert({rcu_dereference, p});
+  } else if (auto rcu_dereference_bh = Result.Nodes.getNodeAs<clang::StmtExpr>(
+                 "rcu_dereference_bh")) {
+    auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
+    m_rcu_dereference_bh_to_p.insert({rcu_dereference_bh, p});
+  } else if (auto rcu_dereference_sched =
+                 Result.Nodes.getNodeAs<clang::StmtExpr>(
+                     "rcu_dereference_sched")) {
+    auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
+    m_rcu_dereference_sched_to_p.insert({rcu_dereference_sched, p});
   } else if (auto rcu_assign_pointer =
                  Result.Nodes.getNodeAs<clang::DoStmt>("rcu_assign_pointer")) {
     auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
