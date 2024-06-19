@@ -108,12 +108,12 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
 
   clang::ast_matchers::MatchFinder finder;
   rcu_collector matcher;
-  finder.addMatcher(rcu_deference_matcher, &matcher);
-  finder.addMatcher(rcu_deference_bh_matcher, &matcher);
-  finder.addMatcher(rcu_deference_sched_matcher, &matcher);
-  finder.addMatcher(rcu_assign_pointer_matcher, &matcher);
-  finder.addMatcher(rcu_access_pointer_matcher, &matcher);
-  finder.addMatcher(rcu_replace_pointer_matcher, &matcher);
+  finder.addMatcher(rcu_collector::rcu_deference_matcher, &matcher);
+  finder.addMatcher(rcu_collector::rcu_deference_bh_matcher, &matcher);
+  finder.addMatcher(rcu_collector::rcu_deference_sched_matcher, &matcher);
+  finder.addMatcher(rcu_collector::rcu_assign_pointer_matcher, &matcher);
+  finder.addMatcher(rcu_collector::rcu_access_pointer_matcher, &matcher);
+  finder.addMatcher(rcu_collector::rcu_replace_pointer_matcher, &matcher);
   finder.matchAST(Ctx);
 
   // Set up the driver.
