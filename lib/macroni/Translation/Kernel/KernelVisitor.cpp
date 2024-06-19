@@ -194,21 +194,15 @@ kernel_visitor::visit_rcu_replace_pointer(const vast::cg::clang_stmt *stmt,
                                          c_op->getOpResult(0));
 }
 
-template <typename AttrT>
-void annotate_op_with_attrs_in_text(vast::operation op, std::string_view text,
-                                    AttrT attr) {
-  if (text.contains(AttrT::getMnemonic())) {
-    op->setAttr(AttrT::getMnemonic(), attr);
-  }
-}
-
 template <typename AttrT, typename... Rest>
 void annotate_op_with_attrs_in_text(vast::operation op, std::string_view text,
                                     AttrT attr, Rest... rest) {
   if (text.contains(AttrT::getMnemonic())) {
     op->setAttr(AttrT::getMnemonic(), attr);
   }
-  annotate_op_with_attrs_in_text(op, text, rest...);
+  if constexpr (sizeof...(Rest) != 0) {
+    annotate_op_with_attrs_in_text(op, text, rest...);
+  }
 }
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
