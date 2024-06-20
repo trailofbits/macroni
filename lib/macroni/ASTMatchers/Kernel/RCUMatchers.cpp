@@ -88,6 +88,15 @@ const StatementMatcher rcu_collector::rcu_replace_pointer_matcher =
 
         .bind("rcu_replace_pointer");
 
+void rcu_collector::attach_to(clang::ast_matchers::MatchFinder &finder) {
+  finder.addMatcher(rcu_collector::rcu_deference_matcher, this);
+  finder.addMatcher(rcu_collector::rcu_deference_bh_matcher, this);
+  finder.addMatcher(rcu_collector::rcu_deference_sched_matcher, this);
+  finder.addMatcher(rcu_collector::rcu_assign_pointer_matcher, this);
+  finder.addMatcher(rcu_collector::rcu_access_pointer_matcher, this);
+  finder.addMatcher(rcu_collector::rcu_replace_pointer_matcher, this);
+}
+
 void rcu_collector::run(const MatchFinder::MatchResult &Result) {
   for (auto rcu_macro : KernelDialect::rcu_macro_spellings) {
     if (auto expansion =
