@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vast/Dialect/HighLevel/HighLevelOps.hpp"
+#include "vast/Util/Common.hpp"
 #include <mlir/IR/PatternMatch.h>
 #include <mlir/Support/LogicalResult.h>
 
