@@ -102,8 +102,7 @@ void rcu_collector::run(const MatchFinder::MatchResult &Result) {
     if (auto expansion = Result.Nodes.getNodeAs<clang::Stmt>(rcu_macro.name)) {
       std::vector<const clang::Expr *> args;
       for (auto param_name : rcu_macro.parameter_names) {
-        auto arg = Result.Nodes.getNodeAs<clang::Expr>(param_name);
-        args.push_back(arg);
+        args.push_back(Result.Nodes.getNodeAs<clang::Expr>(param_name));
       }
       m_expansions.insert({expansion, {rcu_macro, args}});
     }
