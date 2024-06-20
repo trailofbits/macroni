@@ -23,7 +23,6 @@
 #include <mlir/IR/Attributes.h>
 #include <mlir/IR/BuiltinAttributes.h>
 #include <mlir/IR/Operation.h>
-#include <optional>
 #include <string>
 #include <string_view>
 
