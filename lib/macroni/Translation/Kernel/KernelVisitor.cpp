@@ -53,10 +53,8 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
   }();
 
   auto name = expansion.spelling.name;
-  if (KernelDialect::rcu_access_pointer.name == name ||
-      KernelDialect::rcu_dereference.name == name ||
-      KernelDialect::rcu_dereference_bh.name == name ||
-      KernelDialect::rcu_dereference_sched.name == name) {
+  auto num_args = expansion.arguments.size();
+  if (1 == num_args) {
     auto p = m_view.visit(expansion.arguments[0], scope)->getResult(0);
 
     if (KernelDialect::rcu_access_pointer.name == name) {
@@ -71,12 +69,14 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
     // if (KernelDialect::rcu_dereference_sched.name == name)
     return m_bld.create<RCUDereferenceSched>(loc, rty, p);
   }
-  if (KernelDialect::rcu_assign_pointer.name == name) {
+  if (2 == num_args) {
+    // KernelDialect::rcu_assign_pointer.name == name
     auto p = m_view.visit(expansion.arguments[0], scope)->getResult(0);
     auto v = m_view.visit(expansion.arguments[1], scope)->getResult(0);
     return m_bld.create<RCUAssignPointer>(loc, rty, p, v);
   }
-  if (KernelDialect::rcu_replace_pointer.name == name) {
+  if (3 == num_args) {
+    // KernelDialect::rcu_replace_pointer.name == name
     auto rcu_ptr = m_view.visit(expansion.arguments[0], scope)->getResult(0);
     auto ptr = m_view.visit(expansion.arguments[1], scope)->getResult(0);
     auto c = m_view.visit(expansion.arguments[2], scope)->getResult(0);
