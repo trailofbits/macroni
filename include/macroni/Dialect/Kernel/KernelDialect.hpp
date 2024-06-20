@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "macroni/Common/MacroSpelling.hpp"
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/BuiltinTypes.h>
 #include <mlir/IR/Dialect.h>
