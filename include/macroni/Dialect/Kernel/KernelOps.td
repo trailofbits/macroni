@@ -143,7 +143,7 @@ class RCU_Unary_Op<string mnemonic, list<Trait> traits = []>
     [DeclareOpInterfaceMethods<RCU_Macro_Interface>])>
   , Arguments<(ins AnyType:$p)>
   , Results<(outs AnyType:$result)> {
-    let summary = "An expansion of an RCU macro with one paramter, p";
+    let summary = "An expansion of an RCU macro with one parameter, p";
     let assemblyFormat = [{
       `(` $p `)` attr-dict
       `:` functional-type( operands, results )
