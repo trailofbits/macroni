@@ -45,10 +45,12 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
 
   auto loc = m_view.location(stmt);
   auto expansion = m_expansions.at(stmt);
-  vast::mlir_type rty = m_bld.void_type();
-  if (auto expr = clang::dyn_cast<clang::Expr>(stmt)) {
-    rty = m_view.visit(expr->getType(), scope);
-  }
+  auto rty = [&] -> vast::mlir_type {
+    if (auto expr = clang::dyn_cast<clang::Expr>(stmt)) {
+      return m_view.visit(expr->getType(), scope);
+    }
+    return m_bld.void_type();
+  }();
 
   auto name = expansion.spelling.name;
   if (KernelDialect::rcu_access_pointer.name == name ||
