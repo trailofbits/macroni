@@ -2,7 +2,6 @@
 
 #include "macroni/Common/EmptyVisitor.hpp"
 #include "macroni/Common/ExpansionTable.hpp"
-#include "macroni/Common/MacroSpelling.hpp"
 #include "vast/CodeGen/CodeGenBuilder.hpp"
 #include "vast/CodeGen/CodeGenMeta.hpp"
 #include "vast/CodeGen/CodeGenVisitorBase.hpp"
