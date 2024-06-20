@@ -1,10 +1,13 @@
 #include "macroni/Dialect/Kernel/KernelOps.hpp"
 #include "vast/Dialect/HighLevel/HighLevelOps.hpp"
+#include "vast/Util/Common.hpp"
 #include <llvm/ADT/APInt.h>
 #include <mlir/IR/BuiltinAttributes.h>
 #include <mlir/IR/Operation.h>
 #include <mlir/IR/PatternMatch.h>
+#include <mlir/Rewrite/FrozenRewritePatternSet.h>
 #include <mlir/Support/LogicalResult.h>
+#include <mlir/Transforms/GreedyPatternRewriteDriver.h>
 
 namespace macroni::kernel {
 llvm::APInt get_lock_level(mlir::Operation &op) {
@@ -74,4 +77,17 @@ mlir::LogicalResult rewrite_rcu_read_unlock(vast::hl::CallOp call_op,
   return mlir::success();
 }
 
+void rewrite_rcu(vast::mcontext_t *mctx, vast::owning_module_ref &mod) {
+  // Register conversions
+  auto patterns = mlir::RewritePatternSet(mctx);
+  patterns.add(rewrite_label_stmt).add(rewrite_rcu_read_unlock);
+
+  // Apply the conversions
+  auto frozen_pats = mlir::FrozenRewritePatternSet(std::move(patterns));
+  mod->walk([&frozen_pats](mlir::Operation *op) {
+    if (mlir::isa<vast::hl::ForOp, vast::hl::CallOp, vast::hl::LabelStmt>(op)) {
+      std::ignore = mlir::applyOpPatternsAndFold(op, frozen_pats);
+    }
+  });
+}
 } // namespace macroni::kernel
