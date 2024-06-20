@@ -248,7 +248,8 @@ add_subdirectory(bin)
 #
 # macroni tests
 #
-option(MACRONI_ENABLE_TESTING "Enable Macroni's test suite" OFF)
+option(MACRONI_ENABLE_TESTING "Enable Macroni's test suite"
+       ${PROJECT_IS_TOP_LEVEL})
 if(MACRONI_ENABLE_TESTING)
   enable_testing()
   add_subdirectory(test)
