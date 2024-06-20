@@ -1,9 +1,11 @@
 #include "macroni/ASTMatchers/Kernel/RCUMatchers.hpp"
-#include "macroni/Translation/Kernel/KernelVisitor.hpp"
+#include "macroni/Common/MacroSpelling.hpp"
+#include "macroni/Dialect/Kernel/KernelDialect.hpp"
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
+#include <vector>
 
 namespace macroni::kernel {
 using namespace clang::ast_matchers;
@@ -87,35 +89,16 @@ const StatementMatcher rcu_collector::rcu_replace_pointer_matcher =
         .bind("rcu_replace_pointer");
 
 void rcu_collector::run(const MatchFinder::MatchResult &Result) {
-  if (auto rcu_dereference =
-          Result.Nodes.getNodeAs<clang::StmtExpr>("rcu_dereference")) {
-    auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
-    m_rcu_dereference_to_p.insert({rcu_dereference, p});
-  } else if (auto rcu_dereference_bh = Result.Nodes.getNodeAs<clang::StmtExpr>(
-                 "rcu_dereference_bh")) {
-    auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
-    m_rcu_dereference_bh_to_p.insert({rcu_dereference_bh, p});
-  } else if (auto rcu_dereference_sched =
-                 Result.Nodes.getNodeAs<clang::StmtExpr>(
-                     "rcu_dereference_sched")) {
-    auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
-    m_rcu_dereference_sched_to_p.insert({rcu_dereference_sched, p});
-  } else if (auto rcu_assign_pointer =
-                 Result.Nodes.getNodeAs<clang::DoStmt>("rcu_assign_pointer")) {
-    auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
-    auto v = Result.Nodes.getNodeAs<clang::Expr>("v");
-    m_rcu_assign_pointer_to_params.insert({rcu_assign_pointer, {p, v}});
-  } else if (auto rcu_access_pointer = Result.Nodes.getNodeAs<clang::StmtExpr>(
-                 "rcu_access_pointer")) {
-    auto p = Result.Nodes.getNodeAs<clang::Expr>("p");
-    m_rcu_access_pointer_to_p.insert({rcu_access_pointer, p});
-  } else if (auto rcu_replace_pointer = Result.Nodes.getNodeAs<clang::StmtExpr>(
-                 "rcu_replace_pointer")) {
-    auto rcu_ptr = Result.Nodes.getNodeAs<clang::Expr>("rcu_ptr");
-    auto ptr = Result.Nodes.getNodeAs<clang::Expr>("ptr");
-    auto c = Result.Nodes.getNodeAs<clang::Expr>("c");
-    m_rcu_replace_pointer_to_params.insert(
-        {rcu_replace_pointer, {rcu_ptr, ptr, c}});
+  for (auto rcu_macro : KernelDialect::rcu_macro_spellings) {
+    if (auto expansion =
+            Result.Nodes.getNodeAs<clang::Stmt>(rcu_macro.m_name)) {
+      std::vector<const clang::Expr *> arguments;
+      for (auto parameter_name : rcu_macro.m_parameter_names) {
+        auto argument = Result.Nodes.getNodeAs<clang::Expr>(parameter_name);
+        arguments.push_back(argument);
+      }
+      m_expansions.insert({expansion, {rcu_macro, arguments}});
+    }
   }
 }
 } // namespace macroni::kernel
