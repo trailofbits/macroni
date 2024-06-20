@@ -13,7 +13,6 @@
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 #include <mlir/IR/Operation.h>
-#include <optional>
 
 namespace macroni::kernel {
 
@@ -29,7 +28,7 @@ struct kernel_visitor : ::macroni::empty_visitor {
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
 
-  [[nodiscard]] std::optional<vast::operation>
+  [[nodiscard]] vast::operation
   visit_rcu_read_lock_or_unlock(const vast::cg::clang_stmt *stmt,
                                 vast::cg::scope_context &scope);
 
