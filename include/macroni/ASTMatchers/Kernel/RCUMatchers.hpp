@@ -29,6 +29,6 @@ public:
   virtual void
   run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
 
-  expansion_table m_expansions;
+  expansion_table expansions;
 };
 } // namespace macroni::kernel
