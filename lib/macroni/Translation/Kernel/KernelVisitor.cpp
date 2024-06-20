@@ -40,7 +40,7 @@ kernel_visitor::kernel_visitor(expansion_table &expansions,
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
   if (!m_expansions.contains(stmt)) {
-    return {};
+    return visit_rcu_read_lock_or_unlock(stmt, scope);
   }
 
   auto loc = m_view.location(stmt);
@@ -85,23 +85,23 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
   return nullptr;
 }
 
-std::optional<vast::operation>
+vast::operation
 kernel_visitor::visit_rcu_read_lock_or_unlock(const vast::cg::clang_stmt *stmt,
                                               vast::cg::scope_context &scope) {
   auto call_expr = clang::dyn_cast<clang::CallExpr>(stmt);
   if (!call_expr) {
-    return std::nullopt;
+    return {};
   }
 
   auto direct_callee = call_expr->getDirectCallee();
   if (!direct_callee) {
-    return std::nullopt;
+    return {};
   }
 
   auto name = direct_callee->getName();
   if (KernelDialect::rcu_read_lock() != name &&
       KernelDialect::rcu_read_unlock() != name) {
-    return std::nullopt;
+    return {};
   }
 
   vast::cg::default_stmt_visitor visitor(m_bld, m_view, scope);
