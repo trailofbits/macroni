@@ -33,7 +33,7 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
                                          vast::cg::default_meta_gen>(Ctx);
 
   driver->push_visitor(std::make_unique<kernel_visitor>(
-      matcher.m_expansions, Ctx, driver->mcontext(),
+      matcher.expansions, Ctx, driver->mcontext(),
       driver->get_codegen_builder(), driver->get_meta_generator(),
       driver->get_symbol_generator(),
       vast::cg::visitor_view(driver->get_visitor_stack())));
