@@ -52,17 +52,8 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   driver->finalize();
   auto mod = driver->freeze();
 
-  // Register conversions
-  auto patterns = mlir::RewritePatternSet(&driver->mcontext());
-  patterns.add(rewrite_label_stmt).add(rewrite_rcu_read_unlock);
-
-  // Apply the conversions
-  auto frozen_pats = mlir::FrozenRewritePatternSet(std::move(patterns));
-  mod->walk([&frozen_pats](mlir::Operation *op) {
-    if (mlir::isa<vast::hl::ForOp, vast::hl::CallOp, vast::hl::LabelStmt>(op)) {
-      std::ignore = mlir::applyOpPatternsAndFold(op, frozen_pats);
-    }
-  });
+  // Rewrite rcu_read_lock()/unlock() calls into critical sections.
+  rewrite_rcu(&driver->mcontext(), mod);
 
   // Print the result
 
