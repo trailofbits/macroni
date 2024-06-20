@@ -7,6 +7,7 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <llvm/Support/raw_ostream.h>
 #include <memory>
 
 namespace macroni::safety {
@@ -36,7 +37,7 @@ void SafetyASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   driver->emit(Ctx.getTranslationUnitDecl());
   driver->finalize();
   auto mod = driver->freeze();
-  mod->dump();
+  mod->print(llvm::outs());
 }
 
 std::unique_ptr<SafetyASTConsumer>
