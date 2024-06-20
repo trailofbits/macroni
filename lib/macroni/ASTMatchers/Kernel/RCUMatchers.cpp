@@ -1,4 +1,5 @@
 #include "macroni/ASTMatchers/Kernel/RCUMatchers.hpp"
+#include "macroni/Common/ExpansionTable.hpp"
 #include "macroni/Common/MacroSpelling.hpp"
 #include "macroni/Dialect/Kernel/KernelDialect.hpp"
 #include <clang/AST/Expr.h>
@@ -104,7 +105,8 @@ void rcu_collector::run(const MatchFinder::MatchResult &Result) {
       for (auto param_name : rcu_macro.parameter_names) {
         args.push_back(Result.Nodes.getNodeAs<clang::Expr>(param_name));
       }
-      m_expansions.insert({expansion, {rcu_macro, args}});
+      m_expansions.emplace(expansion,
+                           expansion_info{rcu_macro, std::move(args)});
     }
   }
 }
