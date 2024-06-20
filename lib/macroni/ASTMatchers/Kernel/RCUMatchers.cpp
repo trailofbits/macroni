@@ -99,10 +99,9 @@ void rcu_collector::attach_to(clang::ast_matchers::MatchFinder &finder) {
 
 void rcu_collector::run(const MatchFinder::MatchResult &Result) {
   for (auto rcu_macro : KernelDialect::rcu_macro_spellings) {
-    if (auto expansion =
-            Result.Nodes.getNodeAs<clang::Stmt>(rcu_macro.m_name)) {
+    if (auto expansion = Result.Nodes.getNodeAs<clang::Stmt>(rcu_macro.name)) {
       std::vector<const clang::Expr *> arguments;
-      for (auto parameter_name : rcu_macro.m_parameter_names) {
+      for (auto parameter_name : rcu_macro.parameter_names) {
         auto argument = Result.Nodes.getNodeAs<clang::Expr>(parameter_name);
         arguments.push_back(argument);
       }
