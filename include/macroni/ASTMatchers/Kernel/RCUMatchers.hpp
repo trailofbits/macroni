@@ -12,7 +12,6 @@ private:
   static const clang::ast_matchers::StatementMatcher
   make_rcu_dereference_matcher(std::string suffix);
 
-public:
   static const clang::ast_matchers::StatementMatcher rcu_deference_matcher;
   static const clang::ast_matchers::StatementMatcher rcu_deference_bh_matcher;
   static const clang::ast_matchers::StatementMatcher
@@ -21,6 +20,11 @@ public:
   static const clang::ast_matchers::StatementMatcher rcu_access_pointer_matcher;
   static const clang::ast_matchers::StatementMatcher
       rcu_replace_pointer_matcher;
+
+public:
+  // Attaches this RCU collector instance and all its matcher to the given
+  // MatchFinder.
+  void attach_to(clang::ast_matchers::MatchFinder &finder);
 
   virtual void
   run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
