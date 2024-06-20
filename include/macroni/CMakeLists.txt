@@ -1,5 +1,6 @@
 # Copyright (c) 2024-present, Trail of Bits, Inc.
 
+add_subdirectory(Analysis)
 add_subdirectory(ASTConsumers)
 add_subdirectory(ASTMatchers)
 add_subdirectory(Common)
