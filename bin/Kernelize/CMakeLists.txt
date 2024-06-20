@@ -1,17 +1,20 @@
 set(LLVM_LINK_COMPONENTS Core Support AsmParser)
 
-add_executable(kernelize
-    Main.cpp
-)
-llvm_update_compile_flags(kernelize)
+set(MACRONI_ORIGINAL_LLVM_RUNTIME_OUTPUT_INTDIR ${LLVM_RUNTIME_OUTPUT_INTDIR})
 
-target_link_libraries(kernelize
-    PRIVATE
-        macroni_api
-        MLIRMacroni
-        MLIRKernel
-        kernel_conversion
-        VASTCodeGen
-)
+set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
+add_clang_executable(kernelize Kernelize.cpp)
 
+set(LLVM_RUNTIME_OUTPUT_INTDIR ${MACRONI_ORIGINAL_LLVM_RUNTIME_OUTPUT_INTDIR})
+
+target_link_libraries(
+  kernelize
+  PRIVATE macroni_settings
+          macroni_common
+          kernel_translation_api
+          rcu_matchers
+          rcu_analyzer
+          kernel_consumer
+          MLIRKernel
+          kernel_conversion)
 mlir_check_link_libraries(kernelize)

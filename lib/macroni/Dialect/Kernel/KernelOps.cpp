@@ -8,7 +8,6 @@
 
 #include <llvm/Support/ErrorHandling.h>
 #include <mlir/IR/Builders.h>
-#include <mlir/IR/FunctionImplementation.h>
 #include <mlir/IR/OpImplementation.h>
 #include <mlir/IR/OperationSupport.h>
 #include <mlir/IR/SymbolTable.h>

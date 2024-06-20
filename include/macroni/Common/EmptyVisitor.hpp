@@ -1,6 +1,5 @@
 #pragma once
 
-#include "vast/CodeGen/CodeGenBuilder.hpp"
 #include "vast/CodeGen/CodeGenMeta.hpp"
 #include "vast/CodeGen/CodeGenVisitorBase.hpp"
 #include "vast/CodeGen/SymbolGenerator.hpp"

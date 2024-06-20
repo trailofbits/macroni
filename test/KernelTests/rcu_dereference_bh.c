@@ -4,7 +4,7 @@
 int main(void) {
   int *x = 0;
   struct string *s = {0};
-  rcu_dereference(x);
-  rcu_dereference(s->begin);
+  rcu_dereference_bh(x);
+  rcu_dereference_bh(s->begin);
   return 0;
 }

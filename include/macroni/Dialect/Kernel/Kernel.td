@@ -26,6 +26,16 @@ def Kernel_Dialect : Dialect {
     let extraClassDeclaration = [{
         void registerTypes();
         void registerAttributes();
+
+        static const macro_spelling rcu_access_pointer;
+        static const macro_spelling rcu_assign_pointer;
+        static const macro_spelling rcu_dereference;
+        static const macro_spelling rcu_dereference_bh;
+        static const macro_spelling rcu_dereference_sched;
+        static const macro_spelling rcu_replace_pointer;
+
+        static const std::vector<macro_spelling> rcu_macro_spellings;
+
         static llvm::StringRef rcu_read_lock() { return "rcu_read_lock"; }
         static llvm::StringRef rcu_read_unlock() { return "rcu_read_unlock"; }
     }];
