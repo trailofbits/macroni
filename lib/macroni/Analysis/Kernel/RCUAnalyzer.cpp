@@ -95,7 +95,7 @@ void rcu_analyzer::check_critical_section_section_for_rcu_invocations(
   cs.walk([](RCUAccessPointer op) {
     op->emitWarning() << format_location(op)
                       << ": info: Use rcu_dereference_protected() instead of"
-                         "rcu_access_pointer() in critical section\n";
+                         " rcu_access_pointer() in critical section\n";
   });
 }
 
