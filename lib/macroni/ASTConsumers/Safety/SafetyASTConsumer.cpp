@@ -1,9 +1,9 @@
 #include "macroni/ASTConsumers/Safety/SafetyASTConsumer.hpp"
 #include "macroni/ASTMatchers/Safety/SafetyMatchers.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
+#include "macroni/Common/MacroniMetaGenerator.hpp"
 #include "macroni/Dialect/Safety/SafetyDialect.hpp"
 #include "macroni/Translation/Safety/SafetyVisitor.hpp"
-#include "vast/CodeGen/CodeGenMeta.hpp"
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
@@ -19,7 +19,7 @@ void SafetyASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   finder.addMatcher(macroni::safety::safe_block_condition_matcher, &matcher);
   auto driver =
       macroni::generate_codegen_driver<SafetyDialect,
-                                       vast::cg::default_meta_gen>(Ctx);
+                                       macroni::macroni_meta_generator>(Ctx);
   finder.matchAST(Ctx);
 
   // Generate the driver.

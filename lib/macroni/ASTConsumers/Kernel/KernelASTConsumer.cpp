@@ -2,10 +2,10 @@
 #include "macroni/ASTMatchers/Kernel/RCUMatchers.hpp"
 #include "macroni/Analysis/Kernel/RCUAnalyzer.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
+#include "macroni/Common/MacroniMetaGenerator.hpp"
 #include "macroni/Conversion/Kernel/KernelRewriters.hpp"
 #include "macroni/Dialect/Kernel/KernelDialect.hpp"
 #include "macroni/Translation/Kernel/KernelVisitor.hpp"
-#include "vast/CodeGen/CodeGenMeta.hpp"
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
@@ -30,7 +30,7 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   // Set up the driver.
   auto driver =
       ::macroni::generate_codegen_driver<KernelDialect,
-                                         vast::cg::default_meta_gen>(Ctx);
+                                         macroni::macroni_meta_generator>(Ctx);
 
   driver->push_visitor(std::make_unique<kernel_visitor>(
       matcher.expansions, Ctx, driver->mcontext(),
