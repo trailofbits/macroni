@@ -13,6 +13,7 @@
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 #include <mlir/IR/Operation.h>
+#include <unordered_set>
 
 namespace macroni::kernel {
 
@@ -42,6 +43,7 @@ struct kernel_visitor : ::macroni::empty_visitor {
   void unlock_op(mlir::Operation &op);
 
   expansion_table &m_expansions;
+  std::unordered_set<const clang::Stmt *> m_function_bodies;
   vast::acontext_t &m_actx;
   vast::cg::codegen_builder &m_bld;
   vast::cg::visitor_view m_view;
