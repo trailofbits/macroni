@@ -38,6 +38,11 @@ kernel_visitor::kernel_visitor(expansion_table &expansions,
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
+  // If we have started visiting a new function body, reset the current lock
+  // level.
+  if (m_function_bodies.contains(stmt)) {
+    lock_level = 0;
+  }
   if (!m_expansions.contains(stmt)) {
     return visit_rcu_read_lock_or_unlock(stmt, scope);
   }
@@ -131,6 +136,14 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
   if (!function_decl || !function_decl->hasBody()) {
     return nullptr;
   }
+  // Keep track of function decl bodies so that we can reset the lock level when
+  // the stmt visitor visits them. We can't reset the lock level here when
+  // visiting the function decl because of the way vast visitors visit the AST:
+  // They visit the decls first, and then then statements. If vast visitors
+  // visited the AST using plain DFS then this wouldn't be an issue and we could
+  // just set the lock level here whenever we visit a function decl.
+  auto body = function_decl->getBody();
+  m_function_bodies.insert(body);
 
   // Get the source text of this function declaration so we can check if it
   // contains an RCU annotation. The RCU annotations (__acquires(),
@@ -140,7 +153,6 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
 
   auto &sm = m_actx.getSourceManager();
   auto &lo = m_actx.getLangOpts();
-  auto body = function_decl->getBody();
   auto begin = function_decl->getBeginLoc();
   auto end = body->getBeginLoc();
   auto s_range = clang::SourceRange(begin, end);
