@@ -7,8 +7,8 @@
 #include "ParseAST.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
 #include "macroni/Dialect/Macroni/MacroniDialect.hpp"
-#include "macroni/Translation/Macroni/MacroniMetaGenerator.hpp"
 #include "macroni/Translation/Macroni/MacroniVisitor.hpp"
+#include "macroni/Translation/Macroni/PastaMetaGenerator.hpp"
 #include "pasta/AST/AST.h"
 #include "vast/CodeGen/CodeGenDriver.hpp"
 #include <clang/AST/ASTContext.h>
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   auto &actx = pctx.UnderlyingAST();
   auto driver =
       macroni::generate_codegen_driver<macroni::macroni::MacroniDialect,
-                                       macroni::macroni_meta_generator>(actx);
+                                       macroni::pasta_meta_generator>(actx);
 
   // Add the macroni visitor first. This ensures that our visitor will try to
   // lower stmts down to the Macroni dialect first before VAST's dialect.

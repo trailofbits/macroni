@@ -1,7 +1,7 @@
 #include "macroni/Translation/Macroni/MacroniVisitor.hpp"
 #include "macroni/Common/EmptyVisitor.hpp"
 #include "macroni/Dialect/Macroni/MacroniOps.hpp"
-#include "macroni/Translation/Macroni/MacroniMetaGenerator.hpp"
+#include "macroni/Translation/Macroni/PastaMetaGenerator.hpp"
 #include "pasta/AST/Macro.h"
 #include "pasta/AST/Stmt.h"
 #include <llvm/ADT/StringRef.h>
@@ -97,7 +97,7 @@ vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
   // vast::cg::codegen_instance expects a vast::cg::meta_generator as its meta
   // generator, but we use static inheritance to pass it our own meta generator,
   // so simply calling location() directly won't work.
-  auto meta = dynamic_cast<macroni_meta_generator *>(&mg);
+  auto meta = dynamic_cast<pasta_meta_generator *>(&mg);
   auto loc = meta ? meta->location(*sub) : mlir::UnknownLoc();
   auto name_tok = sub->NameOrOperator();
   auto macro_name = (name_tok ? name_tok->Data() : "<a nameless macro>");
