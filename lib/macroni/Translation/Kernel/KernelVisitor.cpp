@@ -1,6 +1,7 @@
 #include "macroni/Translation/Kernel/KernelVisitor.hpp"
 #include "macroni/Common/EmptyVisitor.hpp"
 #include "macroni/Common/ExpansionTable.hpp"
+#include "macroni/Common/MacroniMetaGenerator.hpp"
 #include "macroni/Dialect/Kernel/KernelAttributes.hpp"
 #include "macroni/Dialect/Kernel/KernelDialect.hpp"
 #include "macroni/Dialect/Kernel/KernelOps.hpp"
@@ -18,6 +19,7 @@
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 #include <clang/Basic/LLVM.h>
+#include <clang/Basic/SourceManager.h>
 #include <clang/Lex/Lexer.h>
 #include <llvm/ADT/Twine.h>
 #include <mlir/IR/Attributes.h>
@@ -47,7 +49,9 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
     return visit_rcu_read_lock_or_unlock(stmt, scope);
   }
 
-  auto loc = m_view.location(stmt);
+  auto &meta = static_cast<macroni::macroni_meta_generator &>(mg);
+  auto &sm = m_actx.getSourceManager();
+  auto loc = meta.location(sm.getExpansionLoc(stmt->getBeginLoc()));
   auto expansion = m_expansions.at(stmt);
   auto rty = [&] -> vast::mlir_type {
     if (auto expr = clang::dyn_cast<clang::Expr>(stmt)) {
