@@ -1,4 +1,4 @@
-add_library(macroni_translation_api STATIC MacroniMetaGenerator.cpp
+add_library(macroni_translation_api STATIC PastaMetaGenerator.cpp
                                            MacroniVisitor.cpp)
 target_link_libraries(macroni_translation_api PRIVATE macroni_settings
                                                       macroni_common)
