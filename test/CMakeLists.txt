@@ -10,15 +10,20 @@ endif()
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.py
-  MAIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.py)
+  #
+  MAIN_CONFIG
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.py)
 
 set(MACRONI_TEST_DEPENDS kernelize kernelcheck macronify safe-c)
 
-add_lit_testsuite(check-macroni "Running Macroni regression tests"
-                  ${CMAKE_CURRENT_BINARY_DIR}
-                  DEPENDS ${MACRONI_TEST_DEPENDS})
+add_lit_testsuite(
+  check-macroni "Running Macroni regression tests" ${CMAKE_CURRENT_BINARY_DIR}
+  #
+  DEPENDS ${MACRONI_TEST_DEPENDS})
 
 set_target_properties(check-macroni PROPERTIES FOLDER "Tests")
 
-add_lit_testsuites(Macroni ${CMAKE_CURRENT_SOURCE_DIR}
-                   DEPENDS ${MACRONI_TEST_DEPENDS})
+add_lit_testsuites(
+  Macroni ${CMAKE_CURRENT_SOURCE_DIR}
+  #
+  DEPENDS ${MACRONI_TEST_DEPENDS})
