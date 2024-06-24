@@ -1,4 +1,4 @@
 # Copyright (c) 2024-present, Trail of Bits, Inc.
 
-add_library(rcu_analyzer RCUAnalyzer.cpp)
-target_link_libraries(rcu_analyzer PUBLIC macroni_settings)
+add_library(kernel_analysis KernelAnalysisPass.cpp RCUAnalysis.cpp)
+target_link_libraries(kernel_analysis PUBLIC macroni_settings MLIRKernel)
