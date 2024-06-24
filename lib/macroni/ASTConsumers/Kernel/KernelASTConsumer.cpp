@@ -1,6 +1,5 @@
 #include "macroni/ASTConsumers/Kernel/KernelASTConsumer.hpp"
 #include "macroni/ASTMatchers/Kernel/RCUMatchers.hpp"
-#include "macroni/Analysis/Kernel/RCUAnalyzer.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
 #include "macroni/Common/MacroniMetaGenerator.hpp"
 #include "macroni/Conversion/Kernel/KernelRewriters.hpp"
@@ -50,20 +49,6 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   // Print the result
 
   mod->print(llvm::outs());
-
-  // Run analyses. The type of analysis we do depends on the annotation (if any)
-  // that a given function definition is annotated with.
-
-  mlir::DiagnosticEngine &engine = driver->mcontext().getDiagEngine();
-  auto diagnostic_handler = engine.registerHandler([](mlir::Diagnostic &diag) {
-    diag.print(llvm::errs());
-    return;
-  });
-
-  rcu_analyzer analyzer;
-  analyzer.analyze(mod);
-
-  engine.eraseHandler(diagnostic_handler);
 }
 
 std::unique_ptr<KernelASTConsumer>
