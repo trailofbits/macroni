@@ -13,7 +13,6 @@ target_link_libraries(
           macroni_common
           kernel_translation_api
           rcu_matchers
-          rcu_analyzer
           kernel_consumer
           MLIRKernel
           kernel_conversion)
