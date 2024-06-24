@@ -55,6 +55,12 @@ tools = [
                      'Kernelize', 'Debug', 'kernelize')),
 
     ToolSubst(
+        "kernelcheck",
+        os.path.join(config.macroni_obj_root, 'bin',
+                     'KernelCheck', 'Debug', 'kernelcheck'),
+        extra_args = ["--kernelcheck"]),
+
+    ToolSubst(
         "macronify",
         os.path.join(config.macroni_obj_root, 'bin',
                      'Macronify', 'Debug', 'macronify')),
