@@ -12,7 +12,7 @@ configure_lit_site_cfg(
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.py
   MAIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.py)
 
-set(MACRONI_TEST_DEPENDS kernelize macronify safe-c)
+set(MACRONI_TEST_DEPENDS kernelize kernelcheck macronify safe-c)
 
 add_lit_testsuite(check-macroni "Running Macroni regression tests"
                   ${CMAKE_CURRENT_BINARY_DIR}
