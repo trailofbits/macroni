@@ -3,8 +3,8 @@
 #include "macroni/Dialect/Kernel/KernelOps.hpp"
 #include "vast/Dialect/HighLevel/HighLevelOps.hpp"
 #include "vast/Util/Common.hpp"
+#include <format>
 #include <llvm/ADT/StringRef.h>
-#include <llvm/Support/raw_ostream.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/Iterators.h>
 #include <mlir/IR/Operation.h>
@@ -14,7 +14,7 @@
 
 namespace macroni::kernel {
 // TODO(Brent): Use mlir::Operation::emitWarning() to emit warnings instead of
-// directly printing to stderr.
+// using custom emit method.
 
 // Format an operation's location as a string for diagnostics
 std::string format_location(mlir::Operation *op) {
@@ -29,16 +29,18 @@ std::string format_location(mlir::Operation *op) {
 }
 
 // Warn about an RCU dereference call outside a critical section.
-void warn_rcu_dereference(RCU_Dereference_Interface &op) {
+void kernel_analysis::warn_rcu_dereference(
+    RCU_Dereference_Interface &rcu_deref) {
   // Skip dialect namespace prefix when printing op name
-  llvm::errs() << format_location(op.getOperation())
-               << ": warning: Invocation of "
-               << op.getOperation()->getName().stripDialect()
-               << "() outside of RCU critical section\n";
+  auto op = rcu_deref.getOperation();
+  auto warning = std::format(
+      "{}: warning: Invocation of {}() outside of RCU critical section\n",
+      format_location(op), op->getName().stripDialect().str());
+  emit(warning);
 }
 
 // Check for invocations of RCU macros outside of RCU critical sections.
-void analyze_non_rcu_function(vast::hl::FuncOp &func) {
+void kernel_analysis::analyze_non_rcu_function(vast::hl::FuncOp &func) {
   func.walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op) {
     if (mlir::isa<RCUCriticalSection>(op)) {
       // NOTE(bpp): Skip checking for invocations of RCU macros inside RCU
@@ -57,8 +59,8 @@ void analyze_non_rcu_function(vast::hl::FuncOp &func) {
 
 // Create an MLIR operation walker that warns about RCU calls until finding a
 // call to the function with the given name.
-auto walk_until_call(llvm::StringRef name) {
-  return [=](mlir::Operation *op) {
+auto kernel_analysis::walk_until_call(llvm::StringRef name) {
+  return [=, this](mlir::Operation *op) {
     if (auto call = mlir::dyn_cast<vast::hl::CallOp>(op);
         call && name == call.getCalleeAttr().getValue()) {
       return mlir::WalkResult::interrupt();
@@ -71,14 +73,14 @@ auto walk_until_call(llvm::StringRef name) {
 }
 
 // Check for RCU macro invocations before first invocation of rcu_read_lock().
-void analyze_acquires_function(vast::hl::FuncOp &func) {
+void kernel_analysis::analyze_acquires_function(vast::hl::FuncOp &func) {
   // Walk pre-order and warn until we find an invocation of rcu_read_lock().
   func.walk<mlir::WalkOrder::PreOrder>(
       walk_until_call(KernelDialect::rcu_read_lock()));
 }
 
 // Check for RCU macro invocations after last invocation of rcu_read_unlock().
-void analyze_releases_function(vast::hl::FuncOp &func) {
+void kernel_analysis::analyze_releases_function(vast::hl::FuncOp &func) {
   // Walk post-order in reverse and emit warnings until we encounter an
   // invocation of rcu_read_unlock()
   func.walk<mlir::WalkOrder::PostOrder, mlir::ReverseIterator>(
@@ -86,11 +88,13 @@ void analyze_releases_function(vast::hl::FuncOp &func) {
 }
 
 // Check certain RCU macro invocations inside of an RCU critical section.
-void analyze_critical_section(RCUCriticalSection cs) {
-  cs.walk([](RCUAccessPointer op) {
-    llvm::errs() << format_location(op)
-                 << ": info: Use rcu_dereference_protected() instead of"
-                    " rcu_access_pointer() in critical section\n";
+void kernel_analysis::analyze_critical_section(RCUCriticalSection cs) {
+  cs.walk([this](RCUAccessPointer op) {
+    auto warning =
+        std::format("{}: info: Use rcu_dereference_protected() instead of "
+                    "rcu_access_pointer() in critical section\n",
+                    format_location(op));
+    emit(warning);
   });
 }
 
@@ -110,6 +114,6 @@ kernel_analysis::kernel_analysis(mlir::Operation *op) {
     }
   });
 
-  mod->walk(analyze_critical_section);
+  mod->walk([&](RCUCriticalSection cs) { analyze_critical_section(cs); });
 }
 } // namespace macroni::kernel
