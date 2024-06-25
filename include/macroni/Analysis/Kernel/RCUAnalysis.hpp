@@ -5,7 +5,9 @@
 #include "vast/Dialect/HighLevel/HighLevelOps.hpp"
 #include <format>
 #include <llvm/Support/raw_ostream.h>
+#include <mlir/IR/AsmState.h>
 #include <mlir/IR/Operation.h>
+#include <mlir/IR/OperationSupport.h>
 #include <string>
 
 namespace macroni::kernel {
@@ -25,11 +27,10 @@ protected:
   virtual std::string format_location(mlir::Operation *op) {
     std::string s;
     auto os = llvm::raw_string_ostream(s);
-    op->getLoc()->print(os);
-    s.erase(s.find("loc("), 4);
-    s.erase(s.find('"'), 1);
-    s.erase(s.find('"'), 1);
-    s.erase(s.rfind(')'), 1);
+    mlir::OpPrintingFlags flags;
+    flags.enableDebugInfo(false, true);
+    mlir::AsmState state(op, flags);
+    op->getLoc()->print(os, state, true);
     return s;
   }
 
