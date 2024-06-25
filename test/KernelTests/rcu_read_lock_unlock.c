@@ -105,14 +105,14 @@ b_label:
 // CHECK:     }
 // CHECK:     hl.func @lock external () -> !hl.void {
 // CHECK:       core.scope {
-// CHECK:         %1 = hl.call @rcu_read_lock() {lock_level = 0 : i64} : () -> !hl.void
+// CHECK:         %1 = hl.call @rcu_read_lock() : () -> !hl.void
 // CHECK:       }
 // CHECK:       %0 = hl.const #void_value
 // CHECK:       core.implicit.return %0 : !hl.void
 // CHECK:     }
 // CHECK:     hl.func @unlock external () -> !hl.void {
 // CHECK:       core.scope {
-// CHECK:         %1 = hl.call @rcu_read_unlock() {lock_level = -1 : i64} : () -> !hl.void
+// CHECK:         %1 = hl.call @rcu_read_unlock() : () -> !hl.void
 // CHECK:       }
 // CHECK:       %0 = hl.const #void_value
 // CHECK:       core.implicit.return %0 : !hl.void
@@ -211,11 +211,11 @@ b_label:
 // CHECK:             hl.cond.yield %4 : !hl.int
 // CHECK:           } then {
 // CHECK:             core.scope {
-// CHECK:               %4 = hl.call @rcu_read_unlock() {lock_level = 0 : i64} : () -> !hl.void
+// CHECK:               %4 = hl.call @rcu_read_unlock() : () -> !hl.void
 // CHECK:             }
 // CHECK:           } else {
 // CHECK:             core.scope {
-// CHECK:               %4 = hl.call @rcu_read_lock() {lock_level = 0 : i64} : () -> !hl.void
+// CHECK:               %4 = hl.call @rcu_read_lock() : () -> !hl.void
 // CHECK:             }
 // CHECK:           }
 // CHECK:         }
