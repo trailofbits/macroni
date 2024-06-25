@@ -18,11 +18,7 @@ class KernelAttr<string name, string attr_mnemonic, list<Trait> traits = []>
 }
 
 class ContextAttr<string name, string attr_mnemonic>
-  : KernelAttr< name, attr_mnemonic >
-{
-  let parameters = (ins "::mlir::StringAttr":$lock);
-  let assemblyFormat = "`<` $lock `>`";
-}
+  : KernelAttr< name, attr_mnemonic >;
 
 def MustHoldAttr : ContextAttr < "MustHold", "__must_hold" >;
 def AcquiresAttr : ContextAttr < "Acquires", "__acquires" >;
