@@ -12,7 +12,7 @@ struct rcu_analysis {
 
   virtual ~rcu_analysis(){};
 
-private:
+protected:
   void warn_rcu_dereference(RCU_Dereference_Interface &op);
   void analyze_non_rcu_function(vast::hl::FuncOp &func);
   auto walk_until_call(llvm::StringRef name);
