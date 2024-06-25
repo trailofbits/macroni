@@ -13,10 +13,8 @@
 #include <clang/AST/Expr.h>
 #include <clang/AST/Stmt.h>
 #include <mlir/IR/Operation.h>
-#include <unordered_set>
 
 namespace macroni::kernel {
-
 struct kernel_visitor : ::macroni::empty_visitor {
   [[nodiscard]] explicit kernel_visitor(expansion_table &expansions,
                                         vast::acontext_t &actx,
@@ -29,24 +27,12 @@ struct kernel_visitor : ::macroni::empty_visitor {
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
 
-  [[nodiscard]] vast::operation
-  visit_rcu_read_lock_or_unlock(const vast::cg::clang_stmt *stmt,
-                                vast::cg::scope_context &scope);
-
   [[nodiscard]] vast::operation visit(const vast::cg::clang_decl *decl,
                                       vast::cg::scope_context &scope) override;
 
-  void set_lock_level(mlir::Operation &op);
-
-  void lock_op(mlir::Operation &op);
-
-  void unlock_op(mlir::Operation &op);
-
   expansion_table &m_expansions;
-  std::unordered_set<const clang::Stmt *> m_function_bodies;
   vast::acontext_t &m_actx;
   vast::cg::codegen_builder &m_bld;
   vast::cg::visitor_view m_view;
-  std::int64_t lock_level = 0;
 };
 } // namespace macroni::kernel
