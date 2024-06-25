@@ -10,10 +10,6 @@
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
 
 namespace macroni::kernel {
-llvm::APInt get_lock_level(mlir::Operation &op) {
-  return op.getAttrOfType<mlir::IntegerAttr>("lock_level").getValue();
-}
-
 mlir::LogicalResult rewrite_label_stmt(vast::hl::LabelStmt label_stmt,
                                        mlir::PatternRewriter &rewriter) {
   // In the Linux Kernel, a common idiom is to call `rcu_read_unlock()` right
@@ -47,17 +43,13 @@ mlir::LogicalResult rewrite_rcu_read_unlock(vast::hl::CallOp call_op,
     return mlir::failure();
   }
   auto unlock_op = call_op.getOperation();
-  auto unlock_level = get_lock_level(*unlock_op);
   mlir::Operation *lock_op = nullptr;
   for (auto op = unlock_op; op; op = op->getPrevNode()) {
     if (auto other_call_op = mlir::dyn_cast<vast::hl::CallOp>(op)) {
       name = other_call_op.getCalleeAttr().getValue();
       if ("rcu_read_lock" == name) {
-        auto lock_level = get_lock_level(*op);
-        if (unlock_level == lock_level) {
-          lock_op = op;
-          break;
-        }
+        lock_op = op;
+        break;
       }
     }
   }
