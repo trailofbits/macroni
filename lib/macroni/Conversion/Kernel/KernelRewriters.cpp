@@ -1,3 +1,4 @@
+#include "macroni/Dialect/Kernel/KernelDialect.hpp"
 #include "macroni/Dialect/Kernel/KernelOps.hpp"
 #include "vast/Dialect/HighLevel/HighLevelOps.hpp"
 #include "vast/Util/Common.hpp"
@@ -24,7 +25,8 @@ mlir::LogicalResult rewrite_label_stmt(vast::hl::LabelStmt label_stmt,
   }
 
   auto call_op = mlir::dyn_cast<vast::hl::CallOp>(*ops.begin());
-  if (!call_op || call_op.getCalleeAttr().getValue() != "rcu_read_unlock") {
+  if (!call_op ||
+      call_op.getCalleeAttr().getValue() != KernelDialect::rcu_read_unlock()) {
     return mlir::failure();
   }
 
@@ -39,7 +41,7 @@ mlir::LogicalResult rewrite_label_stmt(vast::hl::LabelStmt label_stmt,
 mlir::LogicalResult rewrite_rcu_read_unlock(vast::hl::CallOp call_op,
                                             mlir::PatternRewriter &rewriter) {
   auto name = call_op.getCalleeAttr().getValue();
-  if ("rcu_read_unlock" != name) {
+  if (KernelDialect::rcu_read_unlock() != name) {
     return mlir::failure();
   }
   auto unlock_op = call_op.getOperation();
@@ -47,7 +49,7 @@ mlir::LogicalResult rewrite_rcu_read_unlock(vast::hl::CallOp call_op,
   for (auto op = unlock_op; op; op = op->getPrevNode()) {
     if (auto other_call_op = mlir::dyn_cast<vast::hl::CallOp>(op)) {
       name = other_call_op.getCalleeAttr().getValue();
-      if ("rcu_read_lock" == name) {
+      if (KernelDialect::rcu_read_lock() == name) {
         lock_op = op;
         break;
       }
