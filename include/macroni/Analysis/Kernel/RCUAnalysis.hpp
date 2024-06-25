@@ -7,10 +7,10 @@
 #include <mlir/IR/Operation.h>
 
 namespace macroni::kernel {
-struct kernel_analysis {
-  kernel_analysis(mlir::Operation *op);
+struct rcu_analysis {
+  rcu_analysis(mlir::Operation *op);
 
-  virtual ~kernel_analysis(){};
+  virtual ~rcu_analysis(){};
 
 private:
   void warn_rcu_dereference(RCU_Dereference_Interface &op);

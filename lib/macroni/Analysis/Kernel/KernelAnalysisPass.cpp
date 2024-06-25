@@ -21,7 +21,7 @@ void kernel_analysis_pass::runOnOperation() {
   // results. This is only valid because this operation pass does not perform
   // any transformations.
   markAllAnalysesPreserved();
-  getAnalysis<kernel_analysis>();
+  getAnalysis<rcu_analysis>();
 }
 
 void register_kernel_analysis_pass() {
