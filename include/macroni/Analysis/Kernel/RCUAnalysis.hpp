@@ -10,7 +10,7 @@ namespace macroni::kernel {
 struct rcu_analysis {
   rcu_analysis(mlir::Operation *op);
 
-  virtual ~rcu_analysis(){};
+  virtual ~rcu_analysis() = default;
 
 protected:
   void warn_rcu_dereference(RCU_Dereference_Interface &op);
