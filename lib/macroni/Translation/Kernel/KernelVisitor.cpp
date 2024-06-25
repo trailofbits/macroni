@@ -40,13 +40,8 @@ kernel_visitor::kernel_visitor(expansion_table &expansions,
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
-  // If we have started visiting a new function body, reset the current lock
-  // level.
-  if (m_function_bodies.contains(stmt)) {
-    lock_level = 0;
-  }
   if (!m_expansions.contains(stmt)) {
-    return visit_rcu_read_lock_or_unlock(stmt, scope);
+    return {};
   }
 
   auto &meta = static_cast<macroni::macroni_meta_generator &>(mg);
@@ -93,36 +88,6 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
   return nullptr;
 }
 
-vast::operation
-kernel_visitor::visit_rcu_read_lock_or_unlock(const vast::cg::clang_stmt *stmt,
-                                              vast::cg::scope_context &scope) {
-  auto call_expr = clang::dyn_cast<clang::CallExpr>(stmt);
-  if (!call_expr) {
-    return {};
-  }
-
-  auto direct_callee = call_expr->getDirectCallee();
-  if (!direct_callee) {
-    return {};
-  }
-
-  auto name = direct_callee->getName();
-  if (KernelDialect::rcu_read_lock() != name &&
-      KernelDialect::rcu_read_unlock() != name) {
-    return {};
-  }
-
-  vast::cg::default_stmt_visitor visitor(m_bld, m_view, scope);
-  auto op = visitor.visit(stmt);
-  if (KernelDialect::rcu_read_lock() == name) {
-    lock_op(*op);
-  } else {
-    unlock_op(*op);
-  }
-
-  return op;
-}
-
 template <typename AttrT, typename... Rest>
 void annotate_op_with_attrs_in_text(vast::operation op, std::string_view text,
                                     AttrT attr, Rest... rest) {
@@ -140,14 +105,7 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
   if (!function_decl || !function_decl->hasBody()) {
     return nullptr;
   }
-  // Keep track of function decl bodies so that we can reset the lock level when
-  // the stmt visitor visits them. We can't reset the lock level here when
-  // visiting the function decl because of the way vast visitors visit the AST:
-  // They visit the decls first, and then then statements. If vast visitors
-  // visited the AST using plain DFS then this wouldn't be an issue and we could
-  // just set the lock level here whenever we visit a function decl.
   auto body = function_decl->getBody();
-  m_function_bodies.insert(body);
 
   // Get the source text of this function declaration so we can check if it
   // contains an RCU annotation. The RCU annotations (__acquires(),
@@ -168,35 +126,15 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
   vast::cg::default_decl_visitor visitor(m_bld, m_view, scope);
   auto op = visitor.visit(decl);
 
-  // Create the lock level attribute.
-
-  auto lock_level_twine = llvm::Twine(std::to_string(lock_level));
-  auto lock_level_attr = mlir::StringAttr::get(&mctx, lock_level_twine);
-
   // Attach the present attributes to the operation. Because one function may be
   // annotaed with several RCU attributes (though I'm not sure if any actually
   // are), we name each annotation after its attribute so that the attributes
   // are unique.
 
-  annotate_op_with_attrs_in_text(op, source_text,
-                                 AcquiresAttr::get(&mctx, lock_level_attr),
-                                 ReleasesAttr::get(&mctx, lock_level_attr),
-                                 MustHoldAttr::get(&mctx, lock_level_attr));
+  annotate_op_with_attrs_in_text(op, source_text, AcquiresAttr::get(&mctx),
+                                 ReleasesAttr::get(&mctx),
+                                 MustHoldAttr::get(&mctx));
 
   return op;
-}
-
-void kernel_visitor::set_lock_level(mlir::Operation &op) {
-  op.setAttr("lock_level", m_bld.getI64IntegerAttr(lock_level));
-}
-
-void kernel_visitor::lock_op(mlir::Operation &op) {
-  set_lock_level(op);
-  lock_level++;
-}
-
-void kernel_visitor::unlock_op(mlir::Operation &op) {
-  lock_level--;
-  set_lock_level(op);
 }
 } // namespace macroni::kernel
