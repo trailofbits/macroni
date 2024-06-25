@@ -221,13 +221,8 @@ endif()
 # TODO(Brent): Only link vast libs to targets that need them.
 get_property(VAST_LIBS GLOBAL PROPERTY VAST_ALL_LIBS)
 target_link_libraries(
-  macroni_settings
-  INTERFACE ${LLVM_LIBS}
-            ${CLANG_LIBS}
-            ${MACRONI_MLIR_LIBS}
-            gap::gap
-            vast_settings
-            ${VAST_LIBS})
+  macroni_settings INTERFACE ${LLVM_LIBS} ${CLANG_LIBS} ${MACRONI_MLIR_LIBS}
+                             gap::gap vast_settings ${VAST_LIBS})
 
 include_directories(${MACRONI_SOURCE_DIR}/include)
 include_directories(${MACRONI_BINARY_DIR}/include)
