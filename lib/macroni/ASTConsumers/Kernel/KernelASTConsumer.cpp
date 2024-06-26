@@ -11,6 +11,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <memory>
 #include <mlir/IR/Iterators.h>
+#include <mlir/IR/OperationSupport.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
 
 // NOTE(Brent): Not sure where to put this file's local functions. It may be
@@ -18,6 +19,9 @@
 // there.
 
 namespace macroni::kernel {
+KernelASTConsumer::KernelASTConsumer(bool print_locations)
+    : m_print_locations(print_locations) {}
+
 void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   // Match safe blocks.
 
@@ -46,13 +50,20 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   // Rewrite rcu_read_lock()/unlock() calls into critical sections.
   rewrite_rcu(&driver->mcontext(), mod);
 
-  // Print the result
+  // Print the result.
 
-  mod->print(llvm::outs());
+  mlir::OpPrintingFlags flags;
+  // Only print original locations if the flag is enabled.
+  flags.enableDebugInfo(m_print_locations, false);
+
+  mod->print(llvm::outs(), flags);
 }
+
+KernelASTConsumerFactory::KernelASTConsumerFactory(bool print_locations)
+    : m_print_locations(print_locations) {}
 
 std::unique_ptr<KernelASTConsumer>
 KernelASTConsumerFactory::newASTConsumer(void) {
-  return std::make_unique<KernelASTConsumer>();
+  return std::make_unique<KernelASTConsumer>(m_print_locations);
 }
 } // namespace macroni::kernel
