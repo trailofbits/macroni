@@ -19,6 +19,17 @@ static llvm::cl::extrahelp
 static llvm::cl::extrahelp
     g_more_help("\nAnalyzes Linux kernel RCU macro usage\n");
 
+static llvm::cl::opt<bool> g_print_locations(
+    "locations",
+    llvm::cl::desc("Enable printing original source locations in MLIR output"),
+    llvm::cl::cat(g_tool_category));
+
+static llvm::cl::alias
+    g_print_locations_alias("l", llvm::cl::desc("Alias for --locations"),
+                            llvm::cl::aliasopt(g_print_locations),
+                            llvm::cl::NotHidden,
+                            llvm::cl::cat(g_tool_category));
+
 int main(int argc, const char **argv) {
   auto ExpectedParser =
       clang::tooling::CommonOptionsParser::create(argc, argv, g_tool_category);
@@ -31,7 +42,7 @@ int main(int argc, const char **argv) {
   clang::tooling::ClangTool Tool(OptionsParser.getCompilations(),
                                  OptionsParser.getSourcePathList());
 
-  macroni::kernel::KernelASTConsumerFactory factory;
+  macroni::kernel::KernelASTConsumerFactory factory(g_print_locations);
 
   return Tool.run(clang::tooling::newFrontendActionFactory(&factory).get());
 }
