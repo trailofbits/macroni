@@ -32,8 +32,8 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
 
   // Set up the driver.
   auto driver =
-      ::macroni::generate_codegen_driver<KernelDialect,
-                                         macroni::macroni_meta_generator>(Ctx);
+      macroni::generate_codegen_driver<KernelDialect,
+                                       macroni::macroni_meta_generator>(Ctx);
 
   driver->push_visitor(std::make_unique<kernel_visitor>(
       matcher.expansions, Ctx, driver->mcontext(),
