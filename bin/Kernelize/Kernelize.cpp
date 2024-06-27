@@ -5,6 +5,7 @@
 // LICENSE file found in the root directory of this source tree.
 
 #include "macroni/ASTConsumers/Kernel/KernelASTConsumer.hpp"
+#include "vast/Util/Common.hpp"
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
@@ -42,7 +43,14 @@ int main(int argc, const char **argv) {
   clang::tooling::ClangTool Tool(OptionsParser.getCompilations(),
                                  OptionsParser.getSourcePathList());
 
-  macroni::kernel::KernelASTConsumerFactory factory(g_print_locations);
+  auto mod_handler = [=](vast::owning_module_ref &mod) {
+    mlir::OpPrintingFlags flags;
+    // Only print original locations if the flag is enabled.
+    flags.enableDebugInfo(g_print_locations, false);
+    mod->print(llvm::outs(), flags);
+  };
+
+  macroni::kernel::KernelASTConsumerFactory factory(mod_handler);
 
   return Tool.run(clang::tooling::newFrontendActionFactory(&factory).get());
 }
