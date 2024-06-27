@@ -1,6 +1,7 @@
 #include "macroni/ASTConsumers/Kernel/KernelASTConsumer.hpp"
 #include "macroni/ASTMatchers/Kernel/RCUMatchers.hpp"
 #include "macroni/Common/CodeGenDriverSetup.hpp"
+#include "macroni/Common/Common.hpp"
 #include "macroni/Common/MacroniMetaGenerator.hpp"
 #include "macroni/Conversion/Kernel/KernelRewriters.hpp"
 #include "macroni/Dialect/Kernel/KernelDialect.hpp"
@@ -8,7 +9,6 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
-#include <llvm/Support/raw_ostream.h>
 #include <memory>
 #include <mlir/IR/Iterators.h>
 #include <mlir/IR/OperationSupport.h>
@@ -19,8 +19,8 @@
 // there.
 
 namespace macroni::kernel {
-KernelASTConsumer::KernelASTConsumer(bool print_locations)
-    : m_print_locations(print_locations) {}
+KernelASTConsumer::KernelASTConsumer(module_handler mod_handler)
+    : m_module_handler(mod_handler) {}
 
 void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   // Match safe blocks.
@@ -50,20 +50,15 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &Ctx) {
   // Rewrite rcu_read_lock()/unlock() calls into critical sections.
   rewrite_rcu(&driver->mcontext(), mod);
 
-  // Print the result.
-
-  mlir::OpPrintingFlags flags;
-  // Only print original locations if the flag is enabled.
-  flags.enableDebugInfo(m_print_locations, false);
-
-  mod->print(llvm::outs(), flags);
+  // Handle the result.
+  m_module_handler(mod);
 }
 
-KernelASTConsumerFactory::KernelASTConsumerFactory(bool print_locations)
-    : m_print_locations(print_locations) {}
+KernelASTConsumerFactory::KernelASTConsumerFactory(module_handler mod_handler)
+    : m_module_handler(mod_handler) {}
 
 std::unique_ptr<KernelASTConsumer>
 KernelASTConsumerFactory::newASTConsumer(void) {
-  return std::make_unique<KernelASTConsumer>(m_print_locations);
+  return std::make_unique<KernelASTConsumer>(m_module_handler);
 }
 } // namespace macroni::kernel
