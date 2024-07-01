@@ -29,13 +29,13 @@
 
 namespace macroni::kernel {
 kernel_visitor::kernel_visitor(vast::cg::visitor_base &head,
-                               vast::acontext_t &actx, vast::mcontext_t &mctx,
+                               vast::mcontext_t &mctx,
                                vast::cg::codegen_builder &bld,
                                vast::cg::meta_generator &mg,
-                               vast::cg::symbol_generator &sg,
+                               vast::acontext_t &actx,
                                expansion_table &expansions)
-    : vast::cg::fallthrough_list_node(), m_actx(actx), m_mctx(mctx), m_bld(bld),
-      m_mg(mg), m_expansions(expansions), m_view(head) {}
+    : vast::cg::fallthrough_list_node(), m_mctx(mctx), m_bld(bld), m_mg(mg),
+      m_actx(actx), m_expansions(expansions), m_view(head) {}
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
