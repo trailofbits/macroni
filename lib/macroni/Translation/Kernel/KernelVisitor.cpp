@@ -1,16 +1,15 @@
 #include "macroni/Translation/Kernel/KernelVisitor.hpp"
-#include "macroni/Common/EmptyVisitor.hpp"
+
 #include "macroni/Common/ExpansionTable.hpp"
 #include "macroni/Common/MacroniMetaGenerator.hpp"
 #include "macroni/Dialect/Kernel/KernelAttributes.hpp"
 #include "macroni/Dialect/Kernel/KernelDialect.hpp"
 #include "macroni/Dialect/Kernel/KernelOps.hpp"
 #include "vast/CodeGen/CodeGenBuilder.hpp"
-#include "vast/CodeGen/CodeGenMeta.hpp"
+#include "vast/CodeGen/CodeGenMetaGenerator.hpp"
 #include "vast/CodeGen/CodeGenVisitorBase.hpp"
 #include "vast/CodeGen/Common.hpp"
 #include "vast/CodeGen/DefaultDeclVisitor.hpp"
-#include "vast/CodeGen/DefaultStmtVisitor.hpp"
 #include "vast/CodeGen/ScopeContext.hpp"
 #include "vast/CodeGen/SymbolGenerator.hpp"
 #include "vast/Util/Common.hpp"
@@ -29,22 +28,22 @@
 #include <string_view>
 
 namespace macroni::kernel {
-kernel_visitor::kernel_visitor(expansion_table &expansions,
+kernel_visitor::kernel_visitor(vast::cg::visitor_base &head,
                                vast::acontext_t &actx, vast::mcontext_t &mctx,
                                vast::cg::codegen_builder &bld,
                                vast::cg::meta_generator &mg,
                                vast::cg::symbol_generator &sg,
-                               vast::cg::visitor_view view)
-    : ::macroni::empty_visitor(mctx, mg, sg, view), m_expansions(expansions),
-      m_actx(actx), m_bld(bld), m_view(view) {}
+                               expansion_table &expansions)
+    : vast::cg::fallthrough_list_node(), m_actx(actx), m_mctx(mctx), m_bld(bld),
+      m_mg(mg), m_expansions(expansions), m_view(head) {}
 
 vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) {
   if (!m_expansions.contains(stmt)) {
-    return {};
+    return next->visit(stmt, scope);
   }
 
-  auto &meta = static_cast<macroni::macroni_meta_generator &>(mg);
+  auto &meta = static_cast<macroni::macroni_meta_generator &>(m_mg);
   auto &sm = m_actx.getSourceManager();
   auto loc = meta.location(sm.getExpansionLoc(stmt->getBeginLoc()));
   auto expansion = m_expansions.at(stmt);
@@ -85,7 +84,7 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_stmt *stmt,
     auto c = m_view.visit(expansion.arguments[2], scope)->getResult(0);
     return m_bld.create<RCUReplacePointer>(loc, rty, rcu_ptr, ptr, c);
   }
-  return nullptr;
+  return next->visit(stmt, scope);
 }
 
 template <typename AttrT, typename... Rest>
@@ -103,7 +102,7 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
                                       vast::cg::scope_context &scope) {
   auto function_decl = clang::dyn_cast<clang::FunctionDecl>(decl);
   if (!function_decl || !function_decl->hasBody()) {
-    return nullptr;
+    return next->visit(decl, scope);
   }
   auto body = function_decl->getBody();
 
@@ -123,7 +122,7 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
 
   // Get the op for this function decl.
 
-  vast::cg::default_decl_visitor visitor(m_bld, m_view, scope);
+  vast::cg::default_decl_visitor visitor(m_mctx, m_bld, m_view, scope);
   auto op = visitor.visit(decl);
 
   // Attach the present attributes to the operation. Because one function may be
@@ -131,9 +130,9 @@ vast::operation kernel_visitor::visit(const vast::cg::clang_decl *decl,
   // are), we name each annotation after its attribute so that the attributes
   // are unique.
 
-  annotate_op_with_attrs_in_text(op, source_text, AcquiresAttr::get(&mctx),
-                                 ReleasesAttr::get(&mctx),
-                                 MustHoldAttr::get(&mctx));
+  annotate_op_with_attrs_in_text(op, source_text, AcquiresAttr::get(&m_mctx),
+                                 ReleasesAttr::get(&m_mctx),
+                                 MustHoldAttr::get(&m_mctx));
 
   return op;
 }
