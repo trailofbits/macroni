@@ -71,7 +71,7 @@ mlir::LogicalResult rewrite_rcu_read_unlock(vast::hl::CallOp call_op,
   return mlir::success();
 }
 
-void rewrite_rcu(vast::mcontext_t *mctx, vast::owning_module_ref &mod) {
+void rewrite_rcu(vast::mcontext_t *mctx, vast::vast_module &mod) {
   // Register conversions
   auto patterns = mlir::RewritePatternSet(mctx);
   patterns.add(rewrite_label_stmt).add(rewrite_rcu_read_unlock);
