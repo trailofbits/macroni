@@ -14,6 +14,7 @@ namespace macroni::safety {
 safety_visitor::safety_visitor(vast::cg::visitor_base &head,
                                vast::mcontext_t &mctx,
                                vast::cg::codegen_builder &bld,
+                               vast::cg::meta_generator &mg,
                                safety_conditions &safe_block_conditions)
     : vast::cg::fallthrough_list_node(), m_mctx(mctx), m_bld(bld),
       m_safe_block_conditions(safe_block_conditions), m_view(head) {}

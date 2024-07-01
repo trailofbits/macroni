@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vast/CodeGen/CodeGenBuilder.hpp"
+#include "vast/CodeGen/CodeGenMetaGenerator.hpp"
 #include "vast/CodeGen/CodeGenVisitorBase.hpp"
 #include "vast/CodeGen/CodeGenVisitorList.hpp"
 #include "vast/CodeGen/Common.hpp"
@@ -17,6 +18,7 @@ struct safety_visitor : vast::cg::fallthrough_list_node {
   [[nodiscard]] safety_visitor(vast::cg::visitor_base &head,
                                vast::mcontext_t &mctx,
                                vast::cg::codegen_builder &bld,
+                               vast::cg::meta_generator &mg,
                                safety_conditions &safe_block_conditions);
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
@@ -25,7 +27,9 @@ struct safety_visitor : vast::cg::fallthrough_list_node {
 protected:
   vast::mcontext_t &m_mctx;
   vast::cg::codegen_builder &m_bld;
+
   safety_conditions &m_safe_block_conditions;
+
   vast::cg::visitor_view m_view;
 };
 } // namespace macroni::safety
