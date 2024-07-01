@@ -1,10 +1,13 @@
 #include "macroni/Translation/Macroni/MacroniVisitor.hpp"
-#include "macroni/Common/EmptyVisitor.hpp"
+
 #include "macroni/Dialect/Macroni/MacroniOps.hpp"
 #include "macroni/Translation/Macroni/PastaMetaGenerator.hpp"
 #include "pasta/AST/Macro.h"
 #include "pasta/AST/Stmt.h"
+#include "vast/CodeGen/CodeGenVisitorBase.hpp"
 #include <llvm/ADT/StringRef.h>
+#include <mlir/IR/Location.h>
+#include <mlir/IR/Value.h>
 #include <optional>
 #include <set>
 #include <vector>
@@ -67,27 +70,27 @@ get_parameter_names(pasta::MacroSubstitution &sub) {
   return param_names;
 }
 
-macroni_visitor::macroni_visitor(pasta::AST &pctx, vast::mcontext_t &mctx,
+macroni_visitor::macroni_visitor(vast::cg::visitor_base &head,
+                                 vast::mcontext_t &mctx,
                                  vast::cg::codegen_builder &bld,
                                  vast::cg::meta_generator &mg,
-                                 vast::cg::symbol_generator &sg,
-                                 vast::cg::visitor_view view)
-    : empty_visitor(mctx, mg, sg, view), m_pctx(pctx), m_bld(bld),
-      m_view(view) {}
+                                 const pasta::AST &pctx)
+    : vast::cg::fallthrough_list_node(), m_mctx(mctx), m_bld(bld), m_mg(mg),
+      m_pctx(pctx), m_view(head) {}
 
 vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
                                        vast::cg::scope_context &scope) {
   auto pasta_stmt = m_pctx.Adopt(stmt);
 
   if (clang::isa<clang::ImplicitValueInitExpr, clang::ImplicitCastExpr>(stmt)) {
-    return {};
+    return next->visit(stmt, scope);
   }
 
   // Find the lowest macro that covers this statement, if any
   auto sub = lowest_unvisited_substitution(pasta_stmt, m_visited);
   if (!sub) {
     // If no substitution covers this statement, let a fallback visit it.
-    return {};
+    return next->visit(stmt, scope);
   }
 
   // Get the substitution's location, name, parameter names, and whether it is
@@ -97,7 +100,7 @@ vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
   // vast::cg::codegen_instance expects a vast::cg::meta_generator as its meta
   // generator, but we use static inheritance to pass it our own meta generator,
   // so simply calling location() directly won't work.
-  auto meta = dynamic_cast<pasta_meta_generator *>(&mg);
+  auto meta = dynamic_cast<pasta_meta_generator *>(&m_mg);
   auto loc = meta ? meta->location(*sub) : mlir::UnknownLoc();
   auto name_tok = sub->NameOrOperator();
   auto macro_name = (name_tok ? name_tok->Data() : "<a nameless macro>");
@@ -121,10 +124,12 @@ vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
       auto last_op = std::prev(last_block->end());
       [[maybe_unused]] auto _ = m_bld.scoped_insertion_at_end(last_block);
       auto stmt_loc = m_view.location(stmt);
+      auto loc = stmt_loc.value_or(mlir::UnknownLoc::get(&m_mctx));
 
       auto value = last_op->getNumResults() > 0 ? last_op->getResult(0)
-                                                : m_bld.void_value(stmt_loc);
-      m_bld.create<vast::hl::ValueYieldOp>(stmt_loc, value);
+                                                : m_bld.void_value(loc);
+
+      m_bld.create<vast::hl::ValueYieldOp>(loc, value);
     };
   };
 
@@ -133,7 +138,7 @@ vast::operation macroni_visitor::visit(const vast::cg::clang_stmt *stmt,
 
   auto expr = clang::dyn_cast<vast::cg::clang_expr>(stmt);
   auto rty = expr ? m_view.visit(expr->getType(), scope)
-                  : vast::hl::VoidType::get(&mctx);
+                  : vast::hl::VoidType::get(&m_mctx);
   if (sub->Kind() == pasta::MacroKind::kExpansion) {
     auto name_attr = m_bld.getStringAttr(llvm::Twine(macro_name));
     auto parameter_names_attr =

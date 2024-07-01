@@ -1,15 +1,14 @@
 #pragma once
 
-#include "macroni/Common/EmptyVisitor.hpp"
 #include "pasta/AST/AST.h"
 #include "pasta/AST/Macro.h"
 #include "pasta/AST/Stmt.h"
 #include "vast/CodeGen/CodeGenBuilder.hpp"
-#include "vast/CodeGen/CodeGenMeta.hpp"
+#include "vast/CodeGen/CodeGenMetaGenerator.hpp"
 #include "vast/CodeGen/CodeGenVisitorBase.hpp"
+#include "vast/CodeGen/CodeGenVisitorList.hpp"
 #include "vast/CodeGen/Common.hpp"
 #include "vast/CodeGen/ScopeContext.hpp"
-#include "vast/CodeGen/SymbolGenerator.hpp"
 #include "vast/Util/Common.hpp"
 #include <optional>
 #include <set>
@@ -31,20 +30,22 @@ lowest_unvisited_substitution(pasta::Stmt &stmt,
 // macro parameters, if any.
 std::vector<llvm::StringRef> get_parameter_names(pasta::MacroSubstitution &sub);
 
-struct macroni_visitor : empty_visitor {
+struct macroni_visitor : vast::cg::fallthrough_list_node {
 
-  [[nodiscard]] macroni_visitor(pasta::AST &pctx, vast::mcontext_t &mctx,
+  [[nodiscard]] macroni_visitor(vast::cg::visitor_base &head,
+                                vast::mcontext_t &mctx,
                                 vast::cg::codegen_builder &bld,
-                                vast::cg::meta_generator &mg,
-                                vast::cg::symbol_generator &sg,
-                                vast::cg::visitor_view view);
+                                vast::cg::meta_generator &mg, const pasta::AST &pctx);
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
 
-  pasta::AST &m_pctx;
+protected:
+  vast::mcontext_t &m_mctx;
   vast::cg::codegen_builder &m_bld;
-  vast::cg::visitor_view m_view;
+  vast::cg::meta_generator &m_mg;
+  const pasta::AST &m_pctx;
   std::set<pasta::MacroSubstitution> m_visited;
+  vast::cg::visitor_view m_view;
 };
 } // namespace macroni
