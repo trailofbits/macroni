@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vast/CodeGen/CodeGenMeta.hpp"
+#include "vast/CodeGen/CodeGenMetaGenerator.hpp"
 #include "vast/Util/Common.hpp"
 #include <clang/AST/DeclBase.h>
 #include <clang/AST/Expr.h>
