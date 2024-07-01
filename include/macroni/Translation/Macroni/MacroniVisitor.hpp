@@ -35,7 +35,8 @@ struct macroni_visitor : vast::cg::fallthrough_list_node {
   [[nodiscard]] macroni_visitor(vast::cg::visitor_base &head,
                                 vast::mcontext_t &mctx,
                                 vast::cg::codegen_builder &bld,
-                                vast::cg::meta_generator &mg, const pasta::AST &pctx);
+                                vast::cg::meta_generator &mg,
+                                const pasta::AST &pctx);
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
                                       vast::cg::scope_context &scope) override;
@@ -44,8 +45,10 @@ protected:
   vast::mcontext_t &m_mctx;
   vast::cg::codegen_builder &m_bld;
   vast::cg::meta_generator &m_mg;
+
   const pasta::AST &m_pctx;
   std::set<pasta::MacroSubstitution> m_visited;
+
   vast::cg::visitor_view m_view;
 };
 } // namespace macroni
