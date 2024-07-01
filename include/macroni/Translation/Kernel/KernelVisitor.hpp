@@ -7,7 +7,6 @@
 #include "vast/CodeGen/CodeGenVisitorList.hpp"
 #include "vast/CodeGen/Common.hpp"
 #include "vast/CodeGen/ScopeContext.hpp"
-#include "vast/CodeGen/SymbolGenerator.hpp"
 #include "vast/Util/Common.hpp"
 #include <clang/AST/Attrs.inc>
 #include <clang/AST/Expr.h>
@@ -17,11 +16,10 @@
 namespace macroni::kernel {
 struct kernel_visitor : vast::cg::fallthrough_list_node {
   [[nodiscard]] explicit kernel_visitor(vast::cg::visitor_base &head,
-                                        vast::acontext_t &actx,
                                         vast::mcontext_t &mctx,
                                         vast::cg::codegen_builder &bld,
                                         vast::cg::meta_generator &mg,
-                                        vast::cg::symbol_generator &sg,
+                                        vast::acontext_t &actx,
                                         expansion_table &expansions);
 
   [[nodiscard]] vast::operation visit(const vast::cg::clang_stmt *stmt,
@@ -31,11 +29,13 @@ struct kernel_visitor : vast::cg::fallthrough_list_node {
                                       vast::cg::scope_context &scope) override;
 
 protected:
-  vast::acontext_t &m_actx;
   vast::mcontext_t &m_mctx;
   vast::cg::codegen_builder &m_bld;
   vast::cg::meta_generator &m_mg;
+
+  vast::acontext_t &m_actx;
   expansion_table &m_expansions;
+
   vast::cg::visitor_view m_view;
 };
 } // namespace macroni::kernel
