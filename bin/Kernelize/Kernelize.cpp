@@ -43,7 +43,7 @@ int main(int argc, const char **argv) {
   clang::tooling::ClangTool Tool(OptionsParser.getCompilations(),
                                  OptionsParser.getSourcePathList());
 
-  auto mod_handler = [=](vast::owning_module_ref &mod) {
+  auto mod_handler = [=](vast::vast_module &mod) {
     mlir::OpPrintingFlags flags;
     // Only print original locations if the flag is enabled.
     flags.enableDebugInfo(g_print_locations, false);
