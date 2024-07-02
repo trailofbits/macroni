@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   auto &actx = pctx.UnderlyingAST();
 
   auto maybe_mod_and_context =
-      macroni::generate_module<macroni::macroni::MacroniDialect,
+      macroni::mk_mod_and_mctx<macroni::macroni::MacroniDialect,
                                macroni::pasta_meta_generator,
                                macroni::macroni_visitor>(actx, pctx);
   if (!maybe_mod_and_context) {

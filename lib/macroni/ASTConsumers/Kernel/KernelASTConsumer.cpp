@@ -34,7 +34,7 @@ void KernelASTConsumer::HandleTranslationUnit(clang::ASTContext &actx) {
   finder.matchAST(actx);
 
   auto maybe_mod_and_context =
-      macroni::generate_module<KernelDialect, macroni::macroni_meta_generator,
+      macroni::mk_mod_and_mctx<KernelDialect, macroni::macroni_meta_generator,
                                kernel_visitor>(actx, actx, matcher.expansions);
   if (!maybe_mod_and_context) {
     llvm::errs() << "Could not make module\n";

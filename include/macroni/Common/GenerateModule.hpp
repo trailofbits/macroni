@@ -34,7 +34,7 @@ template <typename dialect_t, typename metagen_t, typename visitor_t,
   requires std::derived_from<dialect_t, mlir::Dialect> &&
            std::derived_from<metagen_t, vast::cg::meta_generator> &&
            std::derived_from<visitor_t, vast::cg::visitor_base>
-maybe_mod_and_context generate_module(vast::acontext_t &actx,
+maybe_mod_and_context mk_mod_and_mctx(vast::acontext_t &actx,
                                       args_t &&...args) {
   using namespace vast::cg;
 
