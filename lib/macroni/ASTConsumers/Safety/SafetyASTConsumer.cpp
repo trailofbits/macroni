@@ -21,7 +21,7 @@ void SafetyASTConsumer::HandleTranslationUnit(clang::ASTContext &actx) {
   finder.matchAST(actx);
 
   auto maybe_mod_and_context =
-      macroni::generate_module<SafetyDialect, macroni::macroni_meta_generator,
+      macroni::mk_mod_and_mctx<SafetyDialect, macroni::macroni_meta_generator,
                                safety_visitor>(actx,
                                                matcher.m_safe_block_conditions);
   if (!maybe_mod_and_context) {
