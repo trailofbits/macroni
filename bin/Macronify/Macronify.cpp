@@ -9,7 +9,7 @@
 #include "macroni/Dialect/Macroni/MacroniDialect.hpp"
 #include "macroni/Translation/Macroni/MacroniVisitor.hpp"
 #include "macroni/Translation/Macroni/PastaMetaGenerator.hpp"
-#include "vast/Util/Common.hpp"
+#include "vast/Frontend/Action.hpp"
 #include <cstdlib>
 #include <llvm/Support/raw_ostream.h>
 #include <mlir/IR/Verifier.h>
@@ -22,16 +22,17 @@ int main(int argc, char **argv) {
   }
   auto &pctx = maybe_ast.Value();
   auto &actx = pctx.UnderlyingAST();
-  auto mctx = vast::mcontext_t();
 
-  auto mod =
+  auto maybe_mod_and_context =
       macroni::generate_module<macroni::macroni::MacroniDialect,
                                macroni::pasta_meta_generator,
-                               macroni::macroni_visitor>(actx, mctx, pctx);
-  if (!mod) {
+                               macroni::macroni_visitor>(actx, pctx);
+  if (!maybe_mod_and_context) {
     llvm::errs() << "Could not make module\n";
     return EXIT_FAILURE;
   }
+
+  auto mod = maybe_mod_and_context->first;
   mod->print(llvm::outs());
 
   return EXIT_SUCCESS;

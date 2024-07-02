@@ -4,6 +4,7 @@
 #include "macroni/Common/MacroniMetaGenerator.hpp"
 #include "macroni/Dialect/Safety/SafetyDialect.hpp"
 #include "macroni/Translation/Safety/SafetyVisitor.hpp"
+#include "vast/Frontend/Action.hpp"
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
@@ -19,15 +20,16 @@ void SafetyASTConsumer::HandleTranslationUnit(clang::ASTContext &actx) {
   finder.addMatcher(macroni::safety::safe_block_condition_matcher, &matcher);
   finder.matchAST(actx);
 
-  auto mctx = vast::mcontext_t();
-  auto mod =
+  auto maybe_mod_and_context =
       macroni::generate_module<SafetyDialect, macroni::macroni_meta_generator,
-                               safety_visitor>(actx, mctx,
+                               safety_visitor>(actx,
                                                matcher.m_safe_block_conditions);
-  if (!mod) {
+  if (!maybe_mod_and_context) {
     llvm::errs() << "Could not make module\n";
     return;
   }
+
+  auto mod = maybe_mod_and_context->first;
   mod->print(llvm::outs());
 }
 
